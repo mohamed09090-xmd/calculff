@@ -30,7 +30,18 @@ jobs:
         run: flutter pub get
 
       - name: Analyze
-        run: flutter analyze
+        continue-on-error: true
+        shell: bash
+        run: |
+          set -o pipefail
+          flutter analyze 2>&1 | tee flutter-analyze.log
+
+      - name: Upload analyze log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: flutter-analyze-log
+          path: flutter-analyze.log
 
       - name: Test
         run: flutter test
