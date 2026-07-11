@@ -85,7 +85,7 @@ class SettingsScreen extends ConsumerWidget {
   }
 
   Future<void> _update(WidgetRef ref, AppSettings settings) =>
-      ref.read(settingsProvider.notifier).update(settings);
+      ref.read(settingsProvider.notifier).save(settings);
 
   Future<void> _editWarning(
     BuildContext context,
