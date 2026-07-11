@@ -47,7 +47,7 @@ class SettingsController extends AsyncNotifier<AppSettings> {
   @override
   Future<AppSettings> build() => ref.read(appRepositoryProvider).getSettings();
 
-  Future<void> update(AppSettings next) async {
+  Future<void> save(AppSettings next) async {
     state = AsyncData(next);
     await ref.read(appRepositoryProvider).saveSettings(next);
     ref.invalidate(dashboardProvider);
