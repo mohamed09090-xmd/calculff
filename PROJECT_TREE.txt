@@ -1,0 +1,127 @@
+game_credit_profit_manager/
+├── .github/
+│   └── workflows/
+│       └── build-apk.yml
+├── android/
+│   ├── app/
+│   │   ├── src/
+│   │   │   └── main/
+│   │   │       ├── kotlin/
+│   │   │       │   └── com/
+│   │   │       │       └── example/
+│   │   │       │           └── game_credit_profit_manager/
+│   │   │       │               └── MainActivity.kt
+│   │   │       ├── res/
+│   │   │       │   ├── drawable/
+│   │   │       │   │   ├── ic_launcher.xml
+│   │   │       │   │   └── launch_background.xml
+│   │   │       │   ├── drawable-v21/
+│   │   │       │   ├── mipmap-hdpi/
+│   │   │       │   ├── mipmap-mdpi/
+│   │   │       │   ├── mipmap-xhdpi/
+│   │   │       │   ├── mipmap-xxhdpi/
+│   │   │       │   ├── mipmap-xxxhdpi/
+│   │   │       │   ├── values/
+│   │   │       │   │   └── styles.xml
+│   │   │       │   └── values-night/
+│   │   │       │       └── styles.xml
+│   │   │       └── AndroidManifest.xml
+│   │   └── build.gradle
+│   ├── gradle/
+│   │   └── wrapper/
+│   │       └── gradle-wrapper.properties
+│   ├── build.gradle
+│   ├── gradle.properties
+│   ├── gradlew
+│   ├── gradlew.bat
+│   └── settings.gradle
+├── lib/
+│   ├── app/
+│   │   ├── app.dart
+│   │   ├── router.dart
+│   │   └── theme.dart
+│   ├── core/
+│   │   ├── constants/
+│   │   │   └── app_strings.dart
+│   │   ├── database/
+│   │   │   └── app_database.dart
+│   │   ├── services/
+│   │   │   └── notification_service.dart
+│   │   ├── utils/
+│   │   │   ├── date_utils.dart
+│   │   │   ├── id_generator.dart
+│   │   │   └── money_formatter.dart
+│   │   └── widgets/
+│   │       ├── app_shell.dart
+│   │       ├── async_state_view.dart
+│   │       ├── metric_card.dart
+│   │       └── section_card.dart
+│   ├── features/
+│   │   ├── backup/
+│   │   │   └── presentation/
+│   │   │       └── backup_restore_screen.dart
+│   │   ├── calculator/
+│   │   │   ├── application/
+│   │   │   │   ├── presentation/
+│   │   │   │   ├── calculation_engine.dart
+│   │   │   │   └── package_optimizer.dart
+│   │   │   └── presentation/
+│   │   │       ├── presentation/
+│   │   │       ├── calculation_result_screen.dart
+│   │   │       ├── calculation_summary.dart
+│   │   │       ├── calculator_screen.dart
+│   │   │       └── confirm_transaction_screen.dart
+│   │   ├── dashboard/
+│   │   │   └── presentation/
+│   │   │       ├── dashboard_screen.dart
+│   │   │       └── splash_screen.dart
+│   │   ├── inventory/
+│   │   │   ├── application/
+│   │   │   │   └── fefo_allocator.dart
+│   │   │   └── presentation/
+│   │   │       └── inventory_screen.dart
+│   │   ├── packages/
+│   │   │   └── presentation/
+│   │   │       └── packages_screen.dart
+│   │   ├── products/
+│   │   │   └── presentation/
+│   │   │       └── products_screen.dart
+│   │   ├── settings/
+│   │   │   └── presentation/
+│   │   │       └── settings_screen.dart
+│   │   └── transactions/
+│   │       └── presentation/
+│   │           ├── transaction_details_screen.dart
+│   │           └── transactions_screen.dart
+│   ├── shared/
+│   │   ├── models/
+│   │   │   ├── app_settings.dart
+│   │   │   ├── calculation.dart
+│   │   │   ├── credit_package.dart
+│   │   │   ├── dashboard_summary.dart
+│   │   │   ├── inventory_lot.dart
+│   │   │   ├── optimization_result.dart
+│   │   │   ├── product.dart
+│   │   │   ├── sales_transaction.dart
+│   │   │   └── transaction_details.dart
+│   │   ├── providers/
+│   │   │   └── app_providers.dart
+│   │   └── repositories/
+│   │       └── app_repository.dart
+│   └── main.dart
+├── test/
+│   ├── calculation_engine_test.dart
+│   ├── fefo_allocator_test.dart
+│   ├── money_formatter_test.dart
+│   ├── package_optimizer_test.dart
+│   └── test_fixtures.dart
+├── tool/
+│   ├── run_checks.sh
+│   ├── static_check.py
+│   └── verify_logic.py
+├── .gitignore
+├── .metadata
+├── analysis_options.yaml
+├── IMPLEMENTATION_REPORT.md
+├── pubspec.yaml
+└── README.md

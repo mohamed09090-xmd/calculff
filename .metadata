@@ -1,0 +1,10 @@
+# This file tracks properties of this Flutter project.
+version:
+  revision: "manual-scaffold"
+  channel: "stable"
+project_type: app
+migration:
+  platforms:
+    - platform: root
+      create_revision: "manual-scaffold"
+      base_revision: "manual-scaffold"

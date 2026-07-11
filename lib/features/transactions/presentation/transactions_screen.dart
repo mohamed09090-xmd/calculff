@@ -1,0 +1,86 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+
+import '../../../core/constants/app_strings.dart';
+import '../../../core/utils/date_utils.dart';
+import '../../../core/utils/money_formatter.dart';
+import '../../../core/widgets/app_shell.dart';
+import '../../../core/widgets/async_state_view.dart';
+import '../../../shared/models/app_settings.dart';
+import '../../../shared/providers/app_providers.dart';
+
+class TransactionsScreen extends ConsumerStatefulWidget {
+  const TransactionsScreen({super.key});
+
+  @override
+  ConsumerState<TransactionsScreen> createState() => _TransactionsScreenState();
+}
+
+class _TransactionsScreenState extends ConsumerState<TransactionsScreen> {
+  String _query = '';
+
+  @override
+  Widget build(BuildContext context) {
+    final transactions = ref.watch(transactionsProvider);
+    final settings = ref.watch(settingsProvider).valueOrNull ?? AppSettings.defaults;
+    return AppShell(
+      title: AppStrings.transactions,
+      actions: [
+        IconButton(
+          onPressed: () => ref.invalidate(transactionsProvider),
+          icon: const Icon(Icons.refresh),
+        ),
+      ],
+      body: Column(
+        children: [
+          TextField(
+            decoration: const InputDecoration(
+              hintText: 'ابحث باسم المنتج',
+              prefixIcon: Icon(Icons.search),
+            ),
+            onChanged: (value) => setState(() => _query = value.trim().toLowerCase()),
+          ),
+          const SizedBox(height: 12),
+          Expanded(
+            child: AsyncStateView(
+              value: transactions,
+              onRetry: () => ref.invalidate(transactionsProvider),
+              data: (items) {
+                final filtered = items.where((item) {
+                  if (_query.isEmpty) return true;
+                  return (item.productNameSnapshot ?? 'حساب رصيد').toLowerCase().contains(_query);
+                }).toList(growable: false);
+                if (filtered.isEmpty) return const Center(child: Text('لا توجد عمليات مطابقة.'));
+                return ListView.separated(
+                  itemCount: filtered.length,
+                  separatorBuilder: (_, __) => const SizedBox(height: 10),
+                  itemBuilder: (context, index) {
+                    final item = filtered[index];
+                    final profitColor = item.cashProfit >= 0
+                        ? Theme.of(context).colorScheme.primary
+                        : Theme.of(context).colorScheme.error;
+                    return Card(
+                      child: ListTile(
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                        leading: CircleAvatar(child: Text('${item.gems}')),
+                        title: Text(item.productNameSnapshot ?? 'حساب رصيد', style: const TextStyle(fontWeight: FontWeight.w900)),
+                        subtitle: Text('${AppDateUtils.format(item.createdAt)}\n${item.requiredCredit} رصيد'),
+                        isThreeLine: true,
+                        trailing: Text(
+                          MoneyFormatter.format(item.cashProfit, useThousands: settings.useThousands),
+                          style: TextStyle(fontWeight: FontWeight.w900, color: profitColor),
+                        ),
+                        onTap: () => context.push('/transactions/${item.id}'),
+                      ),
+                    );
+                  },
+                );
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
