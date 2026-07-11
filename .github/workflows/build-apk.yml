@@ -1,4 +1,4 @@
-name: Verify and build Android APK
+name: Verify and build Android Release APK
 
 on:
   workflow_dispatch:
@@ -30,7 +30,6 @@ jobs:
         run: flutter pub get
 
       - name: Analyze
-        continue-on-error: true
         shell: bash
         run: |
           set -o pipefail
@@ -49,24 +48,25 @@ jobs:
       - name: Make Gradle executable
         run: chmod +x android/gradlew
 
-      - name: Build debug APK
+      - name: Build release APK
         continue-on-error: true
         shell: bash
         run: |
           set -o pipefail
-          flutter build apk --debug 2>&1 | tee flutter-build.log
+          flutter build apk --release 2>&1 | tee flutter-release-build.log
 
-      - name: Upload build log
+      - name: Upload release build log
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: flutter-build-log
-          path: flutter-build.log
+          name: flutter-release-build-log
+          path: flutter-release-build.log
 
-      - name: Verify APK exists
-        run: test -f build/app/outputs/flutter-apk/app-debug.apk
+      - name: Verify release APK exists
+        run: test -f build/app/outputs/flutter-apk/app-release.apk
 
-      - uses: actions/upload-artifact@v4
+      - name: Upload release APK
+        uses: actions/upload-artifact@v4
         with:
-          name: game-credit-profit-manager-debug-apk
-          path: build/app/outputs/flutter-apk/app-debug.apk
+          name: game-credit-profit-manager-release-apk
+          path: build/app/outputs/flutter-apk/app-release.apk
