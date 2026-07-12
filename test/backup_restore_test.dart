@@ -118,27 +118,19 @@ void main() {
 
   test('يرفض نسخة تالفة ويُبقي البيانات الحالية دون تغيير', () async {
     final payload = await createSourceBackup();
-    payload['transaction_items'] = [
-      {
-        'id': 'broken_item',
-        'transaction_id': 'missing_transaction',
-        'package_id': 'pkg_110',
-        'package_name_snapshot': 'باقة 110',
-        'credit_snapshot': 110,
-        'price_snapshot': 150,
-        'validity_hours_snapshot': 24,
-        'quantity': 1,
-      },
-    ];
+    payload['transaction_items'] = 'قيمة تالفة بدل قائمة';
 
-    final target = createDatabase('rollback-target.db');
+    final target = createDatabase('validation-target.db');
     final targetDb = await target.database;
     await targetDb.insert(
       'customers',
       customerRow(id: 'sentinel_customer', name: 'بيانات أصلية'),
     );
 
-    await expectLater(target.importData(payload), throwsA(anything));
+    await expectLater(
+      target.importData(payload),
+      throwsA(isA<FormatException>()),
+    );
 
     final customers = await targetDb.query('customers');
     expect(customers, hasLength(1));
