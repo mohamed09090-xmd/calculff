@@ -3,8 +3,8 @@ class AppSettings {
     required this.useThousands,
     required this.darkMode,
     required this.expiryWarningHours,
-    required this.creditSaleReferenceCredit,
-    required this.creditSaleReferencePriceDzd,
+    this.creditSaleReferenceCredit = 240,
+    this.creditSaleReferencePriceDzd = 350,
   });
 
   final bool useThousands;
@@ -34,7 +34,5 @@ class AppSettings {
     useThousands: false,
     darkMode: false,
     expiryWarningHours: 24,
-    creditSaleReferenceCredit: 240,
-    creditSaleReferencePriceDzd: 350,
   );
 }
