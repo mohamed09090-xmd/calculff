@@ -4,6 +4,7 @@ class SalesTransaction {
   const SalesTransaction({
     required this.id,
     required this.createdAt,
+    required this.customerName,
     required this.mode,
     this.productId,
     this.productNameSnapshot,
@@ -24,6 +25,7 @@ class SalesTransaction {
 
   final String id;
   final DateTime createdAt;
+  final String customerName;
   final CalculationMode mode;
   final String? productId;
   final String? productNameSnapshot;
@@ -44,6 +46,7 @@ class SalesTransaction {
   Map<String, Object?> toMap() => {
         'id': id,
         'created_at': createdAt.toIso8601String(),
+        'customer_name': customerName,
         'mode': mode.name,
         'product_id': productId,
         'product_name_snapshot': productNameSnapshot,
@@ -62,25 +65,32 @@ class SalesTransaction {
         'cash_profit': cashProfit,
       };
 
-  factory SalesTransaction.fromMap(Map<String, Object?> map) =>
-      SalesTransaction(
-        id: map['id']! as String,
-        createdAt: DateTime.parse(map['created_at']! as String),
-        mode: CalculationMode.values.byName(map['mode']! as String),
-        productId: map['product_id'] as String?,
-        productNameSnapshot: map['product_name_snapshot'] as String?,
-        inputValue: map['input_value']! as int,
-        useInventory: (map['use_inventory']! as int) == 1,
-        units: map['units']! as int,
-        gems: map['gems']! as int,
-        customerPaid: map['customer_paid']! as int,
-        chargedAmount: map['charged_amount']! as int,
-        customerChange: map['customer_change']! as int,
-        requiredCredit: map['required_credit']! as int,
-        inventoryCreditUsed: map['inventory_credit_used']! as int,
-        additionalCreditRequired: map['additional_credit_required']! as int,
-        purchasedCredit: map['purchased_credit']! as int,
-        newPackagesCost: map['new_packages_cost']! as int,
-        cashProfit: map['cash_profit']! as int,
-      );
+  factory SalesTransaction.fromMap(Map<String, Object?> map) {
+    final rawCustomerName = map['customer_name'] as String?;
+    final customerName = rawCustomerName == null || rawCustomerName.trim().isEmpty
+        ? 'عميل سابق'
+        : rawCustomerName.trim();
+
+    return SalesTransaction(
+      id: map['id']! as String,
+      createdAt: DateTime.parse(map['created_at']! as String),
+      customerName: customerName,
+      mode: CalculationMode.values.byName(map['mode']! as String),
+      productId: map['product_id'] as String?,
+      productNameSnapshot: map['product_name_snapshot'] as String?,
+      inputValue: map['input_value']! as int,
+      useInventory: (map['use_inventory']! as int) == 1,
+      units: map['units']! as int,
+      gems: map['gems']! as int,
+      customerPaid: map['customer_paid']! as int,
+      chargedAmount: map['charged_amount']! as int,
+      customerChange: map['customer_change']! as int,
+      requiredCredit: map['required_credit']! as int,
+      inventoryCreditUsed: map['inventory_credit_used']! as int,
+      additionalCreditRequired: map['additional_credit_required']! as int,
+      purchasedCredit: map['purchased_credit']! as int,
+      newPackagesCost: map['new_packages_cost']! as int,
+      cashProfit: map['cash_profit']! as int,
+    );
+  }
 }
