@@ -2,9 +2,10 @@ name: Finalize French localization sources
 
 on:
   push:
-    branches: [main]
+    branches:
+      - main
     paths:
-      - .github/workflows/finalize-french-localization.yml
+      - '.github/workflows/finalize-french-localization.yml'
 
 permissions:
   contents: write
@@ -24,8 +25,9 @@ jobs:
           cache: true
 
       - name: Localize all exported report formats
-        shell: python
+        shell: bash
         run: |
+          python3 <<'PY'
           from pathlib import Path
 
           report_path = Path('lib/features/reports/data/report_export_service.dart')
@@ -48,61 +50,61 @@ jobs:
           start = source.index('  static String buildCsv(')
           end = source.index('\n  static String _csv', start)
           csv_method = r'''  static String buildCsv(
-    ReportSummary report, {
-    String languageCode = 'ar',
-  }) {
-    String tr(String value) =>
-        AppTranslator.translateForLanguage(value, languageCode);
+            ReportSummary report, {
+            String languageCode = 'ar',
+          }) {
+            String tr(String value) =>
+                AppTranslator.translateForLanguage(value, languageCode);
 
-    final buffer = StringBuffer()
-      ..writeln(tr('تقرير مدير رصيد الألعاب'))
-      ..writeln('${tr('الفترة')},${_csv(tr(report.period.label))}')
-      ..writeln('${tr('تم الإنشاء')},${report.generatedAt.toIso8601String()}')
-      ..writeln()
-      ..writeln('${tr('المؤشر')},${tr('القيمة')}')
-      ..writeln('${tr('المبيعات')},${report.current.sales}')
-      ..writeln('${tr('التكلفة')},${report.current.cost}')
-      ..writeln('${tr('الربح')},${report.current.profit}')
-      ..writeln('${tr('عدد العمليات')},${report.current.transactionCount}')
-      ..writeln('${tr('عدد العملاء')},${report.current.customerCount}')
-      ..writeln('${tr('متوسط العملية')},${report.current.averageSale}')
-      ..writeln('${tr('الرصيد المطلوب')},${report.current.requiredCredit}')
-      ..writeln('${tr('الرصيد المشتَرى')},${report.current.purchasedCredit}')
-      ..writeln()
-      ..writeln(tr('الاتجاه الزمني'))
-      ..writeln('${tr('الفترة')},${tr('المبيعات')},${tr('الربح')}');
+            final buffer = StringBuffer()
+              ..writeln(tr('تقرير مدير رصيد الألعاب'))
+              ..writeln('${tr('الفترة')},${_csv(tr(report.period.label))}')
+              ..writeln('${tr('تم الإنشاء')},${report.generatedAt.toIso8601String()}')
+              ..writeln()
+              ..writeln('${tr('المؤشر')},${tr('القيمة')}')
+              ..writeln('${tr('المبيعات')},${report.current.sales}')
+              ..writeln('${tr('التكلفة')},${report.current.cost}')
+              ..writeln('${tr('الربح')},${report.current.profit}')
+              ..writeln('${tr('عدد العمليات')},${report.current.transactionCount}')
+              ..writeln('${tr('عدد العملاء')},${report.current.customerCount}')
+              ..writeln('${tr('متوسط العملية')},${report.current.averageSale}')
+              ..writeln('${tr('الرصيد المطلوب')},${report.current.requiredCredit}')
+              ..writeln('${tr('الرصيد المشتَرى')},${report.current.purchasedCredit}')
+              ..writeln()
+              ..writeln(tr('الاتجاه الزمني'))
+              ..writeln('${tr('الفترة')},${tr('المبيعات')},${tr('الربح')}');
 
-    for (final point in report.points) {
-      buffer.writeln('${_csv(point.label)},${point.sales},${point.profit}');
-    }
+            for (final point in report.points) {
+              buffer.writeln('${_csv(point.label)},${point.sales},${point.profit}');
+            }
 
-    buffer
-      ..writeln()
-      ..writeln(tr('أفضل المنتجات'))
-      ..writeln(
-        '${tr('المنتج')},${tr('العمليات')},${tr('المبيعات')},${tr('الربح')}',
-      );
-    for (final item in report.topProducts) {
-      buffer.writeln(
-        '${_csv(item.label)},${item.transactionCount},${item.sales},${item.profit}',
-      );
-    }
+            buffer
+              ..writeln()
+              ..writeln(tr('أفضل المنتجات'))
+              ..writeln(
+                '${tr('المنتج')},${tr('العمليات')},${tr('المبيعات')},${tr('الربح')}',
+              );
+            for (final item in report.topProducts) {
+              buffer.writeln(
+                '${_csv(item.label)},${item.transactionCount},${item.sales},${item.profit}',
+              );
+            }
 
-    buffer
-      ..writeln()
-      ..writeln(tr('أفضل العملاء'))
-      ..writeln(
-        '${tr('العميل')},${tr('العمليات')},${tr('المبيعات')},${tr('الربح')}',
-      );
-    for (final item in report.topCustomers) {
-      buffer.writeln(
-        '${_csv(item.label)},${item.transactionCount},${item.sales},${item.profit}',
-      );
-    }
+            buffer
+              ..writeln()
+              ..writeln(tr('أفضل العملاء'))
+              ..writeln(
+                '${tr('العميل')},${tr('العمليات')},${tr('المبيعات')},${tr('الربح')}',
+              );
+            for (final item in report.topCustomers) {
+              buffer.writeln(
+                '${_csv(item.label)},${item.transactionCount},${item.sales},${item.profit}',
+              );
+            }
 
-    return buffer.toString();
-  }
-'''
+            return buffer.toString();
+          }
+          '''
           source = source[:start] + csv_method + source[end:]
           report_path.write_text(source, encoding='utf-8')
 
@@ -112,39 +114,40 @@ jobs:
               catalog = catalog.replace(
                   'const Map<String, String> additionalFrenchTranslations = {',
                   """const Map<String, String> additionalFrenchTranslations = {
-  'تقرير مدير رصيد الألعاب':
-      'Rapport du gestionnaire de crédit de jeux',
-  'الفترة': 'Période',
-  'تم الإنشاء': 'Créé le',
-  'المؤشر': 'Indicateur',
-  'القيمة': 'Valeur',
-  'الاتجاه الزمني': 'Évolution temporelle',
-  'العميل': 'Client',""",
+            'تقرير مدير رصيد الألعاب':
+                'Rapport du gestionnaire de crédit de jeux',
+            'الفترة': 'Période',
+            'تم الإنشاء': 'Créé le',
+            'المؤشر': 'Indicateur',
+            'القيمة': 'Valeur',
+            'الاتجاه الزمني': 'Évolution temporelle',
+            'العميل': 'Client',""",
                   1,
               )
           catalog_path.write_text(catalog, encoding='utf-8')
 
           test_path = Path('test/report_export_service_test.dart')
           tests = test_path.read_text(encoding='utf-8')
-          marker = "يبني CSV بالفرنسية عند اختيار الفرنسية"
+          marker = 'يبني CSV بالفرنسية عند اختيار الفرنسية'
           if marker not in tests:
               insertion = r'''
 
-  test('يبني CSV بالفرنسية عند اختيار الفرنسية', () {
-    final csv = ReportExportService.buildCsv(report, languageCode: 'fr');
+            test('يبني CSV بالفرنسية عند اختيار الفرنسية', () {
+              final csv = ReportExportService.buildCsv(report, languageCode: 'fr');
 
-    expect(csv, contains('Rapport du gestionnaire de crédit de jeux'));
-    expect(csv, contains('Période,"7 derniers jours"'));
-    expect(csv, contains('Ventes,3500'));
-    expect(csv, contains('Coût,2400'));
-    expect(csv, contains('Bénéfice,1100'));
-    expect(csv, contains('Meilleurs produits'));
-    expect(csv, contains('Meilleurs clients'));
-  });
-'''
+              expect(csv, contains('Rapport du gestionnaire de crédit de jeux'));
+              expect(csv, contains('Période,"7 derniers jours"'));
+              expect(csv, contains('Ventes,3500'));
+              expect(csv, contains('Coût,2400'));
+              expect(csv, contains('Bénéfice,1100'));
+              expect(csv, contains('Meilleurs produits'));
+              expect(csv, contains('Meilleurs clients'));
+            });
+          '''
               close = tests.rfind('\n}')
               tests = tests[:close] + insertion + tests[close:]
           test_path.write_text(tests, encoding='utf-8')
+          PY
 
       - name: Format localized Dart sources
         run: dart format lib test
