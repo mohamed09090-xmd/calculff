@@ -11,28 +11,39 @@ extension ReportPeriodX on ReportPeriod {
 
   ReportWindow window(DateTime now) {
     final dayStart = DateTime(now.year, now.month, now.day);
+    final tomorrow = dayStart.add(const Duration(days: 1));
+    final monthStart = DateTime(now.year, now.month);
+    final previousMonthStart = DateTime(now.year, now.month - 1);
+    final elapsedMonthDays = tomorrow.difference(monthStart).inDays;
+    final previousMonthEnd = DateTime(now.year, now.month);
+    final previousComparableEnd = previousMonthStart.add(
+      Duration(days: elapsedMonthDays),
+    );
+
     return switch (this) {
       ReportPeriod.today => ReportWindow(
           start: dayStart,
-          endExclusive: dayStart.add(const Duration(days: 1)),
+          endExclusive: tomorrow,
           previousStart: dayStart.subtract(const Duration(days: 1)),
           previousEndExclusive: dayStart,
         ),
       ReportPeriod.last7Days => ReportWindow(
           start: dayStart.subtract(const Duration(days: 6)),
-          endExclusive: dayStart.add(const Duration(days: 1)),
+          endExclusive: tomorrow,
           previousStart: dayStart.subtract(const Duration(days: 13)),
           previousEndExclusive: dayStart.subtract(const Duration(days: 6)),
         ),
       ReportPeriod.thisMonth => ReportWindow(
-          start: DateTime(now.year, now.month),
-          endExclusive: DateTime(now.year, now.month + 1),
-          previousStart: DateTime(now.year, now.month - 1),
-          previousEndExclusive: DateTime(now.year, now.month),
+          start: monthStart,
+          endExclusive: tomorrow,
+          previousStart: previousMonthStart,
+          previousEndExclusive: previousComparableEnd.isAfter(previousMonthEnd)
+              ? previousMonthEnd
+              : previousComparableEnd,
         ),
       ReportPeriod.last30Days => ReportWindow(
           start: dayStart.subtract(const Duration(days: 29)),
-          endExclusive: dayStart.add(const Duration(days: 1)),
+          endExclusive: tomorrow,
           previousStart: dayStart.subtract(const Duration(days: 59)),
           previousEndExclusive: dayStart.subtract(const Duration(days: 29)),
         ),
