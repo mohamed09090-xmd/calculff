@@ -53,6 +53,23 @@ class _AppShellState extends State<AppShell>
     super.dispose();
   }
 
+  void _handleDrawerChanged(bool isOpened) {
+    if (!isOpened) {
+      _drawerKey.currentState?.reset();
+      return;
+    }
+
+    final drawerState = _drawerKey.currentState;
+    if (drawerState != null) {
+      drawerState.play();
+      return;
+    }
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _drawerKey.currentState?.play();
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final content = SafeArea(
@@ -74,13 +91,7 @@ class _AppShellState extends State<AppShell>
     return Scaffold(
       appBar: AppBar(title: Text(widget.title), actions: widget.actions),
       drawer: _AppDrawer(key: _drawerKey),
-      onDrawerChanged: (isOpened) {
-        if (isOpened) {
-          _drawerKey.currentState?.play();
-        } else {
-          _drawerKey.currentState?.reset();
-        }
-      },
+      onDrawerChanged: _handleDrawerChanged,
       body: animatedContent,
       floatingActionButton: widget.floatingActionButton,
     );
@@ -104,6 +115,7 @@ class _AppDrawerState extends State<_AppDrawer>
     _controller = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 560),
+      value: 1,
     );
   }
 
