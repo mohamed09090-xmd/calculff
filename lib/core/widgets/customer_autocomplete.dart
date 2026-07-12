@@ -2,6 +2,9 @@ import 'package:flutter/material.dart' hide Text;
 
 import 'package:flutter/services.dart';
 
+
+import '../localization/app_translator.dart';
+
 import '../localization/localized_text.dart';
 
 import '../../shared/models/customer.dart';
@@ -59,12 +62,12 @@ class CustomerAutocomplete extends StatelessWidget {
           textInputAction: TextInputAction.done,
           autofillHints: const [AutofillHints.name],
           inputFormatters: [LengthLimitingTextInputFormatter(80)],
-          decoration: const InputDecoration(
-            labelText: 'اسم العميل',
-            hintText: 'ابحث أو اكتب اسم عميل جديد',
+          decoration: InputDecoration(
+            labelText: AppTranslator.translate(context, 'اسم العميل'),
+            hintText: AppTranslator.translate(context, 'ابحث أو اكتب اسم عميل جديد'),
             prefixIcon: Icon(Icons.badge_outlined),
             suffixIcon: Icon(Icons.expand_more_rounded),
-            helperText: 'الاسم الجديد سيُضاف إلى قائمة العملاء تلقائيًا.',
+            helperText: AppTranslator.translate(context, 'الاسم الجديد سيُضاف إلى قائمة العملاء تلقائيًا.'),
           ),
           validator: validator,
           onChanged: onTextChanged,

@@ -3,6 +3,9 @@ import 'package:flutter/material.dart' hide Text;
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+
+import '../../../core/localization/app_translator.dart';
+
 import '../../../core/localization/localized_text.dart';
 
 import '../../../core/constants/app_strings.dart';
@@ -38,7 +41,7 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
       title: AppStrings.inventory,
       actions: [
         IconButton(
-          tooltip: 'تحديث المخزون',
+          tooltip: AppTranslator.translate(context, 'تحديث المخزون'),
           onPressed: () => ref.invalidate(inventoryProvider),
           icon: const Icon(Icons.refresh),
         ),
@@ -504,8 +507,8 @@ class _AddCreditDialogState extends State<_AddCreditDialog> {
               TextFormField(
                 controller: _name,
                 maxLength: 80,
-                decoration: const InputDecoration(
-                  labelText: 'اسم الرصيد أو مصدره',
+                decoration: InputDecoration(
+                  labelText: AppTranslator.translate(context, 'اسم الرصيد أو مصدره'),
                   prefixIcon: Icon(Icons.label_outline),
                 ),
                 validator: (value) {
@@ -542,8 +545,8 @@ class _AddCreditDialogState extends State<_AddCreditDialog> {
                 minLines: 2,
                 maxLines: 3,
                 maxLength: 160,
-                decoration: const InputDecoration(
-                  labelText: 'سبب أو ملاحظة (اختياري)',
+                decoration: InputDecoration(
+                  labelText: AppTranslator.translate(context, 'سبب أو ملاحظة (اختياري)'),
                   alignLabelWithHint: true,
                 ),
               ),
@@ -683,8 +686,8 @@ class _RemoveCreditDialogState extends State<_RemoveCreditDialog> {
                 controller: _amount,
                 keyboardType: TextInputType.number,
                 inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                decoration: const InputDecoration(
-                  labelText: 'كمية الرصيد المراد خصمها',
+                decoration: InputDecoration(
+                  labelText: AppTranslator.translate(context, 'كمية الرصيد المراد خصمها'),
                   prefixIcon: Icon(Icons.remove_circle_outline),
                 ),
                 validator: (value) {
@@ -704,9 +707,9 @@ class _RemoveCreditDialogState extends State<_RemoveCreditDialog> {
                 minLines: 2,
                 maxLines: 3,
                 maxLength: 160,
-                decoration: const InputDecoration(
-                  labelText: 'سبب الخصم أو الحذف',
-                  hintText: 'مثال: تصحيح خطأ، رصيد تالف، استعمال خارجي',
+                decoration: InputDecoration(
+                  labelText: AppTranslator.translate(context, 'سبب الخصم أو الحذف'),
+                  hintText: AppTranslator.translate(context, 'مثال: تصحيح خطأ، رصيد تالف، استعمال خارجي'),
                   alignLabelWithHint: true,
                 ),
                 validator: (value) {

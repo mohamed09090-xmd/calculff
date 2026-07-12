@@ -4,6 +4,9 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+
+import '../../../core/localization/app_translator.dart';
+
 import '../../../core/localization/localized_text.dart';
 
 import '../../../core/constants/app_strings.dart';
@@ -134,9 +137,12 @@ class _CalculatorScreenState extends ConsumerState<CalculatorScreen> {
                           key: ValueKey('${_mode.name}-${_product?.id}'),
                           initialValue: _product,
                           decoration: InputDecoration(
-                            labelText: _mode == CalculationMode.directProduct
-                                ? 'المنتج المباشر'
-                                : 'منتج الجواهر',
+                            labelText: AppTranslator.translate(
+                              context,
+                              _mode == CalculationMode.directProduct
+                                  ? 'المنتج المباشر'
+                                  : 'منتج الجواهر',
+                            ),
                           ),
                           items: [
                             for (final product in relevantProducts)
@@ -159,7 +165,7 @@ class _CalculatorScreenState extends ConsumerState<CalculatorScreen> {
                             FilteringTextInputFormatter.digitsOnly,
                           ],
                           decoration: InputDecoration(
-                            labelText: _inputLabel,
+                            labelText: AppTranslator.translate(context, _inputLabel),
                             prefixIcon: const Icon(Icons.pin_outlined),
                           ),
                           validator: (value) {

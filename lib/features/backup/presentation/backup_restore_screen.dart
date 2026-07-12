@@ -8,6 +8,9 @@ import 'package:intl/intl.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 
+
+import '../../../core/localization/app_translator.dart';
+
 import '../../../core/localization/localized_text.dart';
 
 import '../../../core/constants/app_strings.dart';
@@ -131,7 +134,7 @@ class _BackupRestoreScreenState extends ConsumerState<BackupRestoreScreen> {
       await file.writeAsString(AppDatabase.encodeBackup(data), flush: true);
       await Share.shareXFiles(
         [XFile(file.path, mimeType: 'application/json')],
-        subject: 'نسخة احتياطية لمدير رصيد الألعاب',
+        subject: AppTranslator.translate(context, 'نسخة احتياطية لمدير رصيد الألعاب'),
         text: '${preview.transactionCount} عملية • '
             '${preview.customerCount} عميل',
       );

@@ -4,6 +4,9 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+
+import '../../../core/localization/app_translator.dart';
+
 import '../../../core/localization/localized_text.dart';
 
 import '../../../core/constants/app_strings.dart';
@@ -267,8 +270,8 @@ class SettingsScreen extends ConsumerWidget {
               controller: creditController,
               keyboardType: TextInputType.number,
               inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-              decoration: const InputDecoration(
-                labelText: 'الرصيد المرجعي',
+              decoration: InputDecoration(
+                labelText: AppTranslator.translate(context, 'الرصيد المرجعي'),
                 prefixIcon: Icon(Icons.toll_outlined),
               ),
             ),
@@ -277,8 +280,8 @@ class SettingsScreen extends ConsumerWidget {
               controller: priceController,
               keyboardType: TextInputType.number,
               inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-              decoration: const InputDecoration(
-                labelText: 'سعر البيع المرجعي بالدينار',
+              decoration: InputDecoration(
+                labelText: AppTranslator.translate(context, 'سعر البيع المرجعي بالدينار'),
                 prefixIcon: Icon(Icons.payments_outlined),
               ),
             ),
@@ -337,8 +340,8 @@ class SettingsScreen extends ConsumerWidget {
           controller: controller,
           keyboardType: TextInputType.number,
           inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-          decoration: const InputDecoration(
-            labelText: 'عدد الساعات قبل الانتهاء',
+          decoration: InputDecoration(
+            labelText: AppTranslator.translate(context, 'عدد الساعات قبل الانتهاء'),
           ),
         ),
         actions: [

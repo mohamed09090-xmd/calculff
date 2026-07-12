@@ -5,6 +5,9 @@ import 'package:flutter/material.dart' hide Text;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+
+import '../../../core/localization/app_translator.dart';
+
 import '../../../core/localization/localized_text.dart';
 
 import '../../../core/utils/date_utils.dart';
@@ -68,13 +71,13 @@ class _TransactionDetailsScreenState
       title: 'تفاصيل العملية',
       actions: [
         IconButton(
-          tooltip: 'تعديل العملية',
+          tooltip: AppTranslator.translate(context, 'تعديل العملية'),
           onPressed: () =>
               context.push('/transactions/${widget.transactionId}/edit'),
           icon: const Icon(Icons.edit_outlined),
         ),
         IconButton(
-          tooltip: 'حذف العملية',
+          tooltip: AppTranslator.translate(context, 'حذف العملية'),
           onPressed: _delete,
           icon: const Icon(Icons.delete_outline),
         ),

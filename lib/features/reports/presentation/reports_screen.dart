@@ -7,6 +7,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:share_plus/share_plus.dart';
 
+
+import '../../../core/localization/app_translator.dart';
+
 import '../../../core/localization/localized_text.dart';
 
 import '../../../core/utils/money_formatter.dart';
@@ -53,7 +56,7 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
       title: 'التقارير',
       actions: [
         IconButton(
-          tooltip: 'مشاركة أو حفظ التقرير',
+          tooltip: AppTranslator.translate(context, 'مشاركة أو حفظ التقرير'),
           onPressed: _exporting || report.valueOrNull == null
               ? null
               : () => _openExportSheet(
@@ -68,7 +71,7 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
               : const Icon(Icons.ios_share_outlined),
         ),
         IconButton(
-          tooltip: 'تحديث',
+          tooltip: AppTranslator.translate(context, 'تحديث'),
           onPressed: () => ref.invalidate(reportProvider(_period)),
           icon: const Icon(Icons.refresh),
         ),
@@ -144,7 +147,7 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
       if (request.action == _ReportExportAction.share) {
         await Share.shareXFiles(
           [XFile(result.file.path, mimeType: result.format.mimeType)],
-          subject: 'تقرير ${report.period.label}',
+          subject: AppTranslator.translate(context, 'تقرير ${report.period.label}'),
           text: 'تقرير ${report.period.label} - '
               '${MoneyFormatter.format(report.current.profit, useThousands: settings.useThousands)} ربح',
         );
@@ -152,7 +155,7 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
       }
 
       final savedPath = await FilePicker.platform.saveFile(
-        dialogTitle: 'حفظ تقرير ${report.period.label}',
+        dialogTitle: AppTranslator.translate(context, 'حفظ تقرير ${report.period.label}'),
         fileName: result.fileName,
         type: FileType.custom,
         allowedExtensions: [result.format.extension],

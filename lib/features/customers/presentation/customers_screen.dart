@@ -2,6 +2,9 @@ import 'package:flutter/material.dart' hide Text;
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+
+import '../../../core/localization/app_translator.dart';
+
 import '../../../core/localization/localized_text.dart';
 
 import '../../../core/utils/date_utils.dart';
@@ -32,7 +35,7 @@ class _CustomersScreenState extends ConsumerState<CustomersScreen> {
       title: 'العملاء',
       actions: [
         IconButton(
-          tooltip: 'تحديث',
+          tooltip: AppTranslator.translate(context, 'تحديث'),
           onPressed: () => ref.invalidate(customersProvider),
           icon: const Icon(Icons.refresh),
         ),
@@ -45,8 +48,8 @@ class _CustomersScreenState extends ConsumerState<CustomersScreen> {
       body: Column(
         children: [
           TextField(
-            decoration: const InputDecoration(
-              hintText: 'ابحث بالاسم أو رقم الهاتف',
+            decoration: InputDecoration(
+              hintText: AppTranslator.translate(context, 'ابحث بالاسم أو رقم الهاتف'),
               prefixIcon: Icon(Icons.search),
             ),
             onChanged: (value) =>
@@ -433,8 +436,8 @@ class _CustomerEditorDialogState extends State<_CustomerEditorDialog> {
                 controller: _nameController,
                 autofocus: true,
                 textCapitalization: TextCapitalization.words,
-                decoration: const InputDecoration(
-                  labelText: 'الاسم',
+                decoration: InputDecoration(
+                  labelText: AppTranslator.translate(context, 'الاسم'),
                   prefixIcon: Icon(Icons.person_outline),
                 ),
                 validator: (value) {
@@ -449,8 +452,8 @@ class _CustomerEditorDialogState extends State<_CustomerEditorDialog> {
               TextFormField(
                 controller: _phoneController,
                 keyboardType: TextInputType.phone,
-                decoration: const InputDecoration(
-                  labelText: 'رقم الهاتف — اختياري',
+                decoration: InputDecoration(
+                  labelText: AppTranslator.translate(context, 'رقم الهاتف — اختياري'),
                   prefixIcon: Icon(Icons.phone_outlined),
                 ),
               ),
@@ -459,8 +462,8 @@ class _CustomerEditorDialogState extends State<_CustomerEditorDialog> {
                 controller: _notesController,
                 minLines: 2,
                 maxLines: 4,
-                decoration: const InputDecoration(
-                  labelText: 'ملاحظات — اختيارية',
+                decoration: InputDecoration(
+                  labelText: AppTranslator.translate(context, 'ملاحظات — اختيارية'),
                   prefixIcon: Icon(Icons.notes_outlined),
                 ),
               ),

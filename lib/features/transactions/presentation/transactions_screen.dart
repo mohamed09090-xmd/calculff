@@ -5,6 +5,9 @@ import 'package:flutter/material.dart' hide Text;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+
+import '../../../core/localization/app_translator.dart';
+
 import '../../../core/localization/localized_text.dart';
 
 import '../../../core/constants/app_strings.dart';
@@ -48,7 +51,7 @@ class _TransactionsScreenState extends ConsumerState<TransactionsScreen> {
       title: AppStrings.transactions,
       actions: [
         IconButton(
-          tooltip: 'تحديث',
+          tooltip: AppTranslator.translate(context, 'تحديث'),
           onPressed: () => ref.invalidate(transactionsProvider),
           icon: const Icon(Icons.refresh),
         ),
@@ -56,8 +59,8 @@ class _TransactionsScreenState extends ConsumerState<TransactionsScreen> {
       body: Column(
         children: [
           TextField(
-            decoration: const InputDecoration(
-              hintText: 'ابحث باسم العميل أو المنتج',
+            decoration: InputDecoration(
+              hintText: AppTranslator.translate(context, 'ابحث باسم العميل أو المنتج'),
               prefixIcon: Icon(Icons.search),
             ),
             onChanged: (value) =>

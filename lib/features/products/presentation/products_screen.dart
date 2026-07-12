@@ -3,6 +3,9 @@ import 'package:flutter/material.dart' hide Text;
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+
+import '../../../core/localization/app_translator.dart';
+
 import '../../../core/localization/localized_text.dart';
 
 import '../../../core/constants/app_strings.dart';
@@ -208,7 +211,7 @@ class _ProductDialogState extends State<_ProductDialog> {
               const SizedBox(height: 12),
               TextFormField(
                 controller: _name,
-                decoration: const InputDecoration(labelText: 'اسم المنتج'),
+                decoration: InputDecoration(labelText: 'اسم المنتج'),
                 validator: (value) => value == null || value.trim().isEmpty
                     ? 'الاسم مطلوب'
                     : null,
@@ -234,8 +237,8 @@ class _ProductDialogState extends State<_ProductDialog> {
                 minLines: 2,
                 maxLines: 4,
                 maxLength: 250,
-                decoration: const InputDecoration(
-                  labelText: 'الوصف أو الملاحظات (اختياري)',
+                decoration: InputDecoration(
+                  labelText: AppTranslator.translate(context, 'الوصف أو الملاحظات (اختياري)'),
                   alignLabelWithHint: true,
                 ),
               ),

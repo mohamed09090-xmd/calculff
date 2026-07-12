@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../localization/localized_text.dart';
 
+
 class AsyncStateView<T> extends StatelessWidget {
   const AsyncStateView({
     super.key,

@@ -3,6 +3,9 @@ import 'package:flutter/material.dart' hide Text;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+
+import '../../../core/localization/app_translator.dart';
+
 import '../../../core/localization/localized_text.dart';
 
 import '../../../core/constants/app_strings.dart';
@@ -110,7 +113,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
       title: AppStrings.dashboard,
       actions: [
         IconButton(
-          tooltip: 'تحديث',
+          tooltip: AppTranslator.translate(context, 'تحديث'),
           onPressed: _refreshing ? null : _refresh,
           icon: RotationTransition(
             turns: _refreshController,
