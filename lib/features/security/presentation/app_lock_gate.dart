@@ -252,7 +252,7 @@ class _PatternUnlockScreenState extends ConsumerState<_PatternUnlockScreen> {
           await ref.read(appLockProvider.notifier).refresh();
           return;
       }
-    } catch (error) {
+    } catch (_) {
       if (mounted) {
         setState(() {
           _status = PatternPadStatus.error;
