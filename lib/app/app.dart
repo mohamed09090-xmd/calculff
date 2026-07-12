@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../core/constants/app_strings.dart';
 import '../features/security/presentation/app_lock_gate.dart';
+import '../shared/providers/app_language_provider.dart';
 import '../shared/providers/theme_mode_provider.dart';
 import 'router.dart';
 import 'theme.dart';
@@ -13,23 +14,31 @@ class GameCreditApp extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final preference = ref.watch(themeModeProvider).valueOrNull ??
+    final themePreference = ref.watch(themeModeProvider).valueOrNull ??
         AppThemeModePreference.system;
+    final languagePreference = ref.watch(appLanguageProvider).valueOrNull ??
+        AppLanguagePreference.arabic;
+
     return MaterialApp.router(
-      title: AppStrings.appName,
+      title: languagePreference == AppLanguagePreference.french
+          ? 'Gestionnaire de crédit de jeux'
+          : AppStrings.appName,
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light(),
       darkTheme: AppTheme.dark(),
-      themeMode: preference.themeMode,
-      locale: const Locale('ar', 'DZ'),
-      supportedLocales: const [Locale('ar', 'DZ')],
+      themeMode: themePreference.themeMode,
+      locale: languagePreference.locale,
+      supportedLocales: const [
+        Locale('ar', 'DZ'),
+        Locale('fr', 'FR'),
+      ],
       localizationsDelegates: const [
         GlobalMaterialLocalizations.delegate,
         GlobalWidgetsLocalizations.delegate,
         GlobalCupertinoLocalizations.delegate,
       ],
       builder: (context, child) => Directionality(
-        textDirection: TextDirection.rtl,
+        textDirection: languagePreference.textDirection,
         child: AppLockGate(
           child: child ?? const SizedBox.shrink(),
         ),
