@@ -12,7 +12,10 @@ class CalculationEngine {
     required CalculationRequest request,
     required List<CreditPackage> packages,
     required int availableInventoryCredit,
-    required CreditSalePricing pricing,
+    CreditSalePricing pricing = const CreditSalePricing(
+      referenceCredit: 240,
+      referencePriceDzd: 350,
+    ),
   }) {
     if (request.inputValue < 0) {
       throw ArgumentError.value(request.inputValue, 'inputValue');
