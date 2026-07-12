@@ -40,8 +40,6 @@ class _CalculatorScreenState extends ConsumerState<CalculatorScreen> {
         CalculationMode.gems => 'عدد الجواهر المطلوبة',
         CalculationMode.credit => 'الرصيد المطلوب',
         CalculationMode.directProduct => 'وحدة واحدة من المنتج',
-        CalculationMode.inventoryAddition => 'إضافة مخزون',
-        CalculationMode.inventoryRemoval => 'خصم مخزون',
       };
 
   bool get _requiresInput => _mode != CalculationMode.directProduct;
