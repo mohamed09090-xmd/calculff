@@ -69,13 +69,14 @@ class SettingsScreen extends ConsumerWidget {
               icon: Icons.palette_outlined,
               child: Column(
                 children: [
-                  SwitchListTile(
+                  const ListTile(
                     contentPadding: EdgeInsets.zero,
-                    title: const Text('الوضع الداكن'),
-                    subtitle: const Text('تغيير مظهر التطبيق فقط'),
-                    value: data.darkMode,
-                    onChanged: (value) =>
-                        _update(ref, data.copyWith(darkMode: value)),
+                    leading: Icon(Icons.brightness_auto_outlined),
+                    title: Text('سمة التطبيق'),
+                    subtitle: Text(
+                      'تتبع سمة الهاتف تلقائيًا: داكنة مع الهاتف الداكن وفاتحة مع الهاتف الفاتح.',
+                    ),
+                    trailing: Icon(Icons.phone_android_outlined),
                   ),
                   const Divider(),
                   SwitchListTile(
