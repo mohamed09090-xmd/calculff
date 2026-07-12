@@ -2,12 +2,199 @@ name: Verify and build signed Android release
 
 on:
   workflow_dispatch:
+  push:
+    branches: [main]
+  pull_request:
 
 permissions:
   contents: read
 
 jobs:
-  paused:
+  verify:
     runs-on: ubuntu-latest
     steps:
-      - run: echo "Release workflow paused while manual theme override is restored."
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.44.0'
+          channel: stable
+          cache: true
+
+      - name: Install SQLite test libraries
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libsqlite3-0 libsqlite3-dev
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Analyze
+        id: analyze
+        continue-on-error: true
+        shell: bash
+        run: |
+          set -o pipefail
+          flutter analyze 2>&1 | tee flutter-analyze.log
+
+      - name: Upload analyzer log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: flutter-analyze-log
+          path: flutter-analyze.log
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Stop on analyzer errors
+        if: steps.analyze.outcome == 'failure'
+        run: exit 1
+
+      - name: Test
+        id: tests
+        continue-on-error: true
+        shell: bash
+        run: |
+          set -o pipefail
+          flutter test --reporter expanded 2>&1 | tee flutter-test.log
+
+      - name: Upload test log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: flutter-test-log
+          path: flutter-test.log
+          if-no-files-found: ignore
+          retention-days: 30
+
+      - name: Stop on test failures
+        if: steps.tests.outcome == 'failure'
+        run: exit 1
+
+  signed-release:
+    needs: verify
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.44.0'
+          channel: stable
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Prepare production signing
+        shell: bash
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          set -euo pipefail
+          for variable in \
+            ANDROID_KEYSTORE_BASE64 \
+            ANDROID_KEYSTORE_PASSWORD \
+            ANDROID_KEY_ALIAS \
+            ANDROID_KEY_PASSWORD
+          do
+            if [ -z "${!variable}" ]; then
+              echo "::error::$variable GitHub secret is missing or empty."
+              exit 1
+            fi
+          done
+
+          umask 077
+          printf '%s' "$ANDROID_KEYSTORE_BASE64" \
+            | base64 --decode \
+            > android/app/upload-keystore.jks
+
+          {
+            printf 'storePassword=%s\n' "$ANDROID_KEYSTORE_PASSWORD"
+            printf 'keyPassword=%s\n' "$ANDROID_KEY_PASSWORD"
+            printf 'keyAlias=%s\n' "$ANDROID_KEY_ALIAS"
+            printf 'storeFile=upload-keystore.jks\n'
+          } > android/key.properties
+
+          keytool -list \
+            -keystore android/app/upload-keystore.jks \
+            -storepass "$ANDROID_KEYSTORE_PASSWORD" \
+            -alias "$ANDROID_KEY_ALIAS" \
+            >/dev/null
+
+      - name: Make Gradle executable
+        run: chmod +x android/gradlew
+
+      - name: Build signed release APK
+        shell: bash
+        run: |
+          set -o pipefail
+          flutter build apk --release 2>&1 | tee flutter-release-apk.log
+
+      - name: Build signed release AAB
+        shell: bash
+        run: |
+          set -o pipefail
+          flutter build appbundle --release 2>&1 | tee flutter-release-aab.log
+
+      - name: Verify outputs and signatures
+        shell: bash
+        run: |
+          set -euo pipefail
+          APK='build/app/outputs/flutter-apk/app-release.apk'
+          AAB='build/app/outputs/bundle/release/app-release.aab'
+
+          test -s "$APK"
+          test -s "$AAB"
+
+          APKSIGNER="$(find "$ANDROID_HOME/build-tools" -type f -name apksigner | sort -V | tail -n 1)"
+          test -x "$APKSIGNER"
+
+          "$APKSIGNER" verify --verbose --print-certs "$APK" \
+            | tee release-signing-report.txt
+          jarsigner -verify -verbose -certs "$AAB" \
+            | tail -n 60 \
+            >> release-signing-report.txt
+
+          sha256sum "$APK" "$AAB" > release-sha256.txt
+
+      - name: Upload build logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: signed-release-build-logs
+          path: |
+            flutter-release-apk.log
+            flutter-release-aab.log
+          if-no-files-found: ignore
+          retention-days: 30
+
+      - name: Upload signed APK and AAB
+        uses: actions/upload-artifact@v4
+        with:
+          name: game-credit-profit-manager-signed-release
+          path: |
+            build/app/outputs/flutter-apk/app-release.apk
+            build/app/outputs/bundle/release/app-release.aab
+            release-signing-report.txt
+            release-sha256.txt
+          if-no-files-found: error
+          retention-days: 90
+
+      - name: Remove signing material
+        if: always()
+        run: rm -f android/key.properties android/app/upload-keystore.jks
