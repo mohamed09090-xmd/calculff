@@ -14,9 +14,10 @@ import 'package:screenshot/screenshot.dart';
 
 
 
+import '../../../core/localization/localized_text.dart';
+
 import '../../../core/localization/app_translator.dart';
 
-import '../../../core/localization/localized_text.dart';
 
 import '../../../core/utils/money_formatter.dart';
 import '../../../shared/models/app_settings.dart';

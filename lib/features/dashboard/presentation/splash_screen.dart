@@ -9,9 +9,10 @@ import 'package:go_router/go_router.dart';
 
 
 
+import '../../../core/localization/localized_text.dart';
+
 import '../../../core/localization/app_translator.dart';
 
-import '../../../core/localization/localized_text.dart';
 
 import '../../../core/constants/app_strings.dart';
 import '../../../shared/providers/app_providers.dart';

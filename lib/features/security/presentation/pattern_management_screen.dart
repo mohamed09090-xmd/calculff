@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 
 
+
 import '../../../core/localization/localized_text.dart';
 
 import '../../../core/security/pattern_lock_service.dart';

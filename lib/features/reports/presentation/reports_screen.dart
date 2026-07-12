@@ -9,6 +9,7 @@ import 'package:share_plus/share_plus.dart';
 
 
 
+
 import '../../../core/localization/localized_text.dart';
 
 import '../../../core/localization/app_translator.dart';
@@ -137,6 +138,14 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
     AppSettings settings,
     _ReportExportRequest request,
   ) async {
+    final shareSubject = AppTranslator.translate(
+      context,
+      'تقرير ${report.period.label}',
+    );
+    final saveDialogTitle = AppTranslator.translate(
+      context,
+      'حفظ تقرير ${report.period.label}',
+    );
     setState(() => _exporting = true);
     try {
       final result = await _exportService.create(
@@ -149,7 +158,7 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
       if (request.action == _ReportExportAction.share) {
         await Share.shareXFiles(
           [XFile(result.file.path, mimeType: result.format.mimeType)],
-          subject: AppTranslator.translate(context, 'تقرير ${report.period.label}'),
+          subject: shareSubject,
           text: 'تقرير ${report.period.label} - '
               '${MoneyFormatter.format(report.current.profit, useThousands: settings.useThousands)} ربح',
         );
@@ -157,7 +166,7 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
       }
 
       final savedPath = await FilePicker.platform.saveFile(
-        dialogTitle: AppTranslator.translate(context, 'حفظ تقرير ${report.period.label}'),
+        dialogTitle: saveDialogTitle,
         fileName: result.fileName,
         type: FileType.custom,
         allowedExtensions: [result.format.extension],
