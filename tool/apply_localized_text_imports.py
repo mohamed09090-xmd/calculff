@@ -177,6 +177,70 @@ def _localize_string_properties(path: Path, source: str) -> str:
     )
 
 
+def _fix_async_context_lints(path: Path, source: str) -> str:
+    backup_path = (
+        LIB / "features" / "backup" / "presentation" / "backup_restore_screen.dart"
+    )
+    reports_path = (
+        LIB / "features" / "reports" / "presentation" / "reports_screen.dart"
+    )
+
+    if path == backup_path and "final shareSubject = AppTranslator.translate(" not in source:
+        source = source.replace(
+            """  Future<void> _export() async {
+    setState(() => _busy = true);
+    try {
+      final data = await ref.read(appRepositoryProvider).exportBackup();""",
+            """  Future<void> _export() async {
+    final shareSubject = AppTranslator.translate(
+      context,
+      'نسخة احتياطية لمدير رصيد الألعاب',
+    );
+    setState(() => _busy = true);
+    try {
+      final data = await ref.read(appRepositoryProvider).exportBackup();""",
+            1,
+        )
+        source = source.replace(
+            "subject: AppTranslator.translate(context, 'نسخة احتياطية لمدير رصيد الألعاب'),",
+            "subject: shareSubject,",
+            1,
+        )
+
+    if path == reports_path and "final shareSubject = AppTranslator.translate(" not in source:
+        source = source.replace(
+            """  ) async {
+    setState(() => _exporting = true);
+    try {
+      final result = await _exportService.create(""",
+            """  ) async {
+    final shareSubject = AppTranslator.translate(
+      context,
+      'تقرير ${report.period.label}',
+    );
+    final saveDialogTitle = AppTranslator.translate(
+      context,
+      'حفظ تقرير ${report.period.label}',
+    );
+    setState(() => _exporting = true);
+    try {
+      final result = await _exportService.create(""",
+            1,
+        )
+        source = source.replace(
+            "subject: AppTranslator.translate(context, 'تقرير ${report.period.label}'),",
+            "subject: shareSubject,",
+            1,
+        )
+        source = source.replace(
+            "dialogTitle: AppTranslator.translate(context, 'حفظ تقرير ${report.period.label}'),",
+            "dialogTitle: saveDialogTitle,",
+            1,
+        )
+
+    return source
+
+
 def _add_language_settings(source: str) -> str:
     language_import = (
         "import '../../../shared/providers/app_language_provider.dart';"
@@ -254,6 +318,7 @@ def main() -> None:
         if path == TRANSLATOR_TARGET:
             updated = _wire_french_catalog(updated)
         updated = _localize_string_properties(path, updated)
+        updated = _fix_async_context_lints(path, updated)
         if path == LIB / "features" / "settings" / "presentation" / "settings_screen.dart":
             updated = _add_language_settings(updated)
 
