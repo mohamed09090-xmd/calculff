@@ -62,7 +62,7 @@ class PatternSecretCodec {
 
   final int defaultIterations;
 
-  Future<_PatternSecret> create(List<int> pattern) async {
+  Future<PatternSecret> create(List<int> pattern) async {
     final random = Random.secure();
     final saltBytes = List<int>.generate(24, (_) => random.nextInt(256));
     final salt = base64UrlEncode(saltBytes);
@@ -71,7 +71,7 @@ class PatternSecretCodec {
       salt: salt,
       iterations: defaultIterations,
     );
-    return _PatternSecret(
+    return PatternSecret(
       version: 1,
       salt: salt,
       hash: hash,
@@ -79,7 +79,7 @@ class PatternSecretCodec {
     );
   }
 
-  Future<bool> verify(List<int> pattern, _PatternSecret secret) async {
+  Future<bool> verify(List<int> pattern, PatternSecret secret) async {
     final candidate = await derive(
       pattern: pattern,
       salt: secret.salt,
@@ -95,7 +95,7 @@ class PatternSecretCodec {
   }) {
     final canonical = canonicalPattern(pattern);
     return Isolate.run(() {
-      var bytes = utf8.encode('$salt|$canonical');
+      List<int> bytes = utf8.encode('$salt|$canonical');
       for (var index = 0; index < iterations; index++) {
         bytes = sha256.convert(bytes).bytes;
       }
@@ -131,6 +131,48 @@ class PatternSecretCodec {
       difference |= firstBytes[index] ^ secondBytes[index];
     }
     return difference == 0;
+  }
+}
+
+class PatternSecret {
+  const PatternSecret({
+    required this.version,
+    required this.salt,
+    required this.hash,
+    required this.iterations,
+  });
+
+  final int version;
+  final String salt;
+  final String hash;
+  final int iterations;
+
+  Map<String, Object?> toJson() => {
+        'version': version,
+        'salt': salt,
+        'hash': hash,
+        'iterations': iterations,
+      };
+
+  factory PatternSecret.fromJson(Map<String, Object?> json) {
+    final version = json['version'];
+    final salt = json['salt'];
+    final hash = json['hash'];
+    final iterations = json['iterations'];
+    if (version is! int ||
+        version != 1 ||
+        salt is! String ||
+        hash is! String ||
+        iterations is! int ||
+        iterations < 1) {
+      throw const FormatException('بيانات قفل التطبيق تالفة');
+    }
+    return PatternSecret(
+      version: version,
+      salt: salt,
+      hash: hash,
+      iterations: iterations,
+    );
   }
 }
 
@@ -195,7 +237,7 @@ class PatternLockService {
       );
     }
 
-    final secret = _PatternSecret.fromJson(
+    final secret = PatternSecret.fromJson(
       (jsonDecode(raw) as Map).cast<String, Object?>(),
     );
     if (await _codec.verify(pattern, secret)) {
@@ -267,47 +309,5 @@ class PatternLockService {
   Future<void> _resetFailures() async {
     await _store.delete(_failuresKey);
     await _store.delete(_lockedUntilKey);
-  }
-}
-
-class _PatternSecret {
-  const _PatternSecret({
-    required this.version,
-    required this.salt,
-    required this.hash,
-    required this.iterations,
-  });
-
-  final int version;
-  final String salt;
-  final String hash;
-  final int iterations;
-
-  Map<String, Object?> toJson() => {
-        'version': version,
-        'salt': salt,
-        'hash': hash,
-        'iterations': iterations,
-      };
-
-  factory _PatternSecret.fromJson(Map<String, Object?> json) {
-    final version = json['version'];
-    final salt = json['salt'];
-    final hash = json['hash'];
-    final iterations = json['iterations'];
-    if (version is! int ||
-        version != 1 ||
-        salt is! String ||
-        hash is! String ||
-        iterations is! int ||
-        iterations < 1) {
-      throw const FormatException('بيانات قفل التطبيق تالفة');
-    }
-    return _PatternSecret(
-      version: version,
-      salt: salt,
-      hash: hash,
-      iterations: iterations,
-    );
   }
 }
