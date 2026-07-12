@@ -1,11 +1,28 @@
+import java.util.Properties
+import java.io.FileInputStream
+
 plugins {
     id "com.android.application"
     id "org.jetbrains.kotlin.android"
     id "dev.flutter.flutter-gradle-plugin"
 }
 
+final keystoreProperties = new Properties()
+final keystorePropertiesFile = rootProject.file("key.properties")
+final releaseTaskRequested = gradle.startParameter.taskNames.any {
+    it.toLowerCase().contains("release")
+}
+
+if (keystorePropertiesFile.exists()) {
+    keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
+} else if (releaseTaskRequested) {
+    throw new GradleException(
+        "Missing android/key.properties. Configure the production signing key before building a release."
+    )
+}
+
 android {
-    namespace = "com.example.game_credit_profit_manager"
+    namespace = "com.gm0h1.gamecreditmanager"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
@@ -20,7 +37,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.example.game_credit_profit_manager"
+        applicationId = "com.gm0h1.gamecreditmanager"
         minSdk = 23
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
@@ -28,9 +45,22 @@ android {
         multiDexEnabled true
     }
 
+    if (keystorePropertiesFile.exists()) {
+        signingConfigs {
+            release {
+                keyAlias = keystoreProperties["keyAlias"]
+                keyPassword = keystoreProperties["keyPassword"]
+                storeFile = file(keystoreProperties["storeFile"])
+                storePassword = keystoreProperties["storePassword"]
+            }
+        }
+    }
+
     buildTypes {
         release {
-            signingConfig = signingConfigs.debug
+            if (keystorePropertiesFile.exists()) {
+                signingConfig = signingConfigs.release
+            }
         }
     }
 }
