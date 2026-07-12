@@ -9,6 +9,7 @@ class SalesTransaction {
     required this.mode,
     this.productId,
     this.productNameSnapshot,
+    this.productDescriptionSnapshot,
     required this.inputValue,
     required this.useInventory,
     required this.units,
@@ -21,6 +22,7 @@ class SalesTransaction {
     required this.additionalCreditRequired,
     required this.purchasedCredit,
     required this.newPackagesCost,
+    required this.creditCostUsed,
     required this.cashProfit,
   });
 
@@ -31,6 +33,7 @@ class SalesTransaction {
   final CalculationMode mode;
   final String? productId;
   final String? productNameSnapshot;
+  final String? productDescriptionSnapshot;
   final int inputValue;
   final bool useInventory;
   final int units;
@@ -43,7 +46,11 @@ class SalesTransaction {
   final int additionalCreditRequired;
   final int purchasedCredit;
   final int newPackagesCost;
+  final int creditCostUsed;
   final int cashProfit;
+
+  String get displayProductName => productNameSnapshot ??
+      (mode == CalculationMode.credit ? 'بيع رصيد مباشر' : 'عملية رصيد');
 
   Map<String, Object?> toMap() => {
         'id': id,
@@ -53,6 +60,7 @@ class SalesTransaction {
         'mode': mode.name,
         'product_id': productId,
         'product_name_snapshot': productNameSnapshot,
+        'product_description_snapshot': productDescriptionSnapshot,
         'input_value': inputValue,
         'use_inventory': useInventory ? 1 : 0,
         'units': units,
@@ -65,6 +73,7 @@ class SalesTransaction {
         'additional_credit_required': additionalCreditRequired,
         'purchased_credit': purchasedCredit,
         'new_packages_cost': newPackagesCost,
+        'credit_cost_used': creditCostUsed,
         'cash_profit': cashProfit,
       };
 
@@ -82,19 +91,25 @@ class SalesTransaction {
       mode: CalculationMode.values.byName(map['mode']! as String),
       productId: map['product_id'] as String?,
       productNameSnapshot: map['product_name_snapshot'] as String?,
-      inputValue: map['input_value']! as int,
+      productDescriptionSnapshot:
+          map['product_description_snapshot'] as String?,
+      inputValue: (map['input_value'] as num).toInt(),
       useInventory: (map['use_inventory']! as int) == 1,
-      units: map['units']! as int,
-      gems: map['gems']! as int,
-      customerPaid: map['customer_paid']! as int,
-      chargedAmount: map['charged_amount']! as int,
-      customerChange: map['customer_change']! as int,
-      requiredCredit: map['required_credit']! as int,
-      inventoryCreditUsed: map['inventory_credit_used']! as int,
-      additionalCreditRequired: map['additional_credit_required']! as int,
-      purchasedCredit: map['purchased_credit']! as int,
-      newPackagesCost: map['new_packages_cost']! as int,
-      cashProfit: map['cash_profit']! as int,
+      units: (map['units'] as num).toInt(),
+      gems: (map['gems'] as num).toInt(),
+      customerPaid: (map['customer_paid'] as num).toInt(),
+      chargedAmount: (map['charged_amount'] as num).toInt(),
+      customerChange: (map['customer_change'] as num).toInt(),
+      requiredCredit: (map['required_credit'] as num).toInt(),
+      inventoryCreditUsed: (map['inventory_credit_used'] as num).toInt(),
+      additionalCreditRequired:
+          (map['additional_credit_required'] as num).toInt(),
+      purchasedCredit: (map['purchased_credit'] as num).toInt(),
+      newPackagesCost: (map['new_packages_cost'] as num).toInt(),
+      creditCostUsed: (map['credit_cost_used'] as num?)?.toInt() ??
+          ((map['charged_amount'] as num).toInt() -
+              (map['cash_profit'] as num).toInt()),
+      cashProfit: (map['cash_profit'] as num).toInt(),
     );
   }
 }
