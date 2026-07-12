@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../shared/providers/app_language_provider.dart';
 import '../constants/app_strings.dart';
 
 class AppShell extends StatefulWidget {
@@ -137,6 +139,7 @@ class _AppDrawerState extends State<_AppDrawer>
 
   @override
   Widget build(BuildContext context) {
+    final isRtl = Directionality.of(context) == TextDirection.rtl;
     final items = <({String label, IconData icon, String route})>[
       (
         label: AppStrings.dashboard,
@@ -204,9 +207,10 @@ class _AppDrawerState extends State<_AppDrawer>
             return Opacity(
               opacity: value.clamp(0, 1),
               child: Transform.translate(
-                offset: Offset(22 * (1 - value), 0),
+                offset: Offset((isRtl ? 22 : -22) * (1 - value), 0),
                 child: Transform.scale(
-                  alignment: Alignment.centerRight,
+                  alignment:
+                      isRtl ? Alignment.centerRight : Alignment.centerLeft,
                   scale: 0.94 + (0.06 * value),
                   child: child,
                 ),
@@ -250,6 +254,37 @@ class _AppDrawerState extends State<_AppDrawer>
               ),
             ),
           ),
+        const Padding(
+          padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          child: Divider(),
+        ),
+        Consumer(
+          builder: (context, ref, child) {
+            final language = ref.watch(appLanguageProvider).valueOrNull ??
+                AppLanguagePreference.arabic;
+            final targetIsFrench = language == AppLanguagePreference.arabic;
+            return Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
+              child: ListTile(
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                leading: const Icon(Icons.language_outlined),
+                title: Text(targetIsFrench ? 'Français' : 'العربية'),
+                subtitle: const Text('لغة التطبيق'),
+                trailing: Icon(
+                  isRtl
+                      ? Icons.chevron_left_rounded
+                      : Icons.chevron_right_rounded,
+                ),
+                onTap: () async {
+                  await ref.read(appLanguageProvider.notifier).toggle();
+                  if (context.mounted) Navigator.of(context).pop();
+                },
+              ),
+            );
+          },
+        ),
       ],
     );
   }
@@ -295,6 +330,7 @@ class _AnimatedDrawerTileState extends State<_AnimatedDrawerTile> {
 
   @override
   Widget build(BuildContext context) {
+    final isRtl = Directionality.of(context) == TextDirection.rtl;
     return AnimatedBuilder(
       animation: widget.animation,
       builder: (context, child) {
@@ -302,7 +338,7 @@ class _AnimatedDrawerTileState extends State<_AnimatedDrawerTile> {
         return Opacity(
           opacity: value.clamp(0, 1),
           child: Transform.translate(
-            offset: Offset(26 * (1 - value), 0),
+            offset: Offset((isRtl ? 26 : -26) * (1 - value), 0),
             child: child,
           ),
         );
@@ -321,7 +357,8 @@ class _AnimatedDrawerTileState extends State<_AnimatedDrawerTile> {
               onTapDown: (_) => setState(() => _pressed = true),
               onTapCancel: () => setState(() => _pressed = false),
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
                 child: Row(
                   children: [
                     Icon(widget.icon),
@@ -332,7 +369,12 @@ class _AnimatedDrawerTileState extends State<_AnimatedDrawerTile> {
                         style: const TextStyle(fontWeight: FontWeight.w700),
                       ),
                     ),
-                    const Icon(Icons.chevron_left_rounded, size: 20),
+                    Icon(
+                      isRtl
+                          ? Icons.chevron_left_rounded
+                          : Icons.chevron_right_rounded,
+                      size: 20,
+                    ),
                   ],
                 ),
               ),
