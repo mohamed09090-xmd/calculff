@@ -4,7 +4,7 @@ class Product {
   const Product({
     required this.id,
     required this.name,
-    required this.type,
+    this.type = ProductType.gems,
     required this.gemsPerUnit,
     required this.creditPerUnit,
     required this.salePriceDzd,
