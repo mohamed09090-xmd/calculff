@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/app_settings.dart';
 import '../models/calculation.dart';
 import '../models/credit_package.dart';
+import '../models/customer.dart';
 import '../models/dashboard_summary.dart';
 import '../models/inventory_lot.dart';
 import '../models/product.dart';
@@ -29,6 +30,14 @@ final productsProvider = FutureProvider<List<Product>>((ref) async {
 
 final activeProductsProvider = FutureProvider<List<Product>>((ref) async {
   return ref.read(appRepositoryProvider).getProducts(activeOnly: true);
+});
+
+final customersProvider = FutureProvider<List<Customer>>((ref) async {
+  return ref.read(appRepositoryProvider).getCustomers();
+});
+
+final activeCustomersProvider = FutureProvider<List<Customer>>((ref) async {
+  return ref.read(appRepositoryProvider).getCustomers(activeOnly: true);
 });
 
 final inventoryProvider = FutureProvider<List<InventoryLot>>((ref) async {
@@ -81,6 +90,8 @@ void invalidateAppData(WidgetRef ref) {
     ..invalidate(activePackagesProvider)
     ..invalidate(productsProvider)
     ..invalidate(activeProductsProvider)
+    ..invalidate(customersProvider)
+    ..invalidate(activeCustomersProvider)
     ..invalidate(inventoryProvider)
     ..invalidate(transactionsProvider)
     ..invalidate(dashboardProvider)
