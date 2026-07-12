@@ -82,6 +82,7 @@ class CalculationEngine {
     final optimization = additional == 0
         ? null
         : optimizer.optimize(requiredCredit: additional, packages: packages);
+    final plannedPackageCost = optimization?.totalCost ?? 0;
 
     return CalculationResult(
       request: request,
@@ -94,8 +95,8 @@ class CalculationEngine {
       inventoryCreditUsed: inventoryUsed,
       additionalCreditRequired: additional,
       optimization: optimization,
-      creditCostUsed: 0,
-      cashProfit: chargedAmount,
+      creditCostUsed: plannedPackageCost,
+      cashProfit: chargedAmount - plannedPackageCost,
       warning: warning,
     );
   }
