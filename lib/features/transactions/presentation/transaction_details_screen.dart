@@ -9,6 +9,7 @@ import '../../../core/utils/money_formatter.dart';
 import '../../../core/widgets/app_shell.dart';
 import '../../../core/widgets/section_card.dart';
 import '../../../shared/models/app_settings.dart';
+import '../../../shared/models/calculation.dart';
 import '../../../shared/models/transaction_details.dart';
 import '../../../shared/providers/app_providers.dart';
 
@@ -103,7 +104,9 @@ class _TransactionDetailsScreenState
                 value,
                 useThousands: settings.useThousands,
               );
-          final productName = item.productNameSnapshot ?? 'عملية رصيد';
+          final productName = item.displayProductName;
+          final isGemSale = item.mode == CalculationMode.customerAmount ||
+              item.mode == CalculationMode.gems;
 
           return ListView(
             children: [
@@ -121,6 +124,11 @@ class _TransactionDetailsScreenState
                         fontWeight: FontWeight.w900,
                       ),
                     ),
+                    if (item.productDescriptionSnapshot?.trim().isNotEmpty ??
+                        false) ...[
+                      const SizedBox(height: 6),
+                      Text(item.productDescriptionSnapshot!),
+                    ],
                     const SizedBox(height: 6),
                     Text(AppDateUtils.format(item.createdAt)),
                   ],
@@ -135,11 +143,13 @@ class _TransactionDetailsScreenState
                   children: [
                     _row('المنتج', productName),
                     const Divider(height: 24),
-                    _row('الحزم', '${item.units}'),
-                    _row('الجواهر', '${item.gems}'),
-                    _row('المبلغ المدفوع', money(item.customerPaid)),
-                    _row('المبلغ المحتسب', money(item.chargedAmount)),
-                    _row('المبلغ المعاد', money(item.customerChange)),
+                    if (isGemSale) _row('الحزم', '${item.units}'),
+                    if (isGemSale) _row('الجواهر', '${item.gems}'),
+                    if (isGemSale)
+                      _row('المبلغ المدفوع', money(item.customerPaid)),
+                    _row('سعر البيع', money(item.chargedAmount)),
+                    if (item.mode == CalculationMode.customerAmount)
+                      _row('المبلغ المعاد', money(item.customerChange)),
                     _row('الرصيد المطلوب', '${item.requiredCredit}'),
                     _row('من المخزون', '${item.inventoryCreditUsed}'),
                     _row(
@@ -183,8 +193,12 @@ class _TransactionDetailsScreenState
                     : Theme.of(context).colorScheme.error,
                 child: Column(
                   children: [
-                    _row('تكلفة الباقات', money(item.newPackagesCost)),
-                    _row('الربح النقدي', money(item.cashProfit)),
+                    _row('تكلفة الرصيد المستعمل', money(item.creditCostUsed)),
+                    _row(
+                      'المبلغ المدفوع الآن للباقات',
+                      money(item.newPackagesCost),
+                    ),
+                    _row('الربح', money(item.cashProfit)),
                     _row('الرصيد المشتَرى', '${item.purchasedCredit}'),
                   ],
                 ),
