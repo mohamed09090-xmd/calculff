@@ -6,8 +6,8 @@
         android:label="مدير رصيد الألعاب"
         android:name="${applicationName}"
         android:icon="@drawable/ic_launcher"
-        android:allowBackup="true"
-        android:fullBackupContent="true">
+        android:allowBackup="false"
+        android:fullBackupContent="false">
         <activity
             android:name=".MainActivity"
             android:exported="true"
