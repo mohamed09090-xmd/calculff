@@ -36,6 +36,7 @@ class CalculationEngine {
         customerChange = customerPaid - chargedAmount;
         requiredCredit = units * product.creditPerUnit;
         if (units == 0) warning = 'المبلغ أقل من سعر أصغر حزمة للمنتج';
+        break;
       case CalculationMode.gems:
         final product = _requireGemProduct(request.product);
         final requestedGems = request.inputValue;
@@ -50,11 +51,13 @@ class CalculationEngine {
         chargedAmount = units * product.salePriceDzd;
         customerPaid = chargedAmount;
         requiredCredit = units * product.creditPerUnit;
+        break;
       case CalculationMode.credit:
         requiredCredit = request.inputValue;
         chargedAmount = pricing.priceFor(requiredCredit);
         customerPaid = chargedAmount;
         units = 1;
+        break;
       case CalculationMode.directProduct:
         final product = request.product;
         if (product == null || product.type != ProductType.direct) {
@@ -64,6 +67,7 @@ class CalculationEngine {
         chargedAmount = pricing.priceFor(requiredCredit);
         customerPaid = chargedAmount;
         units = 1;
+        break;
     }
 
     final inventoryUsed = request.useInventory
