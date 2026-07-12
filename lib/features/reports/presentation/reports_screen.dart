@@ -1,10 +1,10 @@
-import 'dart:io';
 import 'dart:math' as math;
 
+import 'package:cross_file/cross_file.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 
 import '../../../core/utils/money_formatter.dart';
@@ -14,7 +14,20 @@ import '../../../core/widgets/section_card.dart';
 import '../../../shared/models/app_settings.dart';
 import '../../../shared/models/report.dart';
 import '../../../shared/providers/app_providers.dart';
+import '../data/report_export_service.dart';
 import 'report_providers.dart';
+
+enum _ReportExportAction { share, save }
+
+class _ReportExportRequest {
+  const _ReportExportRequest({
+    required this.format,
+    required this.action,
+  });
+
+  final ReportExportFormat format;
+  final _ReportExportAction action;
+}
 
 class ReportsScreen extends ConsumerStatefulWidget {
   const ReportsScreen({super.key});
@@ -24,6 +37,7 @@ class ReportsScreen extends ConsumerStatefulWidget {
 }
 
 class _ReportsScreenState extends ConsumerState<ReportsScreen> {
+  final ReportExportService _exportService = ReportExportService();
   ReportPeriod _period = ReportPeriod.last7Days;
   bool _exporting = false;
 
@@ -37,10 +51,13 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
       title: 'التقارير',
       actions: [
         IconButton(
-          tooltip: 'تصدير CSV',
+          tooltip: 'مشاركة أو حفظ التقرير',
           onPressed: _exporting || report.valueOrNull == null
               ? null
-              : () => _exportCsv(report.valueOrNull!, settings),
+              : () => _openExportSheet(
+                    report.valueOrNull!,
+                    settings,
+                  ),
           icon: _exporting
               ? const SizedBox.square(
                   dimension: 20,
@@ -94,67 +111,57 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
     );
   }
 
-  Future<void> _exportCsv(
+  Future<void> _openExportSheet(
     ReportSummary report,
     AppSettings settings,
   ) async {
+    final request = await showModalBottomSheet<_ReportExportRequest>(
+      context: context,
+      showDragHandle: true,
+      isScrollControlled: true,
+      builder: (context) => const _ReportExportSheet(),
+    );
+    if (request == null || !mounted) return;
+    await _export(report, settings, request);
+  }
+
+  Future<void> _export(
+    ReportSummary report,
+    AppSettings settings,
+    _ReportExportRequest request,
+  ) async {
     setState(() => _exporting = true);
     try {
-      final buffer = StringBuffer()
-        ..writeln('تقرير مدير رصيد الألعاب')
-        ..writeln('الفترة,${_csv(report.period.label)}')
-        ..writeln('تم الإنشاء,${report.generatedAt.toIso8601String()}')
-        ..writeln()
-        ..writeln('المؤشر,القيمة')
-        ..writeln('المبيعات,${report.current.sales}')
-        ..writeln('التكلفة,${report.current.cost}')
-        ..writeln('الربح,${report.current.profit}')
-        ..writeln('عدد العمليات,${report.current.transactionCount}')
-        ..writeln('عدد العملاء,${report.current.customerCount}')
-        ..writeln('متوسط العملية,${report.current.averageSale}')
-        ..writeln('الرصيد المطلوب,${report.current.requiredCredit}')
-        ..writeln('الرصيد المشتَرى,${report.current.purchasedCredit}')
-        ..writeln()
-        ..writeln('الاتجاه الزمني')
-        ..writeln('الفترة,المبيعات,الربح');
-
-      for (final point in report.points) {
-        buffer.writeln(
-          '${_csv(point.label)},${point.sales},${point.profit}',
-        );
-      }
-
-      buffer
-        ..writeln()
-        ..writeln('أفضل المنتجات')
-        ..writeln('المنتج,العمليات,المبيعات,الربح');
-      for (final item in report.topProducts) {
-        buffer.writeln(
-          '${_csv(item.label)},${item.transactionCount},${item.sales},${item.profit}',
-        );
-      }
-
-      buffer
-        ..writeln()
-        ..writeln('أفضل العملاء')
-        ..writeln('العميل,العمليات,المبيعات,الربح');
-      for (final item in report.topCustomers) {
-        buffer.writeln(
-          '${_csv(item.label)},${item.transactionCount},${item.sales},${item.profit}',
-        );
-      }
-
-      final directory = await getApplicationDocumentsDirectory();
-      final timestamp = DateFormat('yyyy-MM-dd-HH-mm').format(DateTime.now());
-      final file = File(
-        '${directory.path}/game-credit-report-${report.period.name}-$timestamp.csv',
+      final result = await _exportService.create(
+        format: request.format,
+        report: report,
+        settings: settings,
+        context: context,
       );
-      await file.writeAsString('\uFEFF$buffer', flush: true);
-      await Share.shareXFiles(
-        [XFile(file.path, mimeType: 'text/csv')],
-        subject: 'تقرير ${report.period.label}',
-        text: 'تقرير ${report.period.label} — '
-            '${MoneyFormatter.format(report.current.profit, useThousands: settings.useThousands)} ربح',
+
+      if (request.action == _ReportExportAction.share) {
+        await Share.shareXFiles(
+          [XFile(result.file.path, mimeType: result.format.mimeType)],
+          subject: 'تقرير ${report.period.label}',
+          text: 'تقرير ${report.period.label} - '
+              '${MoneyFormatter.format(report.current.profit, useThousands: settings.useThousands)} ربح',
+        );
+        return;
+      }
+
+      final bytes = await result.file.readAsBytes();
+      final savedPath = await FilePicker.platform.saveFile(
+        dialogTitle: 'حفظ تقرير ${report.period.label}',
+        fileName: result.fileName,
+        type: FileType.custom,
+        allowedExtensions: [result.format.extension],
+        bytes: bytes,
+      );
+      if (savedPath == null || !mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('تم حفظ التقرير بصيغة ${result.format.label}.'),
+        ),
       );
     } catch (error) {
       if (mounted) {
@@ -166,8 +173,168 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
       if (mounted) setState(() => _exporting = false);
     }
   }
+}
 
-  String _csv(String value) => '"${value.replaceAll('"', '""')}"';
+class _ReportExportSheet extends StatefulWidget {
+  const _ReportExportSheet();
+
+  @override
+  State<_ReportExportSheet> createState() => _ReportExportSheetState();
+}
+
+class _ReportExportSheetState extends State<_ReportExportSheet> {
+  ReportExportFormat _format = ReportExportFormat.pdf;
+
+  @override
+  Widget build(BuildContext context) {
+    return SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(18, 0, 18, 18),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(
+              'تصدير التقرير',
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.w900,
+                  ),
+            ),
+            const SizedBox(height: 6),
+            const Text(
+              'اختر الصيغة، ثم شارك التقرير أو احفظ نسخة في الجهاز.',
+            ),
+            const SizedBox(height: 16),
+            for (final format in ReportExportFormat.values) ...[
+              _FormatTile(
+                format: format,
+                selected: _format == format,
+                onTap: () => setState(() => _format = format),
+              ),
+              if (format != ReportExportFormat.values.last)
+                const SizedBox(height: 8),
+            ],
+            const SizedBox(height: 18),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: () => Navigator.pop(
+                      context,
+                      _ReportExportRequest(
+                        format: _format,
+                        action: _ReportExportAction.save,
+                      ),
+                    ),
+                    icon: const Icon(Icons.download_outlined),
+                    label: const Text('حفظ في الجهاز'),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: FilledButton.icon(
+                    onPressed: () => Navigator.pop(
+                      context,
+                      _ReportExportRequest(
+                        format: _format,
+                        action: _ReportExportAction.share,
+                      ),
+                    ),
+                    icon: const Icon(Icons.share_outlined),
+                    label: const Text('مشاركة'),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _FormatTile extends StatelessWidget {
+  const _FormatTile({
+    required this.format,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final ReportExportFormat format;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final description = switch (format) {
+      ReportExportFormat.csv => 'ملف جداول قابل للفتح في Excel',
+      ReportExportFormat.pdf => 'تقرير منظم على صفحات جاهزة للطباعة',
+      ReportExportFormat.png => 'صورة طويلة واضحة للمشاركة السريعة',
+    };
+
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(16),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: selected
+              ? scheme.primaryContainer
+              : scheme.surfaceContainerHighest,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: selected ? scheme.primary : Colors.transparent,
+            width: 1.5,
+          ),
+        ),
+        child: Row(
+          children: [
+            CircleAvatar(
+              backgroundColor:
+                  selected ? scheme.primary : scheme.surfaceContainer,
+              foregroundColor:
+                  selected ? scheme.onPrimary : scheme.onSurfaceVariant,
+              child: Icon(format.icon),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    format.label,
+                    style: TextStyle(
+                      fontWeight: FontWeight.w900,
+                      color: selected
+                          ? scheme.onPrimaryContainer
+                          : scheme.onSurface,
+                    ),
+                  ),
+                  const SizedBox(height: 3),
+                  Text(
+                    description,
+                    style: TextStyle(
+                      color: selected
+                          ? scheme.onPrimaryContainer
+                          : scheme.onSurfaceVariant,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Icon(
+              selected
+                  ? Icons.radio_button_checked
+                  : Icons.radio_button_unchecked,
+              color: selected ? scheme.primary : scheme.outline,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }
 
 class _ReportContent extends StatelessWidget {
@@ -203,28 +370,28 @@ class _ReportContent extends StatelessWidget {
           physics: const NeverScrollableScrollPhysics(),
           mainAxisSpacing: 10,
           crossAxisSpacing: 10,
-          childAspectRatio: 1.18,
+          childAspectRatio: 1.14,
           children: [
-            _ReportMetricCard(
+            _MetricCard(
               label: 'المبيعات',
               value: money(report.current.sales),
               icon: Icons.payments_outlined,
               changePercent: report.salesChangePercent,
               emphasis: true,
             ),
-            _ReportMetricCard(
+            _MetricCard(
               label: 'الربح الصافي',
               value: money(report.current.profit),
               icon: Icons.trending_up,
               changePercent: report.profitChangePercent,
-              isNegative: report.current.profit < 0,
+              negative: report.current.profit < 0,
             ),
-            _ReportMetricCard(
+            _MetricCard(
               label: 'التكلفة',
               value: money(report.current.cost),
               icon: Icons.shopping_cart_checkout_outlined,
             ),
-            _ReportMetricCard(
+            _MetricCard(
               label: 'العمليات',
               value: '${report.current.transactionCount}',
               icon: Icons.receipt_long_outlined,
@@ -309,14 +476,14 @@ class _ReportContent extends StatelessWidget {
       first.day == second.day;
 }
 
-class _ReportMetricCard extends StatelessWidget {
-  const _ReportMetricCard({
+class _MetricCard extends StatelessWidget {
+  const _MetricCard({
     required this.label,
     required this.value,
     required this.icon,
     this.changePercent,
     this.emphasis = false,
-    this.isNegative = false,
+    this.negative = false,
   });
 
   final String label;
@@ -324,63 +491,85 @@ class _ReportMetricCard extends StatelessWidget {
   final IconData icon;
   final double? changePercent;
   final bool emphasis;
-  final bool isNegative;
+  final bool negative;
 
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
+    final foreground = emphasis
+        ? scheme.onPrimaryContainer
+        : negative
+            ? scheme.error
+            : scheme.onSurface;
     final change = changePercent;
     final positive = change != null && change >= 0;
-    final foreground = isNegative ? scheme.error : scheme.primary;
 
     return Card(
       color: emphasis ? scheme.primaryContainer : null,
       child: Padding(
         padding: const EdgeInsets.all(14),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Icon(
-              icon,
-              color: emphasis ? scheme.onPrimaryContainer : foreground,
-            ),
-            const Spacer(),
-            Text(
-              value,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: const TextStyle(fontSize: 21, fontWeight: FontWeight.w900),
-            ),
-            const SizedBox(height: 3),
-            Text(label, style: const TextStyle(fontWeight: FontWeight.w700)),
-            const SizedBox(height: 5),
-            if (change == null)
+        child: DefaultTextStyle.merge(
+          style: TextStyle(color: foreground),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Icon(icon, color: foreground),
+              const Spacer(),
               Text(
-                'لا مقارنة متاحة',
-                style: Theme.of(context).textTheme.bodySmall,
-              )
-            else
-              Row(
-                children: [
-                  Icon(
-                    positive ? Icons.arrow_upward : Icons.arrow_downward,
-                    size: 15,
-                    color: positive ? scheme.primary : scheme.error,
-                  ),
-                  const SizedBox(width: 3),
-                  Text(
-                    '${change.abs().toStringAsFixed(1)}٪ عن الفترة السابقة',
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w700,
-                      color: positive ? scheme.primary : scheme.error,
-                    ),
-                  ),
-                ],
+                value,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  fontSize: 21,
+                  fontWeight: FontWeight.w900,
+                ),
               ),
-          ],
+              const SizedBox(height: 3),
+              Text(label, style: const TextStyle(fontWeight: FontWeight.w700)),
+              const SizedBox(height: 5),
+              if (change == null)
+                Text(
+                  'لا مقارنة متاحة',
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: emphasis
+                        ? scheme.onPrimaryContainer
+                        : scheme.onSurfaceVariant,
+                  ),
+                )
+              else
+                Row(
+                  children: [
+                    Icon(
+                      positive ? Icons.arrow_upward : Icons.arrow_downward,
+                      size: 15,
+                      color: emphasis
+                          ? scheme.onPrimaryContainer
+                          : positive
+                              ? scheme.primary
+                              : scheme.error,
+                    ),
+                    const SizedBox(width: 3),
+                    Expanded(
+                      child: Text(
+                        '${change.abs().toStringAsFixed(1)}٪ عن السابقة',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                          color: emphasis
+                              ? scheme.onPrimaryContainer
+                              : positive
+                                  ? scheme.primary
+                                  : scheme.error,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+            ],
+          ),
         ),
       ),
     );
@@ -469,13 +658,13 @@ class _ReportBarChart extends StatelessWidget {
                               crossAxisAlignment: CrossAxisAlignment.end,
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                _AnimatedBar(
+                                _Bar(
                                   value: point.sales,
                                   maximum: maximum,
                                   color: scheme.primary,
                                 ),
                                 const SizedBox(width: 4),
-                                _AnimatedBar(
+                                _Bar(
                                   value: point.profit,
                                   maximum: maximum,
                                   color: point.profit < 0
@@ -504,8 +693,8 @@ class _ReportBarChart extends StatelessWidget {
   }
 }
 
-class _AnimatedBar extends StatelessWidget {
-  const _AnimatedBar({
+class _Bar extends StatelessWidget {
+  const _Bar({
     required this.value,
     required this.maximum,
     required this.color,
