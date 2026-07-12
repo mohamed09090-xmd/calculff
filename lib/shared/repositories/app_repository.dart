@@ -115,7 +115,20 @@ class AppRepository {
     );
   }
 
-  Future<String> saveTransaction(CalculationResult result) async {
+  Future<String> saveTransaction(
+    CalculationResult result, {
+    required String customerName,
+  }) async {
+    final normalizedCustomerName = customerName.trim().replaceAll(
+          RegExp(r'\s+'),
+          ' ',
+        );
+    if (normalizedCustomerName.isEmpty) {
+      throw StateError('اسم العميل مطلوب قبل حفظ العملية');
+    }
+    if (normalizedCustomerName.length > 80) {
+      throw StateError('اسم العميل يجب ألا يتجاوز 80 حرفًا');
+    }
     if (result.requiredCredit <= 0) {
       throw StateError('لا يمكن حفظ عملية بلا رصيد مطلوب');
     }
@@ -135,6 +148,7 @@ class AppRepository {
       final base = SalesTransaction(
         id: transactionId,
         createdAt: now,
+        customerName: normalizedCustomerName,
         mode: result.request.mode,
         productId: result.request.product?.id,
         productNameSnapshot: result.request.product?.name,
@@ -299,14 +313,16 @@ class AppRepository {
 
   Future<List<SalesTransaction>> getTransactions({String? query}) async {
     final db = await _database.database;
+    final normalizedQuery = query?.trim();
+    final hasQuery = normalizedQuery != null && normalizedQuery.isNotEmpty;
     final rows = await db.query(
       'sales_transactions',
-      where: query == null || query.trim().isEmpty
-          ? null
-          : 'product_name_snapshot LIKE ?',
-      whereArgs: query == null || query.trim().isEmpty
-          ? null
-          : ['%${query.trim()}%'],
+      where: hasQuery
+          ? '(customer_name LIKE ? OR product_name_snapshot LIKE ?)'
+          : null,
+      whereArgs: hasQuery
+          ? ['%$normalizedQuery%', '%$normalizedQuery%']
+          : null,
       orderBy: 'created_at DESC',
     );
     return rows.map(SalesTransaction.fromMap).toList(growable: false);
