@@ -9,8 +9,11 @@ import '../models/inventory_lot.dart';
 import '../models/product.dart';
 import '../models/sales_transaction.dart';
 import '../repositories/app_repository.dart';
+import '../repositories/enhanced_app_repository.dart';
 
-final appRepositoryProvider = Provider<AppRepository>((ref) => AppRepository());
+final appRepositoryProvider = Provider<AppRepository>(
+  (ref) => EnhancedAppRepository(),
+);
 
 final initializationProvider = FutureProvider<void>((ref) async {
   await ref.read(appRepositoryProvider).initialize();
@@ -64,7 +67,9 @@ class SettingsController extends AsyncNotifier<AppSettings> {
 }
 
 final settingsProvider =
-    AsyncNotifierProvider<SettingsController, AppSettings>(SettingsController.new);
+    AsyncNotifierProvider<SettingsController, AppSettings>(
+  SettingsController.new,
+);
 
 class CalculationController extends Notifier<CalculationResult?> {
   @override
