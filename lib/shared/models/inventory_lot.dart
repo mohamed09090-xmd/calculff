@@ -25,6 +25,7 @@ class InventoryLot {
   final InventoryLotStatus status;
   final String? sourceTransactionId;
 
+  bool get isManual => packageId == 'manual_credit';
   bool isExpiredAt(DateTime now) => !expiresAt.isAfter(now);
 
   InventoryLot copyWith({int? remainingCredit, InventoryLotStatus? status}) =>
@@ -58,9 +59,9 @@ class InventoryLot {
         id: map['id']! as String,
         packageId: map['package_id']! as String,
         packageNameSnapshot: map['package_name_snapshot']! as String,
-        purchasedCredit: map['purchased_credit']! as int,
-        remainingCredit: map['remaining_credit']! as int,
-        purchaseCost: map['purchase_cost']! as int,
+        purchasedCredit: (map['purchased_credit'] as num).toInt(),
+        remainingCredit: (map['remaining_credit'] as num).toInt(),
+        purchaseCost: (map['purchase_cost'] as num).toInt(),
         purchasedAt: DateTime.parse(map['purchased_at']! as String),
         expiresAt: DateTime.parse(map['expires_at']! as String),
         status: InventoryLotStatus.values.byName(map['status']! as String),
