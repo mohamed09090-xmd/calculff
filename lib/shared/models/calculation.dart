@@ -1,7 +1,7 @@
 import 'optimization_result.dart';
 import 'product.dart';
 
-enum CalculationMode { customerAmount, gems, credit }
+enum CalculationMode { customerAmount, gems, credit, directProduct }
 
 class CalculationRequest {
   const CalculationRequest({
@@ -29,6 +29,7 @@ class CalculationResult {
     required this.inventoryCreditUsed,
     required this.additionalCreditRequired,
     required this.optimization,
+    required this.creditCostUsed,
     required this.cashProfit,
     this.warning,
   });
@@ -43,6 +44,7 @@ class CalculationResult {
   final int inventoryCreditUsed;
   final int additionalCreditRequired;
   final OptimizationResult? optimization;
+  final int creditCostUsed;
   final int cashProfit;
   final String? warning;
 
@@ -52,4 +54,25 @@ class CalculationResult {
       purchasedCredit - additionalCreditRequired;
   double get marginPercent =>
       chargedAmount == 0 ? 0 : (cashProfit / chargedAmount) * 100;
+
+  CalculationResult copyWith({
+    int? creditCostUsed,
+    int? cashProfit,
+  }) {
+    return CalculationResult(
+      request: request,
+      units: units,
+      gems: gems,
+      customerPaid: customerPaid,
+      chargedAmount: chargedAmount,
+      customerChange: customerChange,
+      requiredCredit: requiredCredit,
+      inventoryCreditUsed: inventoryCreditUsed,
+      additionalCreditRequired: additionalCreditRequired,
+      optimization: optimization,
+      creditCostUsed: creditCostUsed ?? this.creditCostUsed,
+      cashProfit: cashProfit ?? this.cashProfit,
+      warning: warning,
+    );
+  }
 }
