@@ -1,3 +1,5 @@
+import 'dart:ui' show PlatformDispatcher;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
@@ -27,10 +29,16 @@ class AppLanguageController extends AsyncNotifier<AppLanguagePreference> {
   @override
   Future<AppLanguagePreference> build() async {
     final stored = await _storage.read(key: _storageKey);
-    return AppLanguagePreference.values.firstWhere(
-      (language) => language.name == stored,
-      orElse: () => AppLanguagePreference.arabic,
-    );
+    if (stored != null) {
+      return AppLanguagePreference.values.firstWhere(
+        (language) => language.name == stored,
+        orElse: () => AppLanguagePreference.arabic,
+      );
+    }
+
+    return PlatformDispatcher.instance.locale.languageCode == 'fr'
+        ? AppLanguagePreference.french
+        : AppLanguagePreference.arabic;
   }
 
   Future<void> setLanguage(AppLanguagePreference language) async {
