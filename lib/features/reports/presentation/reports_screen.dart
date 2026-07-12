@@ -1,6 +1,5 @@
 import 'dart:math' as math;
 
-import 'package:cross_file/cross_file.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -149,15 +148,15 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
         return;
       }
 
-      final bytes = await result.file.readAsBytes();
       final savedPath = await FilePicker.platform.saveFile(
         dialogTitle: 'حفظ تقرير ${report.period.label}',
         fileName: result.fileName,
         type: FileType.custom,
         allowedExtensions: [result.format.extension],
-        bytes: bytes,
       );
-      if (savedPath == null || !mounted) return;
+      if (savedPath == null) return;
+      await result.file.copy(savedPath);
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('تم حفظ التقرير بصيغة ${result.format.label}.'),
