@@ -31,8 +31,8 @@ void main() {
     );
 
     final db = await appDatabase!.database;
-
-    expect(await db.getVersion(), AppDatabase.schemaVersion);
+    final versionRows = await db.rawQuery('PRAGMA user_version');
+    expect(versionRows.single['user_version'], AppDatabase.schemaVersion);
 
     final customers = await db.query('customers');
     expect(customers, hasLength(1));
