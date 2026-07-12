@@ -1,35 +1,150 @@
 from __future__ import annotations
 
 import os
+import re
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 LIB = ROOT / "lib"
 TARGET = LIB / "core" / "localization" / "localized_text.dart"
 MATERIAL_IMPORT = "import 'package:flutter/material.dart';"
+MATERIAL_HIDDEN_IMPORT = "import 'package:flutter/material.dart' hide Text;"
+
+
+def _normalize_text_import(path: Path, source: str) -> str:
+    if path == TARGET:
+        return source
+    if "Text(" not in source and "Text.rich(" not in source:
+        return source
+    if MATERIAL_IMPORT not in source and MATERIAL_HIDDEN_IMPORT not in source:
+        return source
+
+    relative = os.path.relpath(TARGET, path.parent).replace(os.sep, "/")
+    localized_import = f"import '{relative}';"
+
+    source = source.replace(MATERIAL_IMPORT, MATERIAL_HIDDEN_IMPORT, 1)
+    source = re.sub(
+        r"\n?import '[^']*localized_text\.dart';\n?",
+        "\n",
+        source,
+        count=1,
+    )
+
+    lines = source.splitlines()
+    relative_import_indexes = [
+        index
+        for index, line in enumerate(lines)
+        if line.startswith("import '")
+        and not line.startswith("import 'dart:")
+        and not line.startswith("import 'package:")
+    ]
+    package_import_indexes = [
+        index for index, line in enumerate(lines) if line.startswith("import 'package:")
+    ]
+
+    if relative_import_indexes:
+        insert_at = relative_import_indexes[0]
+    elif package_import_indexes:
+        insert_at = package_import_indexes[-1] + 1
+    else:
+        return source
+
+    while insert_at > 0 and lines[insert_at - 1] == "" and (
+        insert_at < len(lines) and lines[insert_at] == ""
+    ):
+        lines.pop(insert_at - 1)
+        insert_at -= 1
+
+    if insert_at > 0 and lines[insert_at - 1] != "":
+        lines.insert(insert_at, "")
+        insert_at += 1
+    lines.insert(insert_at, localized_import)
+    insert_at += 1
+    if insert_at < len(lines) and lines[insert_at] != "":
+        lines.insert(insert_at, "")
+
+    return "\n".join(lines).rstrip() + "\n"
+
+
+def _add_language_settings(source: str) -> str:
+    language_import = (
+        "import '../../../shared/providers/app_language_provider.dart';"
+    )
+    theme_import = "import '../../../shared/providers/theme_mode_provider.dart';"
+    if language_import not in source and theme_import in source:
+        source = source.replace(
+            theme_import,
+            f"{language_import}\n{theme_import}",
+            1,
+        )
+
+    language_state = (
+        "    final languagePreference =\n"
+        "        ref.watch(appLanguageProvider).valueOrNull ??\n"
+        "            AppLanguagePreference.arabic;\n"
+    )
+    state_marker = (
+        "    final platformBrightness = MediaQuery.platformBrightnessOf(context);\n"
+    )
+    if "final languagePreference =" not in source and state_marker in source:
+        source = source.replace(
+            state_marker,
+            f"{language_state}{state_marker}",
+            1,
+        )
+
+    section_marker = (
+        "            const SizedBox(height: 12),\n"
+        "            SectionCard(\n"
+        "              title: 'المظهر وطريقة العرض',"
+    )
+    if "SegmentedButton<AppLanguagePreference>" not in source and section_marker in source:
+        language_section = """            const SizedBox(height: 12),
+            SectionCard(
+              title: 'اللغة',
+              icon: Icons.language_outlined,
+              accent: Theme.of(context).colorScheme.secondary,
+              child: SegmentedButton<AppLanguagePreference>(
+                segments: const [
+                  ButtonSegment(
+                    value: AppLanguagePreference.arabic,
+                    label: Text('العربية'),
+                    icon: Icon(Icons.format_textdirection_r_to_l),
+                  ),
+                  ButtonSegment(
+                    value: AppLanguagePreference.french,
+                    label: Text('الفرنسية'),
+                    icon: Icon(Icons.format_textdirection_l_to_r),
+                  ),
+                ],
+                selected: {languagePreference},
+                showSelectedIcon: false,
+                onSelectionChanged: (selection) => ref
+                    .read(appLanguageProvider.notifier)
+                    .setLanguage(selection.first),
+              ),
+            ),
+"""
+        source = source.replace(
+            section_marker,
+            language_section + section_marker,
+            1,
+        )
+
+    return source
 
 
 def main() -> None:
     changed: list[Path] = []
 
     for path in sorted(LIB.rglob("*.dart")):
-        if path == TARGET:
-            continue
-
         source = path.read_text(encoding="utf-8")
-        if "Text(" not in source and "Text.rich(" not in source:
-            continue
-        if "localized_text.dart" in source:
-            continue
-        if MATERIAL_IMPORT not in source:
-            continue
+        updated = _normalize_text_import(path, source)
+        if path == LIB / "features" / "settings" / "presentation" / "settings_screen.dart":
+            updated = _add_language_settings(updated)
 
-        relative = os.path.relpath(TARGET, path.parent).replace(os.sep, "/")
-        replacement = (
-            "import 'package:flutter/material.dart' hide Text;\n\n"
-            f"import '{relative}';"
-        )
-        updated = source.replace(MATERIAL_IMPORT, replacement, 1)
+        if updated == source:
+            continue
         path.write_text(updated, encoding="utf-8")
         changed.append(path.relative_to(ROOT))
 
