@@ -7,8 +7,11 @@ import '../../../core/constants/app_strings.dart';
 import '../../../core/widgets/app_shell.dart';
 import '../../../core/widgets/async_state_view.dart';
 import '../../../core/widgets/section_card.dart';
+import '../../../shared/models/app_lock_state.dart';
 import '../../../shared/models/app_settings.dart';
+import '../../../shared/providers/app_lock_provider.dart';
 import '../../../shared/providers/app_providers.dart';
+import '../../security/presentation/pattern_management_screen.dart';
 
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
@@ -16,6 +19,7 @@ class SettingsScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final settings = ref.watch(settingsProvider);
+    final appLock = ref.watch(appLockProvider);
     return AppShell(
       title: AppStrings.settings,
       body: AsyncStateView(
@@ -23,6 +27,44 @@ class SettingsScreen extends ConsumerWidget {
         onRetry: () => ref.invalidate(settingsProvider),
         data: (data) => ListView(
           children: [
+            SectionCard(
+              title: 'الأمان والخصوصية',
+              icon: Icons.security_outlined,
+              accent: Theme.of(context).colorScheme.secondary,
+              child: appLock.when(
+                loading: () => const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 18),
+                  child: LinearProgressIndicator(),
+                ),
+                error: (error, stack) => Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Text('تعذر قراءة إعدادات القفل: $error'),
+                    const SizedBox(height: 8),
+                    TextButton.icon(
+                      onPressed: () =>
+                          ref.read(appLockProvider.notifier).refresh(),
+                      icon: const Icon(Icons.refresh),
+                      label: const Text('إعادة المحاولة'),
+                    ),
+                  ],
+                ),
+                data: (lock) => _SecuritySettings(
+                  lock: lock,
+                  onToggle: (enabled) =>
+                      _togglePatternLock(context, ref, enabled),
+                  onChange: () => _openPatternFlow(
+                    context,
+                    ref,
+                    PatternManagementMode.change,
+                  ),
+                  onLockNow: () {
+                    ref.read(appLockProvider.notifier).lock();
+                  },
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
             SectionCard(
               title: 'المظهر وطريقة العرض',
               icon: Icons.palette_outlined,
@@ -33,15 +75,19 @@ class SettingsScreen extends ConsumerWidget {
                     title: const Text('الوضع الداكن'),
                     subtitle: const Text('تغيير مظهر التطبيق فقط'),
                     value: data.darkMode,
-                    onChanged: (value) => _update(ref, data.copyWith(darkMode: value)),
+                    onChanged: (value) =>
+                        _update(ref, data.copyWith(darkMode: value)),
                   ),
                   const Divider(),
                   SwitchListTile(
                     contentPadding: EdgeInsets.zero,
                     title: const Text('عرض المبالغ بصيغة الألف'),
-                    subtitle: Text(data.useThousands ? 'مثال: 35 ألف' : 'مثال: 350 دج'),
+                    subtitle: Text(
+                      data.useThousands ? 'مثال: 35 ألف' : 'مثال: 350 دج',
+                    ),
                     value: data.useThousands,
-                    onChanged: (value) => _update(ref, data.copyWith(useThousands: value)),
+                    onChanged: (value) =>
+                        _update(ref, data.copyWith(useThousands: value)),
                   ),
                 ],
               ),
@@ -84,6 +130,46 @@ class SettingsScreen extends ConsumerWidget {
     );
   }
 
+  Future<void> _togglePatternLock(
+    BuildContext context,
+    WidgetRef ref,
+    bool enabled,
+  ) async {
+    await _openPatternFlow(
+      context,
+      ref,
+      enabled
+          ? PatternManagementMode.enable
+          : PatternManagementMode.disable,
+    );
+  }
+
+  Future<void> _openPatternFlow(
+    BuildContext context,
+    WidgetRef ref,
+    PatternManagementMode mode,
+  ) async {
+    final changed = await Navigator.of(context).push<bool>(
+      MaterialPageRoute(
+        fullscreenDialog: true,
+        builder: (context) => PatternManagementScreen(mode: mode),
+      ),
+    );
+    if (changed == true && context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            switch (mode) {
+              PatternManagementMode.enable => 'تم تفعيل قفل التطبيق بالنمط.',
+              PatternManagementMode.change => 'تم تغيير نمط القفل.',
+              PatternManagementMode.disable => 'تم إيقاف قفل التطبيق.',
+            },
+          ),
+        ),
+      );
+    }
+  }
+
   Future<void> _update(WidgetRef ref, AppSettings settings) =>
       ref.read(settingsProvider.notifier).save(settings);
 
@@ -92,7 +178,9 @@ class SettingsScreen extends ConsumerWidget {
     WidgetRef ref,
     AppSettings settings,
   ) async {
-    final controller = TextEditingController(text: '${settings.expiryWarningHours}');
+    final controller = TextEditingController(
+      text: '${settings.expiryWarningHours}',
+    );
     final hours = await showDialog<int>(
       context: context,
       builder: (context) => AlertDialog(
@@ -106,11 +194,16 @@ class SettingsScreen extends ConsumerWidget {
           ),
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('إلغاء')),
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('إلغاء'),
+          ),
           FilledButton(
             onPressed: () {
               final value = int.tryParse(controller.text);
-              if (value != null && value > 0) Navigator.pop(context, value);
+              if (value != null && value > 0) {
+                Navigator.pop(context, value);
+              }
             },
             child: const Text('حفظ'),
           ),
@@ -118,6 +211,70 @@ class SettingsScreen extends ConsumerWidget {
       ),
     );
     controller.dispose();
-    if (hours != null) await _update(ref, settings.copyWith(expiryWarningHours: hours));
+    if (hours != null) {
+      await _update(
+        ref,
+        settings.copyWith(expiryWarningHours: hours),
+      );
+    }
+  }
+}
+
+class _SecuritySettings extends StatelessWidget {
+  const _SecuritySettings({
+    required this.lock,
+    required this.onToggle,
+    required this.onChange,
+    required this.onLockNow,
+  });
+
+  final AppLockState lock;
+  final ValueChanged<bool> onToggle;
+  final VoidCallback onChange;
+  final VoidCallback onLockNow;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        SwitchListTile(
+          contentPadding: EdgeInsets.zero,
+          title: const Text('قفل التطبيق بنمط'),
+          subtitle: Text(
+            lock.enabled
+                ? 'سيطلب التطبيق النمط عند الفتح أو العودة من الخلفية.'
+                : 'ميزة اختيارية لحماية العملاء والعمليات المالية.',
+          ),
+          value: lock.enabled,
+          onChanged: onToggle,
+        ),
+        if (lock.enabled) ...[
+          const Divider(),
+          ListTile(
+            contentPadding: EdgeInsets.zero,
+            leading: const Icon(Icons.gesture_outlined),
+            title: const Text('تغيير نمط القفل'),
+            subtitle: const Text('يتطلب رسم النمط الحالي أولًا'),
+            trailing: const Icon(Icons.chevron_left),
+            onTap: onChange,
+          ),
+          ListTile(
+            contentPadding: EdgeInsets.zero,
+            leading: const Icon(Icons.lock_clock_outlined),
+            title: const Text('قفل التطبيق الآن'),
+            subtitle: const Text('اختبار شاشة القفل مباشرة'),
+            trailing: const Icon(Icons.lock_outline),
+            onTap: onLockNow,
+          ),
+          const Padding(
+            padding: EdgeInsets.only(top: 6),
+            child: Text(
+              'النمط لا يدخل ضمن ملف النسخة الاحتياطية. نسيانه يتطلب مسح بيانات التطبيق أو إعادة تثبيته.',
+              style: TextStyle(fontSize: 12),
+            ),
+          ),
+        ],
+      ],
+    );
   }
 }
