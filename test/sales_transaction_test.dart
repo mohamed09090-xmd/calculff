@@ -2,9 +2,13 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:game_credit_profit_manager/shared/models/sales_transaction.dart';
 
 void main() {
-  Map<String, Object?> transactionRow({String? customerName}) => {
+  Map<String, Object?> transactionRow({
+    String? customerId,
+    String? customerName,
+  }) => {
         'id': 'txn_1',
         'created_at': '2026-07-12T10:00:00.000',
+        if (customerId != null) 'customer_id': customerId,
         if (customerName != null) 'customer_name': customerName,
         'mode': 'gems',
         'product_id': 'product_100_gems',
@@ -24,18 +28,24 @@ void main() {
         'cash_profit': 350,
       };
 
-  test('يحفظ اسم العميل ويعيد قراءته', () {
+  test('يحفظ هوية واسم العميل ويعيد قراءتهما', () {
     final transaction = SalesTransaction.fromMap(
-      transactionRow(customerName: '  محمد أمين  '),
+      transactionRow(
+        customerId: 'customer_1',
+        customerName: '  محمد أمين  ',
+      ),
     );
 
+    expect(transaction.customerId, 'customer_1');
     expect(transaction.customerName, 'محمد أمين');
+    expect(transaction.toMap()['customer_id'], 'customer_1');
     expect(transaction.toMap()['customer_name'], 'محمد أمين');
   });
 
   test('يمنح العمليات القديمة اسمًا احتياطيًا', () {
     final transaction = SalesTransaction.fromMap(transactionRow());
 
+    expect(transaction.customerId, isNull);
     expect(transaction.customerName, 'عميل سابق');
   });
 }
