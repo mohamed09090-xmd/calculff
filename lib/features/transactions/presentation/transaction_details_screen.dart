@@ -16,7 +16,8 @@ class TransactionDetailsScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final settings = ref.watch(settingsProvider).valueOrNull ?? AppSettings.defaults;
+    final settings =
+        ref.watch(settingsProvider).valueOrNull ?? AppSettings.defaults;
     return AppShell(
       title: 'تفاصيل العملية',
       actions: [
@@ -27,24 +28,53 @@ class TransactionDetailsScreen extends ConsumerWidget {
         ),
       ],
       body: FutureBuilder<TransactionDetails>(
-        future: ref.read(appRepositoryProvider).getTransactionDetails(transactionId),
+        future: ref
+            .read(appRepositoryProvider)
+            .getTransactionDetails(transactionId),
         builder: (context, snapshot) {
           if (snapshot.connectionState != ConnectionState.done) {
             return const Center(child: CircularProgressIndicator());
           }
-          if (snapshot.hasError) return Center(child: Text(snapshot.error.toString()));
+          if (snapshot.hasError) {
+            return Center(child: Text(snapshot.error.toString()));
+          }
           final details = snapshot.data!;
           final item = details.transaction;
-          String money(num value) => MoneyFormatter.format(value, useThousands: settings.useThousands);
+          String money(num value) => MoneyFormatter.format(
+                value,
+                useThousands: settings.useThousands,
+              );
+          final productName = item.productNameSnapshot ?? 'عملية رصيد';
+
           return ListView(
             children: [
               SectionCard(
-                title: item.productNameSnapshot ?? 'عملية رصيد',
+                title: item.customerName,
+                icon: Icons.person_outline_rounded,
+                accent: Theme.of(context).colorScheme.secondary,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      productName,
+                      style: const TextStyle(
+                        fontSize: 17,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(AppDateUtils.format(item.createdAt)),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 12),
+              SectionCard(
+                title: 'بيانات العملية',
                 icon: Icons.receipt_long_outlined,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(AppDateUtils.format(item.createdAt)),
+                    _row('المنتج', productName),
                     const Divider(height: 24),
                     _row('الحزم', '${item.units}'),
                     _row('الجواهر', '${item.gems}'),
@@ -53,7 +83,10 @@ class TransactionDetailsScreen extends ConsumerWidget {
                     _row('المبلغ المعاد', money(item.customerChange)),
                     _row('الرصيد المطلوب', '${item.requiredCredit}'),
                     _row('من المخزون', '${item.inventoryCreditUsed}'),
-                    _row('من الباقات الجديدة', '${item.additionalCreditRequired}'),
+                    _row(
+                      'من الباقات الجديدة',
+                      '${item.additionalCreditRequired}',
+                    ),
                   ],
                 ),
               ),
@@ -69,8 +102,15 @@ class TransactionDetailsScreen extends ConsumerWidget {
                             ListTile(
                               contentPadding: EdgeInsets.zero,
                               title: Text(package.packageNameSnapshot),
-                              subtitle: Text('${package.creditSnapshot} رصيد • صلاحية ${package.validityHoursSnapshot} ساعة'),
-                              trailing: Text('×${package.quantity}\n${money(package.priceSnapshot * package.quantity)}', textAlign: TextAlign.center),
+                              subtitle: Text(
+                                '${package.creditSnapshot} رصيد • صلاحية '
+                                '${package.validityHoursSnapshot} ساعة',
+                              ),
+                              trailing: Text(
+                                '×${package.quantity}\n'
+                                '${money(package.priceSnapshot * package.quantity)}',
+                                textAlign: TextAlign.center,
+                              ),
                             ),
                         ],
                       ),
@@ -102,7 +142,10 @@ class TransactionDetailsScreen extends ConsumerWidget {
         child: Row(
           children: [
             Expanded(child: Text(label)),
-            Text(value, style: const TextStyle(fontWeight: FontWeight.w900)),
+            Text(
+              value,
+              style: const TextStyle(fontWeight: FontWeight.w900),
+            ),
           ],
         ),
       );
@@ -116,8 +159,14 @@ class TransactionDetailsScreen extends ConsumerWidget {
               'سيُعاد بناء المخزون من جميع العمليات المتبقية لضمان صحة الرصيد والحركات.',
             ),
             actions: [
-              TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('إلغاء')),
-              FilledButton(onPressed: () => Navigator.pop(context, true), child: const Text('حذف وإعادة الحساب')),
+              TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                child: const Text('إلغاء'),
+              ),
+              FilledButton(
+                onPressed: () => Navigator.pop(context, true),
+                child: const Text('حذف وإعادة الحساب'),
+              ),
             ],
           ),
         ) ??
@@ -129,7 +178,9 @@ class TransactionDetailsScreen extends ConsumerWidget {
       if (context.mounted) context.go('/transactions');
     } catch (error) {
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(error.toString())));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(error.toString())),
+        );
       }
     }
   }
