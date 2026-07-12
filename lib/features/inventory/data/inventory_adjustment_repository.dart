@@ -17,9 +17,12 @@ class InventoryAdjustmentRepository {
     AppDatabase? database,
     FefoAllocator? allocator,
     NotificationService? notificationService,
+    bool scheduleNotifications = true,
   })  : _database = database ?? AppDatabase.instance,
         _allocator = allocator ?? const FefoAllocator(),
-        _notificationService = notificationService ?? NotificationService.instance;
+        _notificationService = scheduleNotifications
+            ? (notificationService ?? NotificationService.instance)
+            : null;
 
   static const additionProductId = '__inventory_adjustment_add__';
   static const removalProductId = '__inventory_adjustment_remove__';
@@ -54,6 +57,7 @@ class InventoryAdjustmentRepository {
     final lotId = IdGenerator.next('lot');
     final validityMinutes = expiresAt.difference(now).inMinutes;
     final validityHours = math.max(1, (validityMinutes + 59) ~/ 60);
+    final normalizedExpiresAt = now.add(Duration(hours: validityHours));
     final reason = normalizedNote == null || normalizedNote.isEmpty
         ? 'إضافة رصيد يدويًا'
         : 'إضافة رصيد يدويًا: $normalizedNote';
@@ -103,7 +107,7 @@ class InventoryAdjustmentRepository {
         remainingCredit: amount,
         purchaseCost: purchaseCost,
         purchasedAt: now,
-        expiresAt: expiresAt,
+        expiresAt: normalizedExpiresAt,
         status: InventoryLotStatus.active,
         sourceTransactionId: transactionId,
       );
@@ -157,6 +161,32 @@ class InventoryAdjustmentRepository {
     final transactionId = IdGenerator.next('inventory_remove');
     var creditCost = 0;
     await db.transaction((txn) async {
+      final transaction = SalesTransaction(
+        id: transactionId,
+        createdAt: now,
+        customerId: null,
+        customerName: 'تعديل مخزون',
+        mode: CalculationMode.credit,
+        productId: removalProductId,
+        productNameSnapshot: 'خصم يدوي من المخزون',
+        productDescriptionSnapshot: normalizedReason,
+        inputValue: amount,
+        useInventory: true,
+        units: 1,
+        gems: 0,
+        customerPaid: 0,
+        chargedAmount: 0,
+        customerChange: 0,
+        requiredCredit: amount,
+        inventoryCreditUsed: amount,
+        additionalCreditRequired: 0,
+        purchasedCredit: 0,
+        newPackagesCost: 0,
+        creditCostUsed: 0,
+        cashProfit: 0,
+      );
+      await txn.insert('sales_transactions', transaction.toMap());
+
       for (final item in allocation.allocations) {
         final lot = lots.firstWhere((candidate) => candidate.id == item.lotId);
         creditCost += _allocatedCost(lot, item.amount);
@@ -183,31 +213,15 @@ class InventoryAdjustmentRepository {
         });
       }
 
-      final transaction = SalesTransaction(
-        id: transactionId,
-        createdAt: now,
-        customerId: null,
-        customerName: 'تعديل مخزون',
-        mode: CalculationMode.credit,
-        productId: removalProductId,
-        productNameSnapshot: 'خصم يدوي من المخزون',
-        productDescriptionSnapshot: normalizedReason,
-        inputValue: amount,
-        useInventory: true,
-        units: 1,
-        gems: 0,
-        customerPaid: 0,
-        chargedAmount: 0,
-        customerChange: 0,
-        requiredCredit: amount,
-        inventoryCreditUsed: amount,
-        additionalCreditRequired: 0,
-        purchasedCredit: 0,
-        newPackagesCost: 0,
-        creditCostUsed: creditCost,
-        cashProfit: -creditCost,
+      await txn.update(
+        'sales_transactions',
+        {
+          'credit_cost_used': creditCost,
+          'cash_profit': -creditCost,
+        },
+        where: 'id = ?',
+        whereArgs: [transactionId],
       );
-      await txn.insert('sales_transactions', transaction.toMap());
     });
 
     await _rescheduleNotifications();
@@ -216,12 +230,30 @@ class InventoryAdjustmentRepository {
 
   Future<List<InventoryMovement>> getMovements(String lotId) async {
     final db = await _database.database;
-    final rows = await db.query(
-      'inventory_movements',
-      where: 'lot_id = ?',
-      whereArgs: [lotId],
-      orderBy: 'created_at DESC, id DESC',
-    );
+    final rows = await db.rawQuery('''
+      SELECT
+        m.id,
+        m.lot_id,
+        m.transaction_id,
+        m.direction,
+        m.amount,
+        CASE
+          WHEN t.product_id = ? THEN
+            'إضافة رصيد يدويًا' ||
+            CASE
+              WHEN COALESCE(t.product_description_snapshot, '') = '' THEN ''
+              ELSE ': ' || t.product_description_snapshot
+            END
+          WHEN t.product_id = ? THEN
+            'خصم يدوي: ' || COALESCE(t.product_description_snapshot, 'بدون سبب')
+          ELSE m.reason
+        END AS reason,
+        m.created_at
+      FROM inventory_movements m
+      LEFT JOIN sales_transactions t ON t.id = m.transaction_id
+      WHERE m.lot_id = ?
+      ORDER BY m.created_at DESC, m.id DESC
+    ''', [additionProductId, removalProductId, lotId]);
     return rows.map(InventoryMovement.fromMap).toList(growable: false);
   }
 
