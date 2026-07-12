@@ -22,7 +22,10 @@ class ReportRepository {
       final firstRows = await db.rawQuery('''
         SELECT MIN(created_at) AS first_created_at
         FROM sales_transactions
-        WHERE mode NOT IN ('inventoryAddition', 'inventoryRemoval')
+        WHERE COALESCE(product_id, '') NOT IN (
+          '__inventory_adjustment_add__',
+          '__inventory_adjustment_remove__'
+        )
       ''');
       final raw = firstRows.first['first_created_at'] as String?;
       reportStart = raw == null ? null : DateTime.tryParse(raw);
@@ -211,7 +214,7 @@ class ReportRepository {
 
   _SqlRange _range({DateTime? start, DateTime? endExclusive}) {
     final conditions = <String>[
-      "mode NOT IN ('inventoryAddition', 'inventoryRemoval')",
+      "COALESCE(product_id, '') NOT IN ('__inventory_adjustment_add__', '__inventory_adjustment_remove__')",
     ];
     final arguments = <Object?>[];
     if (start != null) {
