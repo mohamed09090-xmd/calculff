@@ -3,10 +3,12 @@ import 'dart:convert';
 import 'package:path/path.dart' as p;
 import 'package:sqflite/sqflite.dart';
 
+import '../utils/id_generator.dart';
+
 class AppDatabase {
   AppDatabase._();
   static final AppDatabase instance = AppDatabase._();
-  static const int schemaVersion = 2;
+  static const int schemaVersion = 3;
 
   Database? _database;
 
@@ -56,9 +58,21 @@ class AppDatabase {
       )
     ''');
     await db.execute('''
+      CREATE TABLE customers (
+        id TEXT PRIMARY KEY,
+        name TEXT NOT NULL,
+        phone TEXT,
+        notes TEXT,
+        is_active INTEGER NOT NULL DEFAULT 1,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL
+      )
+    ''');
+    await db.execute('''
       CREATE TABLE sales_transactions (
         id TEXT PRIMARY KEY,
         created_at TEXT NOT NULL,
+        customer_id TEXT,
         customer_name TEXT NOT NULL,
         mode TEXT NOT NULL,
         product_id TEXT,
@@ -75,7 +89,8 @@ class AppDatabase {
         additional_credit_required INTEGER NOT NULL,
         purchased_credit INTEGER NOT NULL,
         new_packages_cost INTEGER NOT NULL,
-        cash_profit INTEGER NOT NULL
+        cash_profit INTEGER NOT NULL,
+        FOREIGN KEY(customer_id) REFERENCES customers(id) ON DELETE SET NULL
       )
     ''');
     await db.execute('''
@@ -131,7 +146,13 @@ class AppDatabase {
       'CREATE INDEX idx_transactions_created ON sales_transactions(created_at DESC)',
     );
     await db.execute(
-      'CREATE INDEX idx_transactions_customer ON sales_transactions(customer_name COLLATE NOCASE)',
+      'CREATE INDEX idx_transactions_customer_name ON sales_transactions(customer_name COLLATE NOCASE)',
+    );
+    await db.execute(
+      'CREATE INDEX idx_transactions_customer_id ON sales_transactions(customer_id)',
+    );
+    await db.execute(
+      'CREATE UNIQUE INDEX idx_customers_name ON customers(name COLLATE NOCASE)',
     );
   }
 
@@ -213,8 +234,58 @@ class AppDatabase {
           "ALTER TABLE sales_transactions ADD COLUMN customer_name TEXT NOT NULL DEFAULT 'عميل سابق'",
         );
         await db.execute(
-          'CREATE INDEX IF NOT EXISTS idx_transactions_customer '
+          'CREATE INDEX IF NOT EXISTS idx_transactions_customer_name '
           'ON sales_transactions(customer_name COLLATE NOCASE)',
+        );
+        return;
+      case 3:
+        await db.execute('''
+          CREATE TABLE customers (
+            id TEXT PRIMARY KEY,
+            name TEXT NOT NULL,
+            phone TEXT,
+            notes TEXT,
+            is_active INTEGER NOT NULL DEFAULT 1,
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL
+          )
+        ''');
+        await db.execute(
+          'CREATE UNIQUE INDEX idx_customers_name ON customers(name COLLATE NOCASE)',
+        );
+        await db.execute(
+          'ALTER TABLE sales_transactions ADD COLUMN customer_id TEXT',
+        );
+
+        final names = await db.rawQuery('''
+          SELECT DISTINCT TRIM(customer_name) AS name
+          FROM sales_transactions
+          WHERE customer_name IS NOT NULL AND TRIM(customer_name) != ''
+          ORDER BY name COLLATE NOCASE
+        ''');
+        final now = DateTime.now().toIso8601String();
+        for (final row in names) {
+          final name = (row['name'] as String?)?.trim();
+          if (name == null || name.isEmpty) continue;
+          final id = IdGenerator.next('customer');
+          await db.insert('customers', {
+            'id': id,
+            'name': name,
+            'phone': null,
+            'notes': null,
+            'is_active': 1,
+            'created_at': now,
+            'updated_at': now,
+          });
+          await db.update(
+            'sales_transactions',
+            {'customer_id': id, 'customer_name': name},
+            where: 'LOWER(TRIM(customer_name)) = LOWER(?)',
+            whereArgs: [name],
+          );
+        }
+        await db.execute(
+          'CREATE INDEX idx_transactions_customer_id ON sales_transactions(customer_id)',
         );
         return;
       default:
@@ -223,6 +294,17 @@ class AppDatabase {
   }
 
   static const backupTables = <String>[
+    'packages',
+    'products',
+    'customers',
+    'sales_transactions',
+    'transaction_items',
+    'inventory_lots',
+    'inventory_movements',
+    'app_settings',
+  ];
+
+  static const _legacyRequiredTables = <String>[
     'packages',
     'products',
     'sales_transactions',
@@ -249,10 +331,13 @@ class AppDatabase {
     if (backupVersion is! int || backupVersion < 1 || backupVersion > schemaVersion) {
       throw const FormatException('إصدار النسخة الاحتياطية غير مدعوم');
     }
-    for (final table in backupTables) {
+    for (final table in _legacyRequiredTables) {
       if (payload[table] is! List) {
         throw FormatException('الجدول $table مفقود أو تالف');
       }
+    }
+    if (backupVersion >= 3 && payload['customers'] is! List) {
+      throw const FormatException('جدول العملاء مفقود أو تالف');
     }
 
     final db = await database;
@@ -261,17 +346,71 @@ class AppDatabase {
       for (final table in backupTables.reversed) {
         await txn.delete(table);
       }
-      for (final table in backupTables) {
+
+      for (final table in const ['packages', 'products']) {
         final rows = (payload[table]! as List).cast<Map>();
         for (final raw in rows) {
+          await txn.insert(table, raw.cast<String, Object?>());
+        }
+      }
+
+      final customerByName = <String, String>{};
+      if (backupVersion >= 3) {
+        final rows = (payload['customers']! as List).cast<Map>();
+        for (final raw in rows) {
           final row = raw.cast<String, Object?>();
-          if (table == 'sales_transactions') {
-            final customerName = row['customer_name'] as String?;
-            if (customerName == null || customerName.trim().isEmpty) {
-              row['customer_name'] = 'عميل سابق';
-            }
-          }
-          await txn.insert(table, row);
+          await txn.insert('customers', row);
+          final name = (row['name'] as String? ?? '').trim().toLowerCase();
+          if (name.isNotEmpty) customerByName[name] = row['id']! as String;
+        }
+      }
+
+      final salesRows = (payload['sales_transactions']! as List).cast<Map>();
+      if (backupVersion < 3) {
+        final now = DateTime.now().toIso8601String();
+        for (final raw in salesRows) {
+          final row = raw.cast<String, Object?>();
+          final rawName = row['customer_name'] as String?;
+          final name = rawName == null || rawName.trim().isEmpty
+              ? 'عميل سابق'
+              : rawName.trim();
+          final key = name.toLowerCase();
+          if (customerByName.containsKey(key)) continue;
+          final id = IdGenerator.next('customer');
+          await txn.insert('customers', {
+            'id': id,
+            'name': name,
+            'phone': null,
+            'notes': null,
+            'is_active': 1,
+            'created_at': now,
+            'updated_at': now,
+          });
+          customerByName[key] = id;
+        }
+      }
+
+      for (final raw in salesRows) {
+        final row = raw.cast<String, Object?>();
+        final rawName = row['customer_name'] as String?;
+        final name = rawName == null || rawName.trim().isEmpty
+            ? 'عميل سابق'
+            : rawName.trim();
+        row['customer_name'] = name;
+        final existingId = row['customer_id'] as String?;
+        row['customer_id'] = existingId ?? customerByName[name.toLowerCase()];
+        await txn.insert('sales_transactions', row);
+      }
+
+      for (final table in const [
+        'transaction_items',
+        'inventory_lots',
+        'inventory_movements',
+        'app_settings',
+      ]) {
+        final rows = (payload[table]! as List).cast<Map>();
+        for (final raw in rows) {
+          await txn.insert(table, raw.cast<String, Object?>());
         }
       }
     });
