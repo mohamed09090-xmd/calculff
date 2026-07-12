@@ -114,7 +114,7 @@ class _AppDrawerState extends State<_AppDrawer>
     super.initState();
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 560),
+      duration: const Duration(milliseconds: 600),
       value: 1,
     );
   }
@@ -147,6 +147,11 @@ class _AppDrawerState extends State<_AppDrawer>
         label: AppStrings.newCalculation,
         icon: Icons.calculate_outlined,
         route: '/calculate',
+      ),
+      (
+        label: AppStrings.customers,
+        icon: Icons.people_alt_outlined,
+        route: '/customers',
       ),
       (
         label: AppStrings.products,
@@ -234,8 +239,8 @@ class _AppDrawerState extends State<_AppDrawer>
             animation: CurvedAnimation(
               parent: _controller,
               curve: Interval(
-                0.16 + (index * 0.065),
-                (0.52 + (index * 0.06)).clamp(0.0, 1.0),
+                0.14 + (index * 0.058),
+                (0.5 + (index * 0.055)).clamp(0.0, 1.0),
                 curve: Curves.easeOutCubic,
               ),
             ),
