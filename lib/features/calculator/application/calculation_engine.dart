@@ -71,6 +71,11 @@ class CalculationEngine {
         customerPaid = chargedAmount;
         units = 1;
         break;
+      case CalculationMode.inventoryAddition:
+      case CalculationMode.inventoryRemoval:
+        throw ArgumentError(
+          'تعديلات المخزون اليدوية لا تمر عبر حاسبة البيع',
+        );
     }
 
     final inventoryUsed = request.useInventory
