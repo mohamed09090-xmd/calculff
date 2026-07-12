@@ -11,11 +11,19 @@ TRANSLATOR_TARGET = LIB / "core" / "localization" / "app_translator.dart"
 MATERIAL_IMPORT = "import 'package:flutter/material.dart';"
 MATERIAL_HIDDEN_IMPORT = "import 'package:flutter/material.dart' hide Text;"
 
+DART_STRING = r"'(?:\\.|[^'\n])*'|\"(?:\\.|[^\"\n])*\""
 STRING_PROPERTY_PATTERN = re.compile(
     r"(?m)^(?P<indent>\s*)"
     r"(?P<name>labelText|hintText|helperText|errorText|counterText|"
     r"semanticCounterText|tooltip|message|dialogTitle|subject|semanticsLabel)"
-    r":\s*(?P<literal>'(?:\\.|[^'\n])*'|\"(?:\\.|[^\"\n])*\"),\s*$"
+    rf":\s*(?P<literal>{DART_STRING}),\s*$"
+)
+INLINE_DECORATION_PATTERN = re.compile(
+    rf"InputDecoration\((?P<name>labelText|hintText):\s*"
+    rf"(?P<value>(?!AppTranslator\.translate\(context,)(?:{DART_STRING}|[A-Za-z_][A-Za-z0-9_\.]*))\)"
+)
+VALIDATION_TERNARY_PATTERN = re.compile(
+    rf"(?P<prefix>\?\s*)(?P<literal>{DART_STRING})(?P<suffix>\s*:\s*null)"
 )
 
 
@@ -83,13 +91,27 @@ def _localize_string_properties(path: Path, source: str) -> str:
     if "BuildContext context" not in source:
         return source
 
-    def replace(match: re.Match[str]) -> str:
+    def replace_property(match: re.Match[str]) -> str:
         return (
             f"{match.group('indent')}{match.group('name')}: "
             f"AppTranslator.translate(context, {match.group('literal')}),"
         )
 
-    updated = STRING_PROPERTY_PATTERN.sub(replace, source)
+    def replace_inline_decoration(match: re.Match[str]) -> str:
+        return (
+            f"InputDecoration({match.group('name')}: "
+            f"AppTranslator.translate(context, {match.group('value')}))"
+        )
+
+    def replace_validation(match: re.Match[str]) -> str:
+        return (
+            f"{match.group('prefix')}AppTranslator.translate("
+            f"context, {match.group('literal')}){match.group('suffix')}"
+        )
+
+    updated = STRING_PROPERTY_PATTERN.sub(replace_property, source)
+    updated = INLINE_DECORATION_PATTERN.sub(replace_inline_decoration, updated)
+    updated = VALIDATION_TERNARY_PATTERN.sub(replace_validation, updated)
 
     calculator_path = (
         LIB / "features" / "calculator" / "presentation" / "calculator_screen.dart"
