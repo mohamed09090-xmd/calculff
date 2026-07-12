@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:game_credit_profit_manager/core/database/app_database.dart';
 import 'package:path/path.dart' as p;
+import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 import 'support/database_test_utils.dart';
 
@@ -10,14 +11,14 @@ void main() {
   setUpAll(initializeFfiDatabaseTests);
 
   late Directory directory;
-  late AppDatabase appDatabase;
+  AppDatabase? appDatabase;
 
   setUp(() async {
     directory = await createDatabaseTestDirectory('game_credit_migration_');
   });
 
   tearDown(() async {
-    await appDatabase.close();
+    await appDatabase?.close();
     await directory.delete(recursive: true);
   });
 
@@ -29,7 +30,7 @@ void main() {
       databasePath: path,
     );
 
-    final db = await appDatabase.database;
+    final db = await appDatabase!.database;
 
     expect(await db.getVersion(), AppDatabase.schemaVersion);
 
