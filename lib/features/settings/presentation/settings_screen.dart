@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/constants/app_strings.dart';
+import '../../../core/utils/money_formatter.dart';
 import '../../../core/widgets/app_shell.dart';
 import '../../../core/widgets/async_state_view.dart';
 import '../../../core/widgets/section_card.dart';
@@ -117,6 +118,25 @@ class SettingsScreen extends ConsumerWidget {
             ),
             const SizedBox(height: 12),
             SectionCard(
+              title: 'تسعير بيع الرصيد',
+              icon: Icons.price_change_outlined,
+              accent: Theme.of(context).colorScheme.secondary,
+              child: ListTile(
+                contentPadding: EdgeInsets.zero,
+                title: Text(
+                  '${data.creditSaleReferenceCredit} رصيد = '
+                  '${MoneyFormatter.format(data.creditSaleReferencePriceDzd, useThousands: data.useThousands)}',
+                  style: const TextStyle(fontWeight: FontWeight.w900),
+                ),
+                subtitle: const Text(
+                  'قاعدة مشتركة لبيع الرصيد والمنتجات المباشرة، مع التقريب إلى أقرب 10 دج.',
+                ),
+                trailing: const Icon(Icons.edit_outlined),
+                onTap: () => _editCreditPricing(context, ref, data),
+              ),
+            ),
+            const SizedBox(height: 12),
+            SectionCard(
               title: 'تنبيهات الصلاحية',
               icon: Icons.notifications_active_outlined,
               child: ListTile(
@@ -192,6 +212,82 @@ class SettingsScreen extends ConsumerWidget {
 
   Future<void> _update(WidgetRef ref, AppSettings settings) =>
       ref.read(settingsProvider.notifier).save(settings);
+
+  Future<void> _editCreditPricing(
+    BuildContext context,
+    WidgetRef ref,
+    AppSettings settings,
+  ) async {
+    final creditController = TextEditingController(
+      text: '${settings.creditSaleReferenceCredit}',
+    );
+    final priceController = TextEditingController(
+      text: '${settings.creditSaleReferencePriceDzd}',
+    );
+    final result = await showDialog<(int, int)>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('تسعير بيع الرصيد'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: creditController,
+              keyboardType: TextInputType.number,
+              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+              decoration: const InputDecoration(
+                labelText: 'الرصيد المرجعي',
+                prefixIcon: Icon(Icons.toll_outlined),
+              ),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: priceController,
+              keyboardType: TextInputType.number,
+              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+              decoration: const InputDecoration(
+                labelText: 'سعر البيع المرجعي بالدينار',
+                prefixIcon: Icon(Icons.payments_outlined),
+              ),
+            ),
+            const SizedBox(height: 12),
+            const Text(
+              'يُحسب سعر أي كمية أو منتج مباشر نسبيًا، ثم يُقرّب إلى أقرب 10 دج.',
+              style: TextStyle(fontSize: 12),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('إلغاء'),
+          ),
+          FilledButton(
+            onPressed: () {
+              final credit = int.tryParse(creditController.text);
+              final price = int.tryParse(priceController.text);
+              if (credit == null || credit <= 0 || price == null || price <= 0) {
+                return;
+              }
+              Navigator.pop(context, (credit, price));
+            },
+            child: const Text('حفظ'),
+          ),
+        ],
+      ),
+    );
+    creditController.dispose();
+    priceController.dispose();
+    if (result != null) {
+      await _update(
+        ref,
+        settings.copyWith(
+          creditSaleReferenceCredit: result.$1,
+          creditSaleReferencePriceDzd: result.$2,
+        ),
+      );
+    }
+  }
 
   Future<void> _editWarning(
     BuildContext context,
