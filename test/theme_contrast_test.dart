@@ -1,11 +1,35 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:game_credit_profit_manager/app/app.dart';
 import 'package:game_credit_profit_manager/app/theme.dart';
+import 'package:game_credit_profit_manager/shared/providers/theme_mode_provider.dart';
 
 void main() {
-  test('يتبع التطبيق سمة الهاتف افتراضيًا', () {
-    expect(appThemeMode, ThemeMode.system);
+  test('سمة الهاتف هي الخيار الافتراضي', () {
+    expect(
+      AppThemeModePreference.system.themeMode,
+      ThemeMode.system,
+    );
+    expect(
+      AppThemeModePreference.system.isDark(Brightness.dark),
+      isTrue,
+    );
+    expect(
+      AppThemeModePreference.system.isDark(Brightness.light),
+      isFalse,
+    );
+  });
+
+  test('الاختيار اليدوي يتجاوز سمة الهاتف', () {
+    expect(AppThemeModePreference.dark.themeMode, ThemeMode.dark);
+    expect(AppThemeModePreference.light.themeMode, ThemeMode.light);
+    expect(
+      AppThemeModePreference.dark.isDark(Brightness.light),
+      isTrue,
+    );
+    expect(
+      AppThemeModePreference.light.isDark(Brightness.dark),
+      isFalse,
+    );
   });
 
   test('نص الأزرار الأساسية واضح فوق الخلفية الخضراء في الوضع الداكن', () {
