@@ -1,7 +1,14 @@
 import 'optimization_result.dart';
 import 'product.dart';
 
-enum CalculationMode { customerAmount, gems, credit, directProduct }
+enum CalculationMode {
+  customerAmount,
+  gems,
+  credit,
+  directProduct,
+  inventoryAddition,
+  inventoryRemoval,
+}
 
 class CalculationRequest {
   const CalculationRequest({
