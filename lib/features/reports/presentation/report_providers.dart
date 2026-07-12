@@ -7,6 +7,7 @@ final reportRepositoryProvider = Provider<ReportRepository>(
   (ref) => ReportRepository(),
 );
 
-final reportProvider = FutureProvider.family<ReportSummary, ReportPeriod>(
+final reportProvider =
+    FutureProvider.autoDispose.family<ReportSummary, ReportPeriod>(
   (ref, period) => ref.read(reportRepositoryProvider).getReport(period),
 );
