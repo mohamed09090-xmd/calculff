@@ -29,12 +29,14 @@ void main() {
   });
 
   test('يضيف رصيدًا يدويًا مع التكلفة والانتهاء وسجل الحركة', () async {
-    final now = DateTime.now();
+    final expiresAt = DateTime.now()
+        .add(const Duration(days: 2, hours: 3, minutes: 17))
+        .copyWith(microsecond: 0);
     final transactionId = await repository.addCredit(
       name: 'رصيد تجريبي',
       amount: 500,
       purchaseCost: 600,
-      expiresAt: now.add(const Duration(days: 2)),
+      expiresAt: expiresAt,
       note: 'إضافة اختبارية',
     );
 
@@ -51,6 +53,7 @@ void main() {
     expect(lots.single['purchased_credit'], 500);
     expect(lots.single['remaining_credit'], 500);
     expect(lots.single['purchase_cost'], 600);
+    expect(DateTime.parse(lots.single['expires_at']! as String), expiresAt);
     expect(transactions.single['product_id'],
         InventoryAdjustmentRepository.additionProductId);
     expect(transactions.single['purchased_credit'], 500);
