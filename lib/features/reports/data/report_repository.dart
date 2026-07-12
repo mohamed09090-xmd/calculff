@@ -43,7 +43,7 @@ class ReportRepository {
     );
     final topProducts = await _rankings(
       groupExpression:
-          "COALESCE(NULLIF(product_name_snapshot, ''), 'عملية رصيد')",
+          "COALESCE(NULLIF(product_name_snapshot, ''), 'بيع رصيد مباشر')",
       start: window.start,
       endExclusive: window.endExclusive,
     );
@@ -76,7 +76,7 @@ class ReportRepository {
     final rows = await db.rawQuery('''
       SELECT
         COALESCE(SUM(charged_amount), 0) AS sales,
-        COALESCE(SUM(new_packages_cost), 0) AS cost,
+        COALESCE(SUM(credit_cost_used), 0) AS cost,
         COALESCE(SUM(cash_profit), 0) AS profit,
         COUNT(*) AS transaction_count,
         COUNT(DISTINCT COALESCE(customer_id, customer_name)) AS customer_count,
