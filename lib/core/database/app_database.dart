@@ -3,33 +3,63 @@ import 'dart:convert';
 import 'package:path/path.dart' as p;
 import 'package:sqflite/sqflite.dart';
 
+import '../../shared/models/backup_preview.dart';
 import '../utils/id_generator.dart';
 
 class AppDatabase {
-  AppDatabase._();
+  AppDatabase._({
+    DatabaseFactory? factory,
+    String? databasePath,
+  })  : _factory = factory ?? databaseFactory,
+        _databasePath = databasePath;
+
   static final AppDatabase instance = AppDatabase._();
   static const int schemaVersion = 3;
+  static const String backupFormat = 'game_credit_profit_manager';
 
+  factory AppDatabase.forTesting({
+    required DatabaseFactory factory,
+    required String databasePath,
+  }) {
+    return AppDatabase._(
+      factory: factory,
+      databasePath: databasePath,
+    );
+  }
+
+  final DatabaseFactory _factory;
+  final String? _databasePath;
   Database? _database;
 
   Future<Database> get database async => _database ??= await _open();
 
   Future<Database> _open() async {
-    final base = await getDatabasesPath();
-    return openDatabase(
-      p.join(base, 'game_credit_profit_manager.db'),
-      version: schemaVersion,
-      onConfigure: (db) async => db.execute('PRAGMA foreign_keys = ON'),
-      onCreate: (db, version) async {
-        await _createSchema(db);
-        await _seedDefaults(db);
-      },
-      onUpgrade: (db, oldVersion, newVersion) async {
-        for (var version = oldVersion + 1; version <= newVersion; version++) {
-          await _migrate(db, version);
-        }
-      },
+    final path = _databasePath ??
+        p.join(await getDatabasesPath(), 'game_credit_profit_manager.db');
+    return _factory.openDatabase(
+      path,
+      options: OpenDatabaseOptions(
+        version: schemaVersion,
+        onConfigure: (db) async => db.execute('PRAGMA foreign_keys = ON'),
+        onCreate: (db, version) async {
+          await _createSchema(db);
+          await _seedDefaults(db);
+        },
+        onUpgrade: (db, oldVersion, newVersion) async {
+          for (var version = oldVersion + 1;
+              version <= newVersion;
+              version++) {
+            await _migrate(db, version);
+          }
+        },
+      ),
     );
+  }
+
+  Future<void> close() async {
+    final database = _database;
+    _database = null;
+    await database?.close();
   }
 
   Future<void> _createSchema(DatabaseExecutor db) async {
@@ -220,9 +250,18 @@ class AppDatabase {
       'created_at': now,
       'updated_at': now,
     });
-    await db.insert('app_settings', {'key': 'use_thousands', 'value': 'false'});
-    await db.insert('app_settings', {'key': 'dark_mode', 'value': 'false'});
-    await db.insert('app_settings', {'key': 'expiry_warning_hours', 'value': '24'});
+    await db.insert(
+      'app_settings',
+      {'key': 'use_thousands', 'value': 'false'},
+    );
+    await db.insert(
+      'app_settings',
+      {'key': 'dark_mode', 'value': 'false'},
+    );
+    await db.insert(
+      'app_settings',
+      {'key': 'expiry_warning_hours', 'value': '24'},
+    );
   }
 
   Future<void> _migrate(Database db, int version) async {
@@ -251,41 +290,52 @@ class AppDatabase {
           )
         ''');
         await db.execute(
-          'CREATE UNIQUE INDEX idx_customers_name ON customers(name COLLATE NOCASE)',
+          'CREATE UNIQUE INDEX idx_customers_name '
+          'ON customers(name COLLATE NOCASE)',
         );
         await db.execute(
           'ALTER TABLE sales_transactions ADD COLUMN customer_id TEXT',
         );
 
-        final names = await db.rawQuery('''
-          SELECT DISTINCT TRIM(customer_name) AS name
-          FROM sales_transactions
-          WHERE customer_name IS NOT NULL AND TRIM(customer_name) != ''
-          ORDER BY name COLLATE NOCASE
-        ''');
+        final transactions = await db.query(
+          'sales_transactions',
+          columns: ['id', 'customer_name'],
+          orderBy: 'created_at ASC, id ASC',
+        );
         final now = DateTime.now().toIso8601String();
-        for (final row in names) {
-          final name = (row['name'] as String?)?.trim();
-          if (name == null || name.isEmpty) continue;
-          final id = IdGenerator.next('customer');
-          await db.insert('customers', {
-            'id': id,
-            'name': name,
-            'phone': null,
-            'notes': null,
-            'is_active': 1,
-            'created_at': now,
-            'updated_at': now,
-          });
+        final customerByName = <String, String>{};
+        for (final transaction in transactions) {
+          final transactionId = transaction['id']! as String;
+          final rawName = transaction['customer_name'] as String?;
+          final name = _normalizeLegacyCustomerName(rawName);
+          final key = name.toLowerCase();
+          var customerId = customerByName[key];
+          if (customerId == null) {
+            customerId = IdGenerator.next('customer');
+            await db.insert('customers', {
+              'id': customerId,
+              'name': name,
+              'phone': null,
+              'notes': null,
+              'is_active': 1,
+              'created_at': now,
+              'updated_at': now,
+            });
+            customerByName[key] = customerId;
+          }
           await db.update(
             'sales_transactions',
-            {'customer_id': id, 'customer_name': name},
-            where: 'LOWER(TRIM(customer_name)) = LOWER(?)',
-            whereArgs: [name],
+            {
+              'customer_id': customerId,
+              'customer_name': name,
+            },
+            where: 'id = ?',
+            whereArgs: [transactionId],
           );
         }
         await db.execute(
-          'CREATE INDEX idx_transactions_customer_id ON sales_transactions(customer_id)',
+          'CREATE INDEX idx_transactions_customer_id '
+          'ON sales_transactions(customer_id)',
         );
         return;
       default:
@@ -317,6 +367,7 @@ class AppDatabase {
   Future<Map<String, Object?>> exportData() async {
     final db = await database;
     final data = <String, Object?>{
+      'format': backupFormat,
       'version': schemaVersion,
       'exported_at': DateTime.now().toIso8601String(),
     };
@@ -326,21 +377,40 @@ class AppDatabase {
     return data;
   }
 
-  Future<void> importData(Map<String, Object?> payload) async {
-    final backupVersion = payload['version'];
-    if (backupVersion is! int || backupVersion < 1 || backupVersion > schemaVersion) {
-      throw const FormatException('إصدار النسخة الاحتياطية غير مدعوم');
-    }
-    for (final table in _legacyRequiredTables) {
-      if (payload[table] is! List) {
-        throw FormatException('الجدول $table مفقود أو تالف');
-      }
-    }
-    if (backupVersion >= 3 && payload['customers'] is! List) {
-      throw const FormatException('جدول العملاء مفقود أو تالف');
-    }
+  static BackupPreview inspectBackup(Map<String, Object?> payload) {
+    _validateBackupPayload(payload);
+    final version = payload['version']! as int;
+    final exportedAtRaw = payload['exported_at'] as String?;
+    final exportedAt = exportedAtRaw == null
+        ? null
+        : DateTime.tryParse(exportedAtRaw);
+    final transactions = (payload['sales_transactions']! as List).cast<Map>();
+    final customerCount = version >= 3
+        ? (payload['customers']! as List).length
+        : transactions
+            .map((row) => _normalizeLegacyCustomerName(
+                  row.cast<String, Object?>()['customer_name'] as String?,
+                ).toLowerCase())
+            .toSet()
+            .length;
 
+    return BackupPreview(
+      version: version,
+      exportedAt: exportedAt,
+      packageCount: (payload['packages']! as List).length,
+      productCount: (payload['products']! as List).length,
+      customerCount: customerCount,
+      transactionCount: transactions.length,
+      inventoryLotCount: (payload['inventory_lots']! as List).length,
+      isLegacy: version < schemaVersion || payload['format'] == null,
+    );
+  }
+
+  Future<void> importData(Map<String, Object?> payload) async {
+    _validateBackupPayload(payload);
+    final backupVersion = payload['version']! as int;
     final db = await database;
+
     await db.transaction((txn) async {
       await txn.execute('PRAGMA defer_foreign_keys = ON');
       for (final table in backupTables.reversed) {
@@ -358,10 +428,14 @@ class AppDatabase {
       if (backupVersion >= 3) {
         final rows = (payload['customers']! as List).cast<Map>();
         for (final raw in rows) {
-          final row = raw.cast<String, Object?>();
+          final row = Map<String, Object?>.from(
+            raw.cast<String, Object?>(),
+          );
           await txn.insert('customers', row);
           final name = (row['name'] as String? ?? '').trim().toLowerCase();
-          if (name.isNotEmpty) customerByName[name] = row['id']! as String;
+          if (name.isNotEmpty) {
+            customerByName[name] = row['id']! as String;
+          }
         }
       }
 
@@ -370,10 +444,9 @@ class AppDatabase {
         final now = DateTime.now().toIso8601String();
         for (final raw in salesRows) {
           final row = raw.cast<String, Object?>();
-          final rawName = row['customer_name'] as String?;
-          final name = rawName == null || rawName.trim().isEmpty
-              ? 'عميل سابق'
-              : rawName.trim();
+          final name = _normalizeLegacyCustomerName(
+            row['customer_name'] as String?,
+          );
           final key = name.toLowerCase();
           if (customerByName.containsKey(key)) continue;
           final id = IdGenerator.next('customer');
@@ -391,14 +464,16 @@ class AppDatabase {
       }
 
       for (final raw in salesRows) {
-        final row = raw.cast<String, Object?>();
-        final rawName = row['customer_name'] as String?;
-        final name = rawName == null || rawName.trim().isEmpty
-            ? 'عميل سابق'
-            : rawName.trim();
+        final row = Map<String, Object?>.from(
+          raw.cast<String, Object?>(),
+        );
+        final name = _normalizeLegacyCustomerName(
+          row['customer_name'] as String?,
+        );
         row['customer_name'] = name;
         final existingId = row['customer_id'] as String?;
-        row['customer_id'] = existingId ?? customerByName[name.toLowerCase()];
+        row['customer_id'] =
+            existingId ?? customerByName[name.toLowerCase()];
         await txn.insert('sales_transactions', row);
       }
 
@@ -414,6 +489,28 @@ class AppDatabase {
         }
       }
     });
+  }
+
+  static void _validateBackupPayload(Map<String, Object?> payload) {
+    final format = payload['format'];
+    if (format != null && format != backupFormat) {
+      throw const FormatException('الملف لا ينتمي إلى هذا التطبيق');
+    }
+
+    final backupVersion = payload['version'];
+    if (backupVersion is! int ||
+        backupVersion < 1 ||
+        backupVersion > schemaVersion) {
+      throw const FormatException('إصدار النسخة الاحتياطية غير مدعوم');
+    }
+    for (final table in _legacyRequiredTables) {
+      if (payload[table] is! List) {
+        throw FormatException('الجدول $table مفقود أو تالف');
+      }
+    }
+    if (backupVersion >= 3 && payload['customers'] is! List) {
+      throw const FormatException('جدول العملاء مفقود أو تالف');
+    }
   }
 
   Future<void> resetToDefaults() async {
@@ -435,5 +532,12 @@ class AppDatabase {
       throw const FormatException('ملف JSON غير صالح');
     }
     return decoded;
+  }
+
+  static String _normalizeLegacyCustomerName(String? value) {
+    final normalized = value?.trim().replaceAll(RegExp(r'\s+'), ' ');
+    return normalized == null || normalized.isEmpty
+        ? 'عميل سابق'
+        : normalized;
   }
 }
