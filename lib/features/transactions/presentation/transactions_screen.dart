@@ -69,8 +69,7 @@ class _TransactionsScreenState extends ConsumerState<TransactionsScreen> {
                 final filtered = items.where((item) {
                   if (_query.isEmpty) return true;
                   final customer = item.customerName.toLowerCase();
-                  final product =
-                      (item.productNameSnapshot ?? 'حساب رصيد').toLowerCase();
+                  final product = item.displayProductName.toLowerCase();
                   return customer.contains(_query) || product.contains(_query);
                 }).toList(growable: false);
                 if (filtered.isEmpty) {
@@ -84,8 +83,6 @@ class _TransactionsScreenState extends ConsumerState<TransactionsScreen> {
                     final profitColor = item.cashProfit >= 0
                         ? Theme.of(context).colorScheme.primary
                         : Theme.of(context).colorScheme.error;
-                    final productName =
-                        item.productNameSnapshot ?? 'حساب رصيد';
                     return Card(
                       child: ListTile(
                         contentPadding: const EdgeInsets.symmetric(
@@ -100,7 +97,8 @@ class _TransactionsScreenState extends ConsumerState<TransactionsScreen> {
                           style: const TextStyle(fontWeight: FontWeight.w900),
                         ),
                         subtitle: Text(
-                          '$productName • ${item.requiredCredit} رصيد\n'
+                          '${item.displayProductName} • ${item.requiredCredit} رصيد\n'
+                          'بيع: ${MoneyFormatter.format(item.chargedAmount, useThousands: settings.useThousands)} • '
                           '${AppDateUtils.format(item.createdAt)}',
                         ),
                         isThreeLine: true,
