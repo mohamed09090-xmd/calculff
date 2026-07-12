@@ -55,7 +55,6 @@ class InventoryAdjustmentRepository {
     final lotId = IdGenerator.next('lot');
     final validityMinutes = expiresAt.difference(now).inMinutes;
     final validityHours = math.max(1, (validityMinutes + 59) ~/ 60);
-    final normalizedExpiresAt = now.add(Duration(hours: validityHours));
     final reason = normalizedNote == null || normalizedNote.isEmpty
         ? 'إضافة رصيد يدويًا'
         : 'إضافة رصيد يدويًا: $normalizedNote';
@@ -105,7 +104,7 @@ class InventoryAdjustmentRepository {
         remainingCredit: amount,
         purchaseCost: purchaseCost,
         purchasedAt: now,
-        expiresAt: normalizedExpiresAt,
+        expiresAt: expiresAt,
         status: InventoryLotStatus.active,
         sourceTransactionId: transactionId,
       );
