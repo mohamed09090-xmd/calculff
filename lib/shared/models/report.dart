@@ -2,12 +2,12 @@ enum ReportPeriod { today, last7Days, thisMonth, last30Days, allTime }
 
 extension ReportPeriodX on ReportPeriod {
   String get label => switch (this) {
-        ReportPeriod.today => 'اليوم',
-        ReportPeriod.last7Days => '7 أيام',
-        ReportPeriod.thisMonth => 'هذا الشهر',
-        ReportPeriod.last30Days => '30 يومًا',
-        ReportPeriod.allTime => 'الكل',
-      };
+    ReportPeriod.today => 'اليوم',
+    ReportPeriod.last7Days => '7 أيام',
+    ReportPeriod.thisMonth => 'هذا الشهر',
+    ReportPeriod.last30Days => '30 يومًا',
+    ReportPeriod.allTime => 'الكل',
+  };
 
   ReportWindow window(DateTime now) {
     final dayStart = DateTime(now.year, now.month, now.day);
@@ -22,31 +22,31 @@ extension ReportPeriodX on ReportPeriod {
 
     return switch (this) {
       ReportPeriod.today => ReportWindow(
-          start: dayStart,
-          endExclusive: tomorrow,
-          previousStart: dayStart.subtract(const Duration(days: 1)),
-          previousEndExclusive: dayStart,
-        ),
+        start: dayStart,
+        endExclusive: tomorrow,
+        previousStart: dayStart.subtract(const Duration(days: 1)),
+        previousEndExclusive: dayStart,
+      ),
       ReportPeriod.last7Days => ReportWindow(
-          start: dayStart.subtract(const Duration(days: 6)),
-          endExclusive: tomorrow,
-          previousStart: dayStart.subtract(const Duration(days: 13)),
-          previousEndExclusive: dayStart.subtract(const Duration(days: 6)),
-        ),
+        start: dayStart.subtract(const Duration(days: 6)),
+        endExclusive: tomorrow,
+        previousStart: dayStart.subtract(const Duration(days: 13)),
+        previousEndExclusive: dayStart.subtract(const Duration(days: 6)),
+      ),
       ReportPeriod.thisMonth => ReportWindow(
-          start: monthStart,
-          endExclusive: tomorrow,
-          previousStart: previousMonthStart,
-          previousEndExclusive: previousComparableEnd.isAfter(previousMonthEnd)
-              ? previousMonthEnd
-              : previousComparableEnd,
-        ),
+        start: monthStart,
+        endExclusive: tomorrow,
+        previousStart: previousMonthStart,
+        previousEndExclusive: previousComparableEnd.isAfter(previousMonthEnd)
+            ? previousMonthEnd
+            : previousComparableEnd,
+      ),
       ReportPeriod.last30Days => ReportWindow(
-          start: dayStart.subtract(const Duration(days: 29)),
-          endExclusive: tomorrow,
-          previousStart: dayStart.subtract(const Duration(days: 59)),
-          previousEndExclusive: dayStart.subtract(const Duration(days: 29)),
-        ),
+        start: dayStart.subtract(const Duration(days: 29)),
+        endExclusive: tomorrow,
+        previousStart: dayStart.subtract(const Duration(days: 59)),
+        previousEndExclusive: dayStart.subtract(const Duration(days: 29)),
+      ),
       ReportPeriod.allTime => const ReportWindow(),
     };
   }
@@ -78,13 +78,13 @@ class ReportTotals {
   });
 
   const ReportTotals.zero()
-      : sales = 0,
-        cost = 0,
-        profit = 0,
-        transactionCount = 0,
-        customerCount = 0,
-        requiredCredit = 0,
-        purchasedCredit = 0;
+    : sales = 0,
+      cost = 0,
+      profit = 0,
+      transactionCount = 0,
+      customerCount = 0,
+      requiredCredit = 0,
+      purchasedCredit = 0;
 
   final int sales;
   final int cost;

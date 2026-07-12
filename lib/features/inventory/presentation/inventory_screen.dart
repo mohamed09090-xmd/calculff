@@ -3,13 +3,9 @@ import 'package:flutter/material.dart' hide Text;
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-
-
-
 import '../../../core/localization/localized_text.dart';
 
 import '../../../core/localization/app_translator.dart';
-
 
 import '../../../core/constants/app_strings.dart';
 import '../../../core/utils/date_utils.dart';
@@ -21,7 +17,6 @@ import '../../../shared/models/app_settings.dart';
 import '../../../shared/models/inventory_lot.dart';
 import '../../../shared/models/inventory_movement.dart';
 import '../../../shared/providers/app_providers.dart';
-
 
 enum _LotFilter { all, active, expiring, expired, depleted }
 
@@ -54,8 +49,9 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
         onRetry: () => ref.invalidate(inventoryProvider),
         data: (items) {
           final now = DateTime.now();
-          final warningEnd =
-              now.add(Duration(hours: settings.expiryWarningHours));
+          final warningEnd = now.add(
+            Duration(hours: settings.expiryWarningHours),
+          );
           final active = items
               .where(
                 (lot) =>
@@ -66,19 +62,23 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
           final expired = items
               .where((lot) => lot.status == InventoryLotStatus.expired)
               .fold<int>(0, (sum, lot) => sum + lot.remainingCredit);
-          final filtered = items.where((lot) {
-            return switch (_filter) {
-              _LotFilter.all => true,
-              _LotFilter.active =>
-                lot.status == InventoryLotStatus.active &&
-                    !lot.isExpiredAt(now),
-              _LotFilter.expiring =>
-                lot.status == InventoryLotStatus.active &&
-                    lot.expiresAt.isBefore(warningEnd),
-              _LotFilter.expired => lot.status == InventoryLotStatus.expired,
-              _LotFilter.depleted => lot.status == InventoryLotStatus.depleted,
-            };
-          }).toList(growable: false);
+          final filtered = items
+              .where((lot) {
+                return switch (_filter) {
+                  _LotFilter.all => true,
+                  _LotFilter.active =>
+                    lot.status == InventoryLotStatus.active &&
+                        !lot.isExpiredAt(now),
+                  _LotFilter.expiring =>
+                    lot.status == InventoryLotStatus.active &&
+                        lot.expiresAt.isBefore(warningEnd),
+                  _LotFilter.expired =>
+                    lot.status == InventoryLotStatus.expired,
+                  _LotFilter.depleted =>
+                    lot.status == InventoryLotStatus.depleted,
+                };
+              })
+              .toList(growable: false);
 
           return ListView(
             children: [
@@ -139,8 +139,9 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
                         const SizedBox(width: 10),
                         Expanded(
                           child: OutlinedButton.icon(
-                            onPressed:
-                                active > 0 ? () => _openRemoveCredit(active) : null,
+                            onPressed: active > 0
+                                ? () => _openRemoveCredit(active)
+                                : null,
                             icon: const Icon(Icons.remove_circle_outline),
                             label: const Text('خصم رصيد'),
                           ),
@@ -181,9 +182,7 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
               ),
               const SizedBox(height: 12),
               if (filtered.isEmpty)
-                const SectionCard(
-                  child: Text('لا توجد رزم ضمن هذا التصنيف.'),
-                )
+                const SectionCard(child: Text('لا توجد رزم ضمن هذا التصنيف.'))
               else
                 for (final lot in filtered) ...[
                   _LotCard(
@@ -208,7 +207,9 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
     if (result == null) return;
 
     try {
-      await ref.read(inventoryAdjustmentRepositoryProvider).addCredit(
+      await ref
+          .read(inventoryAdjustmentRepositoryProvider)
+          .addCredit(
             name: result.name,
             amount: result.amount,
             purchaseCost: result.purchaseCost,
@@ -219,17 +220,15 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(
-              'تمت إضافة ${result.amount} رصيد إلى المخزون.',
-            ),
+            content: Text('تمت إضافة ${result.amount} رصيد إلى المخزون.'),
           ),
         );
       }
     } catch (error) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(error.toString())),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(error.toString())));
       }
     }
   }
@@ -242,23 +241,20 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
     if (result == null) return;
 
     try {
-      await ref.read(inventoryAdjustmentRepositoryProvider).removeCredit(
-            amount: result.amount,
-            reason: result.reason,
-          );
+      await ref
+          .read(inventoryAdjustmentRepositoryProvider)
+          .removeCredit(amount: result.amount, reason: result.reason);
       invalidateAppData(ref);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('تم خصم ${result.amount} رصيد وتسجيل السبب.'),
-          ),
+          SnackBar(content: Text('تم خصم ${result.amount} رصيد وتسجيل السبب.')),
         );
       }
     } catch (error) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(error.toString())),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(error.toString())));
       }
     }
   }
@@ -273,43 +269,45 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
         initialChildSize: 0.65,
         minChildSize: 0.35,
         maxChildSize: 0.9,
-        builder: (context, controller) => FutureBuilder<List<InventoryMovement>>(
-          future: ref
-              .read(inventoryAdjustmentRepositoryProvider)
-              .getMovements(lot.id),
-          builder: (context, snapshot) {
-            return Padding(
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Text(
-                    lot.packageNameSnapshot,
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+        builder: (context, controller) =>
+            FutureBuilder<List<InventoryMovement>>(
+              future: ref
+                  .read(inventoryAdjustmentRepositoryProvider)
+                  .getMovements(lot.id),
+              builder: (context, snapshot) {
+                return Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Text(
+                        lot.packageNameSnapshot,
+                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
                           fontWeight: FontWeight.w900,
                         ),
+                      ),
+                      const SizedBox(height: 4),
+                      const Text('سجل الإضافة والاستهلاك والخصم'),
+                      const SizedBox(height: 12),
+                      Expanded(
+                        child: switch (snapshot.connectionState) {
+                          ConnectionState.waiting => const Center(
+                            child: CircularProgressIndicator(),
+                          ),
+                          _ when snapshot.hasError => Center(
+                            child: Text(snapshot.error.toString()),
+                          ),
+                          _ => _MovementList(
+                            movements: snapshot.data ?? const [],
+                            controller: controller,
+                          ),
+                        },
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: 4),
-                  const Text('سجل الإضافة والاستهلاك والخصم'),
-                  const SizedBox(height: 12),
-                  Expanded(
-                    child: switch (snapshot.connectionState) {
-                      ConnectionState.waiting =>
-                        const Center(child: CircularProgressIndicator()),
-                      _ when snapshot.hasError => Center(
-                          child: Text(snapshot.error.toString()),
-                        ),
-                      _ => _MovementList(
-                          movements: snapshot.data ?? const [],
-                          controller: controller,
-                        ),
-                    },
-                  ),
-                ],
-              ),
-            );
-          },
-        ),
+                );
+              },
+            ),
       ),
     );
   }
@@ -329,13 +327,14 @@ class _LotCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final now = DateTime.now();
-    final expired = lot.status == InventoryLotStatus.expired || lot.isExpiredAt(now);
+    final expired =
+        lot.status == InventoryLotStatus.expired || lot.isExpiredAt(now);
     final depleted = lot.status == InventoryLotStatus.depleted;
     final color = expired
         ? Theme.of(context).colorScheme.error
         : depleted
-            ? Theme.of(context).colorScheme.outline
-            : Theme.of(context).colorScheme.primary;
+        ? Theme.of(context).colorScheme.outline
+        : Theme.of(context).colorScheme.primary;
     return InkWell(
       borderRadius: BorderRadius.circular(18),
       onTap: onTap,
@@ -364,7 +363,11 @@ class _LotCard extends StatelessWidget {
                 ],
                 Chip(
                   label: Text(
-                    expired ? 'منتهي' : depleted ? 'مستهلك' : 'فعّال',
+                    expired
+                        ? 'منتهي'
+                        : depleted
+                        ? 'مستهلك'
+                        : 'فعّال',
                   ),
                 ),
               ],
@@ -408,10 +411,7 @@ class _LotCard extends StatelessWidget {
 }
 
 class _MovementList extends StatelessWidget {
-  const _MovementList({
-    required this.movements,
-    required this.controller,
-  });
+  const _MovementList({required this.movements, required this.controller});
 
   final List<InventoryMovement> movements;
   final ScrollController controller;
@@ -432,9 +432,7 @@ class _MovementList extends StatelessWidget {
         return ListTile(
           contentPadding: EdgeInsets.zero,
           leading: CircleAvatar(
-            child: Icon(
-              inbound ? Icons.add : Icons.remove,
-            ),
+            child: Icon(inbound ? Icons.add : Icons.remove),
           ),
           title: Text(
             '${inbound ? '+' : '-'}${movement.amount} رصيد',
@@ -511,12 +509,17 @@ class _AddCreditDialogState extends State<_AddCreditDialog> {
                 controller: _name,
                 maxLength: 80,
                 decoration: InputDecoration(
-                  labelText: AppTranslator.translate(context, 'اسم الرصيد أو مصدره'),
+                  labelText: AppTranslator.translate(
+                    context,
+                    'اسم الرصيد أو مصدره',
+                  ),
                   prefixIcon: Icon(Icons.label_outline),
                 ),
                 validator: (value) {
                   final text = value?.trim() ?? '';
-                  return text.length < 2 ? AppTranslator.translate(context, 'اكتب اسمًا واضحًا') : null;
+                  return text.length < 2
+                      ? AppTranslator.translate(context, 'اكتب اسمًا واضحًا')
+                      : null;
                 },
               ),
               const SizedBox(height: 10),
@@ -529,7 +532,10 @@ class _AddCreditDialogState extends State<_AddCreditDialog> {
               const SizedBox(height: 10),
               _numberField(
                 controller: _cost,
-                label: AppTranslator.translate(context, 'تكلفة شراء الرصيد بالدينار'),
+                label: AppTranslator.translate(
+                  context,
+                  'تكلفة شراء الرصيد بالدينار',
+                ),
                 icon: Icons.payments_outlined,
                 allowZero: true,
               ),
@@ -549,7 +555,10 @@ class _AddCreditDialogState extends State<_AddCreditDialog> {
                 maxLines: 3,
                 maxLength: 160,
                 decoration: InputDecoration(
-                  labelText: AppTranslator.translate(context, 'سبب أو ملاحظة (اختياري)'),
+                  labelText: AppTranslator.translate(
+                    context,
+                    'سبب أو ملاحظة (اختياري)',
+                  ),
                   alignLabelWithHint: true,
                 ),
               ),
@@ -562,10 +571,7 @@ class _AddCreditDialogState extends State<_AddCreditDialog> {
           onPressed: () => Navigator.pop(context),
           child: const Text('إلغاء'),
         ),
-        FilledButton(
-          onPressed: _submit,
-          child: const Text('إضافة'),
-        ),
+        FilledButton(onPressed: _submit, child: const Text('إضافة')),
       ],
     );
   }
@@ -580,10 +586,7 @@ class _AddCreditDialogState extends State<_AddCreditDialog> {
       controller: controller,
       keyboardType: TextInputType.number,
       inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-      decoration: InputDecoration(
-        labelText: label,
-        prefixIcon: Icon(icon),
-      ),
+      decoration: InputDecoration(labelText: label, prefixIcon: Icon(icon)),
       validator: (value) {
         final parsed = int.tryParse(value ?? '');
         if (parsed == null || parsed < 0 || (!allowZero && parsed == 0)) {
@@ -690,7 +693,10 @@ class _RemoveCreditDialogState extends State<_RemoveCreditDialog> {
                 keyboardType: TextInputType.number,
                 inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                 decoration: InputDecoration(
-                  labelText: AppTranslator.translate(context, 'كمية الرصيد المراد خصمها'),
+                  labelText: AppTranslator.translate(
+                    context,
+                    'كمية الرصيد المراد خصمها',
+                  ),
                   prefixIcon: Icon(Icons.remove_circle_outline),
                 ),
                 validator: (value) {
@@ -711,13 +717,21 @@ class _RemoveCreditDialogState extends State<_RemoveCreditDialog> {
                 maxLines: 3,
                 maxLength: 160,
                 decoration: InputDecoration(
-                  labelText: AppTranslator.translate(context, 'سبب الخصم أو الحذف'),
-                  hintText: AppTranslator.translate(context, 'مثال: تصحيح خطأ، رصيد تالف، استعمال خارجي'),
+                  labelText: AppTranslator.translate(
+                    context,
+                    'سبب الخصم أو الحذف',
+                  ),
+                  hintText: AppTranslator.translate(
+                    context,
+                    'مثال: تصحيح خطأ، رصيد تالف، استعمال خارجي',
+                  ),
                   alignLabelWithHint: true,
                 ),
                 validator: (value) {
                   final text = value?.trim() ?? '';
-                  return text.length < 2 ? AppTranslator.translate(context, 'اكتب سبب الخصم') : null;
+                  return text.length < 2
+                      ? AppTranslator.translate(context, 'اكتب سبب الخصم')
+                      : null;
                 },
               ),
               const Text(
@@ -733,10 +747,7 @@ class _RemoveCreditDialogState extends State<_RemoveCreditDialog> {
           onPressed: () => Navigator.pop(context),
           child: const Text('إلغاء'),
         ),
-        FilledButton(
-          onPressed: _submit,
-          child: const Text('تأكيد الخصم'),
-        ),
+        FilledButton(onPressed: _submit, child: const Text('تأكيد الخصم')),
       ],
     );
   }

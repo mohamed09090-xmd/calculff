@@ -49,37 +49,39 @@ class SalesTransaction {
   final int creditCostUsed;
   final int cashProfit;
 
-  String get displayProductName => productNameSnapshot ??
+  String get displayProductName =>
+      productNameSnapshot ??
       (mode == CalculationMode.credit ? 'بيع رصيد مباشر' : 'عملية رصيد');
 
   Map<String, Object?> toMap() => {
-        'id': id,
-        'created_at': createdAt.toIso8601String(),
-        'customer_id': customerId,
-        'customer_name': customerName,
-        'mode': mode.name,
-        'product_id': productId,
-        'product_name_snapshot': productNameSnapshot,
-        'product_description_snapshot': productDescriptionSnapshot,
-        'input_value': inputValue,
-        'use_inventory': useInventory ? 1 : 0,
-        'units': units,
-        'gems': gems,
-        'customer_paid': customerPaid,
-        'charged_amount': chargedAmount,
-        'customer_change': customerChange,
-        'required_credit': requiredCredit,
-        'inventory_credit_used': inventoryCreditUsed,
-        'additional_credit_required': additionalCreditRequired,
-        'purchased_credit': purchasedCredit,
-        'new_packages_cost': newPackagesCost,
-        'credit_cost_used': creditCostUsed,
-        'cash_profit': cashProfit,
-      };
+    'id': id,
+    'created_at': createdAt.toIso8601String(),
+    'customer_id': customerId,
+    'customer_name': customerName,
+    'mode': mode.name,
+    'product_id': productId,
+    'product_name_snapshot': productNameSnapshot,
+    'product_description_snapshot': productDescriptionSnapshot,
+    'input_value': inputValue,
+    'use_inventory': useInventory ? 1 : 0,
+    'units': units,
+    'gems': gems,
+    'customer_paid': customerPaid,
+    'charged_amount': chargedAmount,
+    'customer_change': customerChange,
+    'required_credit': requiredCredit,
+    'inventory_credit_used': inventoryCreditUsed,
+    'additional_credit_required': additionalCreditRequired,
+    'purchased_credit': purchasedCredit,
+    'new_packages_cost': newPackagesCost,
+    'credit_cost_used': creditCostUsed,
+    'cash_profit': cashProfit,
+  };
 
   factory SalesTransaction.fromMap(Map<String, Object?> map) {
     final rawCustomerName = map['customer_name'] as String?;
-    final customerName = rawCustomerName == null || rawCustomerName.trim().isEmpty
+    final customerName =
+        rawCustomerName == null || rawCustomerName.trim().isEmpty
         ? 'عميل سابق'
         : rawCustomerName.trim();
     final chargedAmount = (map['charged_amount'] as num).toInt();
@@ -105,11 +107,12 @@ class SalesTransaction {
       customerChange: (map['customer_change'] as num).toInt(),
       requiredCredit: (map['required_credit'] as num).toInt(),
       inventoryCreditUsed: (map['inventory_credit_used'] as num).toInt(),
-      additionalCreditRequired:
-          (map['additional_credit_required'] as num).toInt(),
+      additionalCreditRequired: (map['additional_credit_required'] as num)
+          .toInt(),
       purchasedCredit: (map['purchased_credit'] as num).toInt(),
       newPackagesCost: (map['new_packages_cost'] as num).toInt(),
-      creditCostUsed: rawCreditCost == null ||
+      creditCostUsed:
+          rawCreditCost == null ||
               (rawCreditCost == 0 && chargedAmount != cashProfit)
           ? chargedAmount - cashProfit
           : rawCreditCost,

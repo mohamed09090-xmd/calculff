@@ -60,7 +60,8 @@ class Text extends material.StatelessWidget {
 
   @override
   material.Widget build(material.BuildContext context) {
-    final effectiveScaler = textScaler ??
+    final effectiveScaler =
+        textScaler ??
         (textScaleFactor == null
             ? null
             : material.TextScaler.linear(textScaleFactor!));

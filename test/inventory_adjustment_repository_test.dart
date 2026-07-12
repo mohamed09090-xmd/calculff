@@ -29,8 +29,9 @@ void main() {
   });
 
   test('يضيف رصيدًا يدويًا مع التكلفة والانتهاء وسجل الحركة', () async {
-    final rawExpiry =
-        DateTime.now().add(const Duration(days: 2, hours: 3, minutes: 17));
+    final rawExpiry = DateTime.now().add(
+      const Duration(days: 2, hours: 3, minutes: 17),
+    );
     final expiresAt = DateTime(
       rawExpiry.year,
       rawExpiry.month,
@@ -62,11 +63,15 @@ void main() {
     expect(lots.single['remaining_credit'], 500);
     expect(lots.single['purchase_cost'], 600);
     expect(DateTime.parse(lots.single['expires_at']! as String), expiresAt);
-    expect(transactions.single['product_id'],
-        InventoryAdjustmentRepository.additionProductId);
+    expect(
+      transactions.single['product_id'],
+      InventoryAdjustmentRepository.additionProductId,
+    );
     expect(transactions.single['purchased_credit'], 500);
 
-    final movements = await repository.getMovements(lots.single['id']! as String);
+    final movements = await repository.getMovements(
+      lots.single['id']! as String,
+    );
     expect(movements, hasLength(1));
     expect(movements.single.direction, InventoryMovementDirection.inbound);
     expect(movements.single.amount, 500);
@@ -104,14 +109,17 @@ void main() {
       where: 'id = ?',
       whereArgs: [removalId],
     );
-    expect(removals.single['product_id'],
-        InventoryAdjustmentRepository.removalProductId);
+    expect(
+      removals.single['product_id'],
+      InventoryAdjustmentRepository.removalProductId,
+    );
     expect(removals.single['inventory_credit_used'], 620);
     expect(removals.single['credit_cost_used'], 840);
     expect(removals.single['cash_profit'], -840);
 
-    final firstMovements =
-        await repository.getMovements(lots[0]['id']! as String);
+    final firstMovements = await repository.getMovements(
+      lots[0]['id']! as String,
+    );
     expect(
       firstMovements.any(
         (movement) =>
@@ -131,10 +139,7 @@ void main() {
     );
 
     await expectLater(
-      repository.removeCredit(
-        amount: 101,
-        reason: 'خصم زائد',
-      ),
+      repository.removeCredit(amount: 101, reason: 'خصم زائد'),
       throwsA(isA<StateError>()),
     );
   });

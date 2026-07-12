@@ -7,13 +7,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:share_plus/share_plus.dart';
 
-
-
-
 import '../../../core/localization/localized_text.dart';
 
 import '../../../core/localization/app_translator.dart';
-
 
 import '../../../core/utils/money_formatter.dart';
 import '../../../core/widgets/app_shell.dart';
@@ -28,10 +24,7 @@ import 'report_providers.dart';
 enum _ReportExportAction { share, save }
 
 class _ReportExportRequest {
-  const _ReportExportRequest({
-    required this.format,
-    required this.action,
-  });
+  const _ReportExportRequest({required this.format, required this.action});
 
   final ReportExportFormat format;
   final _ReportExportAction action;
@@ -62,10 +55,7 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
           tooltip: AppTranslator.translate(context, 'مشاركة أو حفظ التقرير'),
           onPressed: _exporting || report.valueOrNull == null
               ? null
-              : () => _openExportSheet(
-                    report.valueOrNull!,
-                    settings,
-                  ),
+              : () => _openExportSheet(report.valueOrNull!, settings),
           icon: _exporting
               ? const SizedBox.square(
                   dimension: 20,
@@ -107,10 +97,7 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
                   ref.invalidate(reportProvider(_period));
                   await ref.read(reportProvider(_period).future);
                 },
-                child: _ReportContent(
-                  report: data,
-                  settings: settings,
-                ),
+                child: _ReportContent(report: data, settings: settings),
               ),
             ),
           ),
@@ -159,7 +146,8 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
         await Share.shareXFiles(
           [XFile(result.file.path, mimeType: result.format.mimeType)],
           subject: shareSubject,
-          text: 'تقرير ${report.period.label} - '
+          text:
+              'تقرير ${report.period.label} - '
               '${MoneyFormatter.format(report.current.profit, useThousands: settings.useThousands)} ربح',
         );
         return;
@@ -175,15 +163,13 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
       await result.file.copy(savedPath);
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('تم حفظ التقرير بصيغة ${result.format.label}.'),
-        ),
+        SnackBar(content: Text('تم حفظ التقرير بصيغة ${result.format.label}.')),
       );
     } catch (error) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('تعذر تصدير التقرير: $error')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('تعذر تصدير التقرير: $error')));
       }
     } finally {
       if (mounted) setState(() => _exporting = false);
@@ -212,14 +198,12 @@ class _ReportExportSheetState extends State<_ReportExportSheet> {
           children: [
             Text(
               'تصدير التقرير',
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.w900,
-                  ),
+              style: Theme.of(
+                context,
+              ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900),
             ),
             const SizedBox(height: 6),
-            const Text(
-              'اختر الصيغة، ثم شارك التقرير أو احفظ نسخة في الجهاز.',
-            ),
+            const Text('اختر الصيغة، ثم شارك التقرير أو احفظ نسخة في الجهاز.'),
             const SizedBox(height: 16),
             for (final format in ReportExportFormat.values) ...[
               _FormatTile(
@@ -308,10 +292,12 @@ class _FormatTile extends StatelessWidget {
         child: Row(
           children: [
             CircleAvatar(
-              backgroundColor:
-                  selected ? scheme.primary : scheme.surfaceContainer,
-              foregroundColor:
-                  selected ? scheme.onPrimary : scheme.onSurfaceVariant,
+              backgroundColor: selected
+                  ? scheme.primary
+                  : scheme.surfaceContainer,
+              foregroundColor: selected
+                  ? scheme.onPrimary
+                  : scheme.onSurfaceVariant,
               child: Icon(format.icon),
             ),
             const SizedBox(width: 12),
@@ -354,20 +340,15 @@ class _FormatTile extends StatelessWidget {
 }
 
 class _ReportContent extends StatelessWidget {
-  const _ReportContent({
-    required this.report,
-    required this.settings,
-  });
+  const _ReportContent({required this.report, required this.settings});
 
   final ReportSummary report;
   final AppSettings settings;
 
   @override
   Widget build(BuildContext context) {
-    String money(num value) => MoneyFormatter.format(
-          value,
-          useThousands: settings.useThousands,
-        );
+    String money(num value) =>
+        MoneyFormatter.format(value, useThousands: settings.useThousands);
 
     return ListView(
       physics: const AlwaysScrollableScrollPhysics(),
@@ -515,8 +496,8 @@ class _MetricCard extends StatelessWidget {
     final foreground = emphasis
         ? scheme.onPrimaryContainer
         : negative
-            ? scheme.error
-            : scheme.onSurface;
+        ? scheme.error
+        : scheme.onSurface;
     final change = changePercent;
     final positive = change != null && change >= 0;
 
@@ -562,8 +543,8 @@ class _MetricCard extends StatelessWidget {
                       color: emphasis
                           ? scheme.onPrimaryContainer
                           : positive
-                              ? scheme.primary
-                              : scheme.error,
+                          ? scheme.primary
+                          : scheme.error,
                     ),
                     const SizedBox(width: 3),
                     Expanded(
@@ -577,8 +558,8 @@ class _MetricCard extends StatelessWidget {
                           color: emphasis
                               ? scheme.onPrimaryContainer
                               : positive
-                                  ? scheme.primary
-                                  : scheme.error,
+                              ? scheme.primary
+                              : scheme.error,
                         ),
                       ),
                     ),
@@ -627,10 +608,7 @@ class _ReportBarChart extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final maximum = points.fold<int>(1, (value, point) {
-      return math.max(
-        value,
-        math.max(point.sales.abs(), point.profit.abs()),
-      );
+      return math.max(value, math.max(point.sales.abs(), point.profit.abs()));
     });
     final itemWidth = points.length == 1 ? 180.0 : 58.0;
     final chartWidth = math.max(
@@ -663,7 +641,8 @@ class _ReportBarChart extends StatelessWidget {
                   SizedBox(
                     width: itemWidth,
                     child: Tooltip(
-                      message: '${point.label}\n'
+                      message:
+                          '${point.label}\n'
                           'المبيعات: ${money(point.sales)}\n'
                           'الربح: ${money(point.profit)}',
                       child: Column(
@@ -710,11 +689,7 @@ class _ReportBarChart extends StatelessWidget {
 }
 
 class _Bar extends StatelessWidget {
-  const _Bar({
-    required this.value,
-    required this.maximum,
-    required this.color,
-  });
+  const _Bar({required this.value, required this.maximum, required this.color});
 
   final int value;
   final int maximum;

@@ -48,14 +48,14 @@ class Customer {
   }
 
   Map<String, Object?> toMap() => {
-        'id': id,
-        'name': name,
-        'phone': _nullableText(phone),
-        'notes': _nullableText(notes),
-        'is_active': isActive ? 1 : 0,
-        'created_at': createdAt.toIso8601String(),
-        'updated_at': updatedAt.toIso8601String(),
-      };
+    'id': id,
+    'name': name,
+    'phone': _nullableText(phone),
+    'notes': _nullableText(notes),
+    'is_active': isActive ? 1 : 0,
+    'created_at': createdAt.toIso8601String(),
+    'updated_at': updatedAt.toIso8601String(),
+  };
 
   factory Customer.fromMap(Map<String, Object?> map) {
     final lastTransaction = map['last_transaction_at'] as String?;

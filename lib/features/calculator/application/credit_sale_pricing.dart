@@ -2,8 +2,8 @@ class CreditSalePricing {
   const CreditSalePricing({
     required this.referenceCredit,
     required this.referencePriceDzd,
-  })  : assert(referenceCredit > 0),
-        assert(referencePriceDzd > 0);
+  }) : assert(referenceCredit > 0),
+       assert(referencePriceDzd > 0);
 
   final int referenceCredit;
   final int referencePriceDzd;

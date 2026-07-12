@@ -3,10 +3,6 @@ import 'package:flutter/material.dart' hide Text;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-
-
-
-
 import '../localization/localized_text.dart';
 
 import '../../shared/providers/app_language_provider.dart';
@@ -216,8 +212,9 @@ class _AppDrawerState extends State<_AppDrawer>
               child: Transform.translate(
                 offset: Offset((isRtl ? 22 : -22) * (1 - value), 0),
                 child: Transform.scale(
-                  alignment:
-                      isRtl ? Alignment.centerRight : Alignment.centerLeft,
+                  alignment: isRtl
+                      ? Alignment.centerRight
+                      : Alignment.centerLeft,
                   scale: 0.94 + (0.06 * value),
                   child: child,
                 ),
@@ -267,7 +264,8 @@ class _AppDrawerState extends State<_AppDrawer>
         ),
         Consumer(
           builder: (context, ref, child) {
-            final language = ref.watch(appLanguageProvider).valueOrNull ??
+            final language =
+                ref.watch(appLanguageProvider).valueOrNull ??
                 AppLanguagePreference.arabic;
             final targetIsFrench = language == AppLanguagePreference.arabic;
             return Padding(
@@ -364,8 +362,10 @@ class _AnimatedDrawerTileState extends State<_AnimatedDrawerTile> {
               onTapDown: (_) => setState(() => _pressed = true),
               onTapCancel: () => setState(() => _pressed = false),
               child: Padding(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 13,
+                ),
                 child: Row(
                   children: [
                     Icon(widget.icon),

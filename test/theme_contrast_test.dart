@@ -5,31 +5,16 @@ import 'package:game_credit_profit_manager/shared/providers/theme_mode_provider.
 
 void main() {
   test('سمة الهاتف هي الخيار الافتراضي', () {
-    expect(
-      AppThemeModePreference.system.themeMode,
-      ThemeMode.system,
-    );
-    expect(
-      AppThemeModePreference.system.isDark(Brightness.dark),
-      isTrue,
-    );
-    expect(
-      AppThemeModePreference.system.isDark(Brightness.light),
-      isFalse,
-    );
+    expect(AppThemeModePreference.system.themeMode, ThemeMode.system);
+    expect(AppThemeModePreference.system.isDark(Brightness.dark), isTrue);
+    expect(AppThemeModePreference.system.isDark(Brightness.light), isFalse);
   });
 
   test('الاختيار اليدوي يتجاوز سمة الهاتف', () {
     expect(AppThemeModePreference.dark.themeMode, ThemeMode.dark);
     expect(AppThemeModePreference.light.themeMode, ThemeMode.light);
-    expect(
-      AppThemeModePreference.dark.isDark(Brightness.light),
-      isTrue,
-    );
-    expect(
-      AppThemeModePreference.light.isDark(Brightness.dark),
-      isFalse,
-    );
+    expect(AppThemeModePreference.dark.isDark(Brightness.light), isTrue);
+    expect(AppThemeModePreference.light.isDark(Brightness.dark), isFalse);
   });
 
   test('نص الأزرار الأساسية واضح فوق الخلفية الخضراء في الوضع الداكن', () {

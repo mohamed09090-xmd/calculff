@@ -55,10 +55,7 @@ class CalculationResult {
   double get marginPercent =>
       chargedAmount == 0 ? 0 : (cashProfit / chargedAmount) * 100;
 
-  CalculationResult copyWith({
-    int? creditCostUsed,
-    int? cashProfit,
-  }) {
+  CalculationResult copyWith({int? creditCostUsed, int? cashProfit}) {
     return CalculationResult(
       request: request,
       units: units,

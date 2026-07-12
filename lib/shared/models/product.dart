@@ -37,33 +37,31 @@ class Product {
     String? description,
     bool clearDescription = false,
     bool? isActive,
-  }) =>
-      Product(
-        id: id,
-        name: name ?? this.name,
-        type: type ?? this.type,
-        gemsPerUnit: gemsPerUnit ?? this.gemsPerUnit,
-        creditPerUnit: creditPerUnit ?? this.creditPerUnit,
-        salePriceDzd: salePriceDzd ?? this.salePriceDzd,
-        description:
-            clearDescription ? null : description ?? this.description,
-        isActive: isActive ?? this.isActive,
-        createdAt: createdAt,
-        updatedAt: DateTime.now(),
-      );
+  }) => Product(
+    id: id,
+    name: name ?? this.name,
+    type: type ?? this.type,
+    gemsPerUnit: gemsPerUnit ?? this.gemsPerUnit,
+    creditPerUnit: creditPerUnit ?? this.creditPerUnit,
+    salePriceDzd: salePriceDzd ?? this.salePriceDzd,
+    description: clearDescription ? null : description ?? this.description,
+    isActive: isActive ?? this.isActive,
+    createdAt: createdAt,
+    updatedAt: DateTime.now(),
+  );
 
   Map<String, Object?> toMap() => {
-        'id': id,
-        'name': name,
-        'product_type': type.name,
-        'gems_per_unit': gemsPerUnit,
-        'credit_per_unit': creditPerUnit,
-        'sale_price_dzd': salePriceDzd,
-        'description': description,
-        'is_active': isActive ? 1 : 0,
-        'created_at': (createdAt ?? DateTime.now()).toIso8601String(),
-        'updated_at': (updatedAt ?? DateTime.now()).toIso8601String(),
-      };
+    'id': id,
+    'name': name,
+    'product_type': type.name,
+    'gems_per_unit': gemsPerUnit,
+    'credit_per_unit': creditPerUnit,
+    'sale_price_dzd': salePriceDzd,
+    'description': description,
+    'is_active': isActive ? 1 : 0,
+    'created_at': (createdAt ?? DateTime.now()).toIso8601String(),
+    'updated_at': (updatedAt ?? DateTime.now()).toIso8601String(),
+  };
 
   factory Product.fromMap(Map<String, Object?> map) {
     final rawType = map['product_type'] as String?;

@@ -5,12 +5,7 @@ import 'dart:math';
 import 'package:crypto/crypto.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
-enum PatternVerificationStatus {
-  success,
-  invalid,
-  lockedOut,
-  notEnabled,
-}
+enum PatternVerificationStatus { success, invalid, lockedOut, notEnabled }
 
 class PatternVerificationResult {
   const PatternVerificationResult({
@@ -39,10 +34,11 @@ abstract interface class SecureKeyValueStore {
 
 class FlutterSecureKeyValueStore implements SecureKeyValueStore {
   FlutterSecureKeyValueStore({FlutterSecureStorage? storage})
-      : _storage = storage ??
-            const FlutterSecureStorage(
-              aOptions: AndroidOptions(migrateWithBackup: true),
-            );
+    : _storage =
+          storage ??
+          const FlutterSecureStorage(
+            aOptions: AndroidOptions(migrateWithBackup: true),
+          );
 
   final FlutterSecureStorage _storage;
 
@@ -148,11 +144,11 @@ class PatternSecret {
   final int iterations;
 
   Map<String, Object?> toJson() => {
-        'version': version,
-        'salt': salt,
-        'hash': hash,
-        'iterations': iterations,
-      };
+    'version': version,
+    'salt': salt,
+    'hash': hash,
+    'iterations': iterations,
+  };
 
   factory PatternSecret.fromJson(Map<String, Object?> json) {
     final version = json['version'];
@@ -177,11 +173,9 @@ class PatternSecret {
 }
 
 class PatternLockService {
-  PatternLockService({
-    SecureKeyValueStore? store,
-    PatternSecretCodec? codec,
-  })  : _store = store ?? FlutterSecureKeyValueStore(),
-        _codec = codec ?? const PatternSecretCodec();
+  PatternLockService({SecureKeyValueStore? store, PatternSecretCodec? codec})
+    : _store = store ?? FlutterSecureKeyValueStore(),
+      _codec = codec ?? const PatternSecretCodec();
 
   static const _enabledKey = 'app_lock.pattern.enabled.v1';
   static const _secretKey = 'app_lock.pattern.secret.v1';
@@ -287,10 +281,7 @@ class PatternLockService {
     }
 
     final lockedUntil = DateTime.now().add(lockoutDuration);
-    await _store.write(
-      _lockedUntilKey,
-      lockedUntil.toIso8601String(),
-    );
+    await _store.write(_lockedUntilKey, lockedUntil.toIso8601String());
     return PatternVerificationResult(
       status: PatternVerificationStatus.lockedOut,
       failedAttempts: failures,

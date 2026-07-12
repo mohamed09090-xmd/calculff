@@ -13,22 +13,15 @@ class AppLockController extends AsyncNotifier<AppLockState> {
   @override
   Future<AppLockState> build() async {
     final enabled = await _service.isEnabled();
-    return AppLockState(
-      enabled: enabled,
-      locked: enabled,
-    );
+    return AppLockState(enabled: enabled, locked: enabled);
   }
 
   Future<void> enablePattern(List<int> pattern) async {
     await _service.enable(pattern);
-    state = const AsyncData(
-      AppLockState(enabled: true, locked: false),
-    );
+    state = const AsyncData(AppLockState(enabled: true, locked: false));
   }
 
-  Future<PatternVerificationResult> verifyAndUnlock(
-    List<int> pattern,
-  ) async {
+  Future<PatternVerificationResult> verifyAndUnlock(List<int> pattern) async {
     final result = await _service.verify(pattern);
     final current = state.valueOrNull ?? const AppLockState.disabled();
     state = AsyncData(
@@ -36,8 +29,7 @@ class AppLockController extends AsyncNotifier<AppLockState> {
         locked: result.status != PatternVerificationStatus.success,
         failedAttempts: result.failedAttempts,
         lockedUntil: result.lockedUntil,
-        clearLockedUntil:
-            result.status == PatternVerificationStatus.success,
+        clearLockedUntil: result.status == PatternVerificationStatus.success,
       ),
     );
     return result;
@@ -70,9 +62,7 @@ class AppLockController extends AsyncNotifier<AppLockState> {
       newPattern: newPattern,
     );
     if (result.status == PatternVerificationStatus.success) {
-      state = const AsyncData(
-        AppLockState(enabled: true, locked: false),
-      );
+      state = const AsyncData(AppLockState(enabled: true, locked: false));
       return result;
     }
     final current = state.valueOrNull ?? const AppLockState.disabled();
@@ -97,7 +87,6 @@ class AppLockController extends AsyncNotifier<AppLockState> {
   }
 }
 
-final appLockProvider =
-    AsyncNotifierProvider<AppLockController, AppLockState>(
+final appLockProvider = AsyncNotifierProvider<AppLockController, AppLockState>(
   AppLockController.new,
 );

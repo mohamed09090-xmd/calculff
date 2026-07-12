@@ -3,10 +3,6 @@ import 'package:flutter/material.dart' hide Text;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-
-
-
-
 import '../../../core/localization/localized_text.dart';
 
 import '../../../core/widgets/app_shell.dart';
@@ -189,7 +185,9 @@ class _ConfirmTransactionScreenState
     FocusScope.of(context).unfocus();
     setState(() => _saving = true);
     try {
-      final id = await ref.read(appRepositoryProvider).saveTransaction(
+      final id = await ref
+          .read(appRepositoryProvider)
+          .saveTransaction(
             result,
             customerName: _customerNameController.text,
             customerId: _selectedCustomerId,
@@ -199,9 +197,9 @@ class _ConfirmTransactionScreenState
       if (mounted) context.go('/transactions/$id?undo=1');
     } catch (error) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(error.toString())),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(error.toString())));
       }
     } finally {
       if (mounted) setState(() => _saving = false);

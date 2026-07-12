@@ -186,10 +186,7 @@ class _PatternPainter extends CustomPainter {
 
     if (selected.length > 1) {
       final path = Path()
-        ..moveTo(
-          centers[selected.first].dx,
-          centers[selected.first].dy,
-        );
+        ..moveTo(centers[selected.first].dx, centers[selected.first].dy);
       for (final node in selected.skip(1)) {
         path.lineTo(centers[node].dx, centers[node].dy);
       }
@@ -204,9 +201,7 @@ class _PatternPainter extends CustomPainter {
     for (var node = 0; node < 9; node++) {
       final isSelected = selected.contains(node);
       final outerPaint = Paint()
-        ..color = isSelected
-            ? lineColor.withValues(alpha: 0.22)
-            : surfaceColor
+        ..color = isSelected ? lineColor.withValues(alpha: 0.22) : surfaceColor
         ..style = PaintingStyle.fill;
       final borderPaint = Paint()
         ..color = isSelected ? lineColor : idleColor
@@ -238,8 +233,5 @@ Offset _nodeCenter(int node, double size) {
   final cell = size / 3;
   final row = node ~/ 3;
   final column = node % 3;
-  return Offset(
-    (column * cell) + (cell / 2),
-    (row * cell) + (cell / 2),
-  );
+  return Offset((column * cell) + (cell / 2), (row * cell) + (cell / 2));
 }

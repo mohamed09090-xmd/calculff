@@ -4,13 +4,9 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-
-
-
 import '../../../core/localization/localized_text.dart';
 
 import '../../../core/localization/app_translator.dart';
-
 
 import '../../../core/constants/app_strings.dart';
 import '../../../core/utils/money_formatter.dart';
@@ -32,11 +28,12 @@ class SettingsScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final settings = ref.watch(settingsProvider);
     final appLock = ref.watch(appLockProvider);
-    final themePreference = ref.watch(themeModeProvider).valueOrNull ??
+    final themePreference =
+        ref.watch(themeModeProvider).valueOrNull ??
         AppThemeModePreference.system;
     final languagePreference =
         ref.watch(appLanguageProvider).valueOrNull ??
-            AppLanguagePreference.arabic;
+        AppLanguagePreference.arabic;
     final platformBrightness = MediaQuery.platformBrightnessOf(context);
 
     return AppShell(
@@ -70,12 +67,9 @@ class SettingsScreen extends ConsumerWidget {
                 ),
                 data: (lock) => _SecuritySettings(
                   lock: lock,
-                  onToggle: (enabled) =>
-                      _togglePatternLock(context, enabled),
-                  onChange: () => _openPatternFlow(
-                    context,
-                    PatternManagementMode.change,
-                  ),
+                  onToggle: (enabled) => _togglePatternLock(context, enabled),
+                  onChange: () =>
+                      _openPatternFlow(context, PatternManagementMode.change),
                   onLockNow: () {
                     ref.read(appLockProvider.notifier).lock();
                   },
@@ -120,8 +114,7 @@ class SettingsScreen extends ConsumerWidget {
                     subtitle: const Text(
                       'عند تفعيله، يفتح التطبيق داكنًا أو فاتحًا حسب إعداد الهاتف.',
                     ),
-                    value:
-                        themePreference == AppThemeModePreference.system,
+                    value: themePreference == AppThemeModePreference.system,
                     onChanged: (value) => ref
                         .read(themeModeProvider.notifier)
                         .followSystem(value, platformBrightness),
@@ -136,9 +129,8 @@ class SettingsScreen extends ConsumerWidget {
                           : 'تغيير مظهر التطبيق فقط',
                     ),
                     value: themePreference.isDark(platformBrightness),
-                    onChanged: (value) => ref
-                        .read(themeModeProvider.notifier)
-                        .setDarkMode(value),
+                    onChanged: (value) =>
+                        ref.read(themeModeProvider.notifier).setDarkMode(value),
                   ),
                   const Divider(),
                   SwitchListTile(
@@ -211,15 +203,10 @@ class SettingsScreen extends ConsumerWidget {
     );
   }
 
-  Future<void> _togglePatternLock(
-    BuildContext context,
-    bool enabled,
-  ) async {
+  Future<void> _togglePatternLock(BuildContext context, bool enabled) async {
     await _openPatternFlow(
       context,
-      enabled
-          ? PatternManagementMode.enable
-          : PatternManagementMode.disable,
+      enabled ? PatternManagementMode.enable : PatternManagementMode.disable,
     );
   }
 
@@ -236,13 +223,11 @@ class SettingsScreen extends ConsumerWidget {
     if (changed == true && context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(
-            switch (mode) {
-              PatternManagementMode.enable => 'تم تفعيل قفل التطبيق بالنمط.',
-              PatternManagementMode.change => 'تم تغيير نمط القفل.',
-              PatternManagementMode.disable => 'تم إيقاف قفل التطبيق.',
-            },
-          ),
+          content: Text(switch (mode) {
+            PatternManagementMode.enable => 'تم تفعيل قفل التطبيق بالنمط.',
+            PatternManagementMode.change => 'تم تغيير نمط القفل.',
+            PatternManagementMode.disable => 'تم إيقاف قفل التطبيق.',
+          }),
         ),
       );
     }
@@ -284,7 +269,10 @@ class SettingsScreen extends ConsumerWidget {
               keyboardType: TextInputType.number,
               inputFormatters: [FilteringTextInputFormatter.digitsOnly],
               decoration: InputDecoration(
-                labelText: AppTranslator.translate(context, 'سعر البيع المرجعي بالدينار'),
+                labelText: AppTranslator.translate(
+                  context,
+                  'سعر البيع المرجعي بالدينار',
+                ),
                 prefixIcon: Icon(Icons.payments_outlined),
               ),
             ),
@@ -304,7 +292,10 @@ class SettingsScreen extends ConsumerWidget {
             onPressed: () {
               final credit = int.tryParse(creditController.text);
               final price = int.tryParse(priceController.text);
-              if (credit == null || credit <= 0 || price == null || price <= 0) {
+              if (credit == null ||
+                  credit <= 0 ||
+                  price == null ||
+                  price <= 0) {
                 return;
               }
               Navigator.pop(context, (credit, price));
@@ -344,7 +335,10 @@ class SettingsScreen extends ConsumerWidget {
           keyboardType: TextInputType.number,
           inputFormatters: [FilteringTextInputFormatter.digitsOnly],
           decoration: InputDecoration(
-            labelText: AppTranslator.translate(context, 'عدد الساعات قبل الانتهاء'),
+            labelText: AppTranslator.translate(
+              context,
+              'عدد الساعات قبل الانتهاء',
+            ),
           ),
         ),
         actions: [
@@ -366,10 +360,7 @@ class SettingsScreen extends ConsumerWidget {
     );
     controller.dispose();
     if (hours != null) {
-      await _update(
-        ref,
-        settings.copyWith(expiryWarningHours: hours),
-      );
+      await _update(ref, settings.copyWith(expiryWarningHours: hours));
     }
   }
 }

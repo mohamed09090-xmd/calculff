@@ -51,8 +51,9 @@ void main() {
     );
     await repository.saveProduct(product);
 
-    final saved = (await repository.getProducts())
-        .firstWhere((item) => item.id == product.id);
+    final saved = (await repository.getProducts()).firstWhere(
+      (item) => item.id == product.id,
+    );
     expect(saved.type, ProductType.direct);
     expect(saved.creditPerUnit, 600);
     expect(saved.description, 'اشتراك لمدة 7 أيام');

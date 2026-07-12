@@ -7,7 +7,10 @@ abstract final class AppTranslator {
       Localizations.localeOf(context).languageCode == 'fr';
 
   static String translate(BuildContext context, String source) =>
-      translateForLanguage(source, Localizations.localeOf(context).languageCode);
+      translateForLanguage(
+        source,
+        Localizations.localeOf(context).languageCode,
+      );
 
   static String translateForLanguage(String source, String languageCode) {
     if (languageCode != 'fr' || source.trim().isEmpty) return source;
@@ -52,9 +55,7 @@ abstract final class AppTranslator {
     final phrases = <MapEntry<String, String>>[
       ...additionalFrenchPhrases.entries,
       ..._phraseFrench.entries,
-    ]..sort(
-        (first, second) => second.key.length.compareTo(first.key.length),
-      );
+    ]..sort((first, second) => second.key.length.compareTo(first.key.length));
     for (final entry in phrases) {
       result = result.replaceAll(entry.key, entry.value);
     }
@@ -124,24 +125,19 @@ abstract final class AppTranslator {
     'تصدير التقرير': 'Exporter le rapport',
     'اختر الصيغة، ثم شارك التقرير أو احفظ نسخة في الجهاز.':
         'Choisissez le format, puis partagez ou enregistrez une copie sur l’appareil.',
-    'ملف جداول قابل للفتح في Excel':
-        'Fichier de tableau compatible avec Excel',
-    'تقرير منظم على صفحات جاهزة للطباعة':
-        'Rapport paginé prêt à imprimer',
+    'ملف جداول قابل للفتح في Excel': 'Fichier de tableau compatible avec Excel',
+    'تقرير منظم على صفحات جاهزة للطباعة': 'Rapport paginé prêt à imprimer',
     'صورة طويلة واضحة للمشاركة السريعة':
         'Image longue et nette pour un partage rapide',
     'صورة PNG': 'Image PNG',
     'حفظ في الجهاز': "Enregistrer sur l’appareil",
     'مشاركة': 'Partager',
     'لا مقارنة متاحة': 'Comparaison indisponible',
-    'لا توجد بيانات كافية للرسم.':
-        'Données insuffisantes pour le graphique.',
-    'لا توجد منتجات ضمن هذه الفترة.':
-        'Aucun produit pour cette période.',
+    'لا توجد بيانات كافية للرسم.': 'Données insuffisantes pour le graphique.',
+    'لا توجد منتجات ضمن هذه الفترة.': 'Aucun produit pour cette période.',
     'لا توجد عمليات عملاء ضمن هذه الفترة.':
         'Aucune opération client pour cette période.',
-    'لا توجد بيانات ضمن هذه الفترة.':
-        'Aucune donnée pour cette période.',
+    'لا توجد بيانات ضمن هذه الفترة.': 'Aucune donnée pour cette période.',
     'لا توجد عمليات محفوظة حتى الآن.':
         'Aucune opération enregistrée pour le moment.',
     'لا توجد عمليات محفوظة': 'Aucune opération enregistrée',
@@ -186,8 +182,7 @@ abstract final class AppTranslator {
     'سبب الخصم أو الحذف': 'Motif du retrait ou de la suppression',
     'اكتب سبب الخصم': 'Saisissez le motif du retrait',
     'تأكيد الخصم': 'Confirmer le retrait',
-    'لا توجد رزم ضمن هذا التصنيف.':
-        'Aucun lot dans cette catégorie.',
+    'لا توجد رزم ضمن هذا التصنيف.': 'Aucun lot dans cette catégorie.',
     'اضغط لعرض سجل الحركة': 'Appuyez pour afficher les mouvements',
     'سجل الإضافة والاستهلاك والخصم':
         'Historique des ajouts, consommations et retraits',
@@ -195,14 +190,14 @@ abstract final class AppTranslator {
         'Aucun mouvement enregistré pour ce lot.',
     'الأمان والخصوصية': 'Sécurité et confidentialité',
     'المظهر وطريقة العرض': 'Apparence et affichage',
-    'اتباع سمة الهاتف تلقائيًا':
-        'Suivre automatiquement le thème du téléphone',
+    'اتباع سمة الهاتف تلقائيًا': 'Suivre automatiquement le thème du téléphone',
     'عند تفعيله، يفتح التطبيق داكنًا أو فاتحًا حسب إعداد الهاتف.':
         "Lorsque cette option est activée, l’application suit le thème clair ou sombre du téléphone.",
     'الوضع الداكن': 'Mode sombre',
     'يتبع الهاتف حاليًا. تغييره يثبت اختيارك يدويًا.':
         'Le thème suit actuellement le téléphone. Le modifier fixe votre choix manuellement.',
-    'تغيير مظهر التطبيق فقط': "Modifier uniquement l’apparence de l’application",
+    'تغيير مظهر التطبيق فقط':
+        "Modifier uniquement l’apparence de l’application",
     'عرض المبالغ بصيغة الألف': 'Afficher les montants en milliers',
     'تسعير بيع الرصيد': 'Tarification de vente du crédit',
     'قاعدة مشتركة لبيع الرصيد والمنتجات المباشرة، مع التقريب إلى أقرب 10 دج.':

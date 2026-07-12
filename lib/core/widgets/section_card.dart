@@ -2,11 +2,6 @@ import 'package:flutter/material.dart' hide Text;
 
 import '../localization/localized_text.dart';
 
-
-
-
-
-
 class SectionCard extends StatelessWidget {
   const SectionCard({
     super.key,
@@ -51,7 +46,10 @@ class SectionCard extends StatelessWidget {
                             Expanded(
                               child: Text(
                                 title!,
-                                style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16),
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.w900,
+                                  fontSize: 16,
+                                ),
                               ),
                             ),
                           ],

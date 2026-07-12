@@ -7,11 +7,9 @@ import '../../shared/models/backup_preview.dart';
 import '../utils/id_generator.dart';
 
 class AppDatabase {
-  AppDatabase._({
-    DatabaseFactory? factory,
-    String? databasePath,
-  })  : _factory = factory ?? databaseFactory,
-        _databasePath = databasePath;
+  AppDatabase._({DatabaseFactory? factory, String? databasePath})
+    : _factory = factory ?? databaseFactory,
+      _databasePath = databasePath;
 
   static final AppDatabase instance = AppDatabase._();
   static const int schemaVersion = 3;
@@ -21,10 +19,7 @@ class AppDatabase {
     required DatabaseFactory factory,
     required String databasePath,
   }) {
-    return AppDatabase._(
-      factory: factory,
-      databasePath: databasePath,
-    );
+    return AppDatabase._(factory: factory, databasePath: databasePath);
   }
 
   final DatabaseFactory _factory;
@@ -34,7 +29,8 @@ class AppDatabase {
   Future<Database> get database async => _database ??= await _open();
 
   Future<Database> _open() async {
-    final path = _databasePath ??
+    final path =
+        _databasePath ??
         p.join(await getDatabasesPath(), 'game_credit_profit_manager.db');
     return _factory.openDatabase(
       path,
@@ -46,9 +42,7 @@ class AppDatabase {
           await _seedDefaults(db);
         },
         onUpgrade: (db, oldVersion, newVersion) async {
-          for (var version = oldVersion + 1;
-              version <= newVersion;
-              version++) {
+          for (var version = oldVersion + 1; version <= newVersion; version++) {
             await _migrate(db, version);
           }
         },
@@ -250,18 +244,12 @@ class AppDatabase {
       'created_at': now,
       'updated_at': now,
     });
-    await db.insert(
-      'app_settings',
-      {'key': 'use_thousands', 'value': 'false'},
-    );
-    await db.insert(
-      'app_settings',
-      {'key': 'dark_mode', 'value': 'false'},
-    );
-    await db.insert(
-      'app_settings',
-      {'key': 'expiry_warning_hours', 'value': '24'},
-    );
+    await db.insert('app_settings', {'key': 'use_thousands', 'value': 'false'});
+    await db.insert('app_settings', {'key': 'dark_mode', 'value': 'false'});
+    await db.insert('app_settings', {
+      'key': 'expiry_warning_hours',
+      'value': '24',
+    });
   }
 
   Future<void> _migrate(Database db, int version) async {
@@ -325,10 +313,7 @@ class AppDatabase {
           }
           await db.update(
             'sales_transactions',
-            {
-              'customer_id': customerId,
-              'customer_name': name,
-            },
+            {'customer_id': customerId, 'customer_name': name},
             where: 'id = ?',
             whereArgs: [transactionId],
           );
@@ -388,11 +373,13 @@ class AppDatabase {
     final customerCount = version >= 3
         ? (payload['customers']! as List).length
         : transactions
-            .map((row) => _normalizeLegacyCustomerName(
+              .map(
+                (row) => _normalizeLegacyCustomerName(
                   row.cast<String, Object?>()['customer_name'] as String?,
-                ).toLowerCase())
-            .toSet()
-            .length;
+                ).toLowerCase(),
+              )
+              .toSet()
+              .length;
 
     return BackupPreview(
       version: version,
@@ -428,9 +415,7 @@ class AppDatabase {
       if (backupVersion >= 3) {
         final rows = (payload['customers']! as List).cast<Map>();
         for (final raw in rows) {
-          final row = Map<String, Object?>.from(
-            raw.cast<String, Object?>(),
-          );
+          final row = Map<String, Object?>.from(raw.cast<String, Object?>());
           await txn.insert('customers', row);
           final name = (row['name'] as String? ?? '').trim().toLowerCase();
           if (name.isNotEmpty) {
@@ -464,16 +449,13 @@ class AppDatabase {
       }
 
       for (final raw in salesRows) {
-        final row = Map<String, Object?>.from(
-          raw.cast<String, Object?>(),
-        );
+        final row = Map<String, Object?>.from(raw.cast<String, Object?>());
         final name = _normalizeLegacyCustomerName(
           row['customer_name'] as String?,
         );
         row['customer_name'] = name;
         final existingId = row['customer_id'] as String?;
-        row['customer_id'] =
-            existingId ?? customerByName[name.toLowerCase()];
+        row['customer_id'] = existingId ?? customerByName[name.toLowerCase()];
         await txn.insert('sales_transactions', row);
       }
 
@@ -536,8 +518,6 @@ class AppDatabase {
 
   static String _normalizeLegacyCustomerName(String? value) {
     final normalized = value?.trim().replaceAll(RegExp(r'\s+'), ' ');
-    return normalized == null || normalized.isEmpty
-        ? 'عميل سابق'
-        : normalized;
+    return normalized == null || normalized.isEmpty ? 'عميل سابق' : normalized;
   }
 }

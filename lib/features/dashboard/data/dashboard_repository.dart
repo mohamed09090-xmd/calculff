@@ -4,7 +4,7 @@ import '../../../shared/models/dashboard_summary.dart';
 
 class DashboardRepository {
   DashboardRepository({AppDatabase? database})
-      : _database = database ?? AppDatabase.instance;
+    : _database = database ?? AppDatabase.instance;
 
   final AppDatabase _database;
 
@@ -31,7 +31,8 @@ class DashboardRepository {
         '__inventory_adjustment_remove__'
       )
     ''');
-    final today = await db.rawQuery('''
+    final today = await db.rawQuery(
+      '''
       SELECT
         COALESCE(SUM(charged_amount), 0) AS sales,
         COALESCE(SUM(cash_profit), 0) AS profit
@@ -41,7 +42,9 @@ class DashboardRepository {
           '__inventory_adjustment_add__',
           '__inventory_adjustment_remove__'
         )
-    ''', [dayStart]);
+    ''',
+      [dayStart],
+    );
     final settingRows = await db.query(
       'app_settings',
       where: 'key = ?',
@@ -52,13 +55,16 @@ class DashboardRepository {
         ? 24
         : int.tryParse(settingRows.first['value']! as String) ?? 24;
     final warningEnd = now.add(Duration(hours: warningHours)).toIso8601String();
-    final inventory = await db.rawQuery('''
+    final inventory = await db.rawQuery(
+      '''
       SELECT
         COALESCE(SUM(CASE WHEN status = 'active' THEN remaining_credit ELSE 0 END), 0) AS active,
         COALESCE(SUM(CASE WHEN status = 'expired' THEN remaining_credit ELSE 0 END), 0) AS expired,
         COALESCE(SUM(CASE WHEN status = 'active' AND expires_at <= ? THEN remaining_credit ELSE 0 END), 0) AS soon
       FROM inventory_lots
-    ''', [warningEnd]);
+    ''',
+      [warningEnd],
+    );
     final totalRow = totals.first;
     final todayRow = today.first;
     final inventoryRow = inventory.first;

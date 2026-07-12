@@ -5,13 +5,9 @@ import 'package:flutter/material.dart' hide Text;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-
-
-
 import '../../../core/localization/localized_text.dart';
 
 import '../../../core/localization/app_translator.dart';
-
 
 import '../../../core/utils/date_utils.dart';
 import '../../../core/utils/money_formatter.dart';
@@ -109,12 +105,11 @@ class _TransactionDetailsScreenState
           }
           final details = snapshot.data!;
           final item = details.transaction;
-          String money(num value) => MoneyFormatter.format(
-                value,
-                useThousands: settings.useThousands,
-              );
+          String money(num value) =>
+              MoneyFormatter.format(value, useThousands: settings.useThousands);
           final productName = item.displayProductName;
-          final isGemSale = item.mode == CalculationMode.customerAmount ||
+          final isGemSale =
+              item.mode == CalculationMode.customerAmount ||
               item.mode == CalculationMode.gems;
 
           return ListView(
@@ -221,17 +216,14 @@ class _TransactionDetailsScreenState
   }
 
   Widget _row(String label, String value) => Padding(
-        padding: const EdgeInsets.symmetric(vertical: 5),
-        child: Row(
-          children: [
-            Expanded(child: Text(label)),
-            Text(
-              value,
-              style: const TextStyle(fontWeight: FontWeight.w900),
-            ),
-          ],
-        ),
-      );
+    padding: const EdgeInsets.symmetric(vertical: 5),
+    child: Row(
+      children: [
+        Expanded(child: Text(label)),
+        Text(value, style: const TextStyle(fontWeight: FontWeight.w900)),
+      ],
+    ),
+  );
 
   Future<void> _showUndoSnackBar() async {
     final repository = ref.read(appRepositoryProvider);
@@ -265,7 +257,8 @@ class _TransactionDetailsScreenState
   }
 
   Future<void> _delete() async {
-    final confirmed = await showDialog<bool>(
+    final confirmed =
+        await showDialog<bool>(
           context: context,
           builder: (context) => AlertDialog(
             title: const Text('حذف العملية؟'),
@@ -294,9 +287,9 @@ class _TransactionDetailsScreenState
       if (mounted) context.go('/transactions?undo=1');
     } catch (error) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(error.toString())),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(error.toString())));
       }
     }
   }

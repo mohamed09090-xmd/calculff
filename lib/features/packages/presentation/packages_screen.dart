@@ -3,13 +3,9 @@ import 'package:flutter/material.dart' hide Text;
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-
-
-
 import '../../../core/localization/localized_text.dart';
 
 import '../../../core/localization/app_translator.dart';
-
 
 import '../../../core/constants/app_strings.dart';
 import '../../../core/utils/id_generator.dart';
@@ -26,7 +22,8 @@ class PackagesScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final packages = ref.watch(packagesProvider);
-    final settings = ref.watch(settingsProvider).valueOrNull ?? AppSettings.defaults;
+    final settings =
+        ref.watch(settingsProvider).valueOrNull ?? AppSettings.defaults;
     return AppShell(
       title: AppStrings.packages,
       floatingActionButton: FloatingActionButton.extended(
@@ -45,15 +42,30 @@ class PackagesScreen extends ConsumerWidget {
             final package = items[index];
             return Card(
               child: ListTile(
-                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                leading: CircleAvatar(child: Text('${package.credit}', style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w900))),
-                title: Text(package.name, style: const TextStyle(fontWeight: FontWeight.w900)),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 8,
+                ),
+                leading: CircleAvatar(
+                  child: Text(
+                    '${package.credit}',
+                    style: const TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                ),
+                title: Text(
+                  package.name,
+                  style: const TextStyle(fontWeight: FontWeight.w900),
+                ),
                 subtitle: Text(
                   '${MoneyFormatter.format(package.priceDzd, useThousands: settings.useThousands)} • ${_validity(package.validityHours)}',
                 ),
                 trailing: Switch(
                   value: package.isActive,
-                  onChanged: (value) => _save(ref, package.copyWith(isActive: value)),
+                  onChanged: (value) =>
+                      _save(ref, package.copyWith(isActive: value)),
                 ),
                 onTap: () => _openEditor(context, ref, package),
               ),
@@ -115,7 +127,10 @@ class _PackageDialogState extends State<_PackageDialog> {
     _validity = TextEditingController(
       text: package == null
           ? ''
-          : (_validityInDays ? package.validityHours ~/ 24 : package.validityHours).toString(),
+          : (_validityInDays
+                    ? package.validityHours ~/ 24
+                    : package.validityHours)
+                .toString(),
     );
     _active = package?.isActive ?? true;
   }
@@ -131,61 +146,74 @@ class _PackageDialogState extends State<_PackageDialog> {
 
   @override
   Widget build(BuildContext context) => AlertDialog(
-        title: Text(widget.package == null ? 'إضافة باقة' : 'تعديل الباقة'),
-        content: Form(
-          key: _formKey,
-          child: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
+    title: Text(widget.package == null ? 'إضافة باقة' : 'تعديل الباقة'),
+    content: Form(
+      key: _formKey,
+      child: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextFormField(
+              controller: _name,
+              decoration: InputDecoration(
+                labelText: AppTranslator.translate(context, 'اسم الباقة'),
+              ),
+              validator: (value) => value == null || value.trim().isEmpty
+                  ? AppTranslator.translate(context, 'الاسم مطلوب')
+                  : null,
+            ),
+            const SizedBox(height: 10),
+            _numberField(_credit, 'رصيد الألعاب'),
+            const SizedBox(height: 10),
+            _numberField(_price, 'السعر بالدينار'),
+            const SizedBox(height: 10),
+            Row(
               children: [
-                TextFormField(
-                  controller: _name,
-                  decoration: InputDecoration(labelText: AppTranslator.translate(context, 'اسم الباقة')),
-                  validator: (value) => value == null || value.trim().isEmpty ? AppTranslator.translate(context, 'الاسم مطلوب') : null,
-                ),
-                const SizedBox(height: 10),
-                _numberField(_credit, 'رصيد الألعاب'),
-                const SizedBox(height: 10),
-                _numberField(_price, 'السعر بالدينار'),
-                const SizedBox(height: 10),
-                Row(
-                  children: [
-                    Expanded(child: _numberField(_validity, 'مدة الصلاحية')),
-                    const SizedBox(width: 8),
-                    DropdownButton<bool>(
-                      value: _validityInDays,
-                      items: const [
-                        DropdownMenuItem(value: false, child: Text('ساعة')),
-                        DropdownMenuItem(value: true, child: Text('يوم')),
-                      ],
-                      onChanged: (value) => setState(() => _validityInDays = value ?? true),
-                    ),
+                Expanded(child: _numberField(_validity, 'مدة الصلاحية')),
+                const SizedBox(width: 8),
+                DropdownButton<bool>(
+                  value: _validityInDays,
+                  items: const [
+                    DropdownMenuItem(value: false, child: Text('ساعة')),
+                    DropdownMenuItem(value: true, child: Text('يوم')),
                   ],
-                ),
-                SwitchListTile(
-                  contentPadding: EdgeInsets.zero,
-                  title: const Text('باقة فعّالة'),
-                  value: _active,
-                  onChanged: (value) => setState(() => _active = value),
+                  onChanged: (value) =>
+                      setState(() => _validityInDays = value ?? true),
                 ),
               ],
             ),
-          ),
+            SwitchListTile(
+              contentPadding: EdgeInsets.zero,
+              title: const Text('باقة فعّالة'),
+              value: _active,
+              onChanged: (value) => setState(() => _active = value),
+            ),
+          ],
         ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('إلغاء')),
-          FilledButton(onPressed: _submit, child: const Text('حفظ')),
-        ],
-      );
+      ),
+    ),
+    actions: [
+      TextButton(
+        onPressed: () => Navigator.pop(context),
+        child: const Text('إلغاء'),
+      ),
+      FilledButton(onPressed: _submit, child: const Text('حفظ')),
+    ],
+  );
 
-  Widget _numberField(TextEditingController controller, String label) => TextFormField(
+  Widget _numberField(TextEditingController controller, String label) =>
+      TextFormField(
         controller: controller,
         keyboardType: TextInputType.number,
         inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-        decoration: InputDecoration(labelText: AppTranslator.translate(context, label)),
+        decoration: InputDecoration(
+          labelText: AppTranslator.translate(context, label),
+        ),
         validator: (value) {
           final parsed = int.tryParse(value ?? '');
-          return parsed == null || parsed <= 0 ? AppTranslator.translate(context, 'قيمة غير صالحة') : null;
+          return parsed == null || parsed <= 0
+              ? AppTranslator.translate(context, 'قيمة غير صالحة')
+              : null;
         },
       );
 

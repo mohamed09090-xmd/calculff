@@ -3,13 +3,9 @@ import 'package:flutter/material.dart' hide Text;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-
-
-
 import '../../../core/localization/localized_text.dart';
 
 import '../../../core/localization/app_translator.dart';
-
 
 import '../../../core/constants/app_strings.dart';
 import '../../../core/utils/date_utils.dart';
@@ -89,9 +85,9 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
       ]);
     } catch (error) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('تعذر التحديث: $error')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('تعذر التحديث: $error')));
       }
     } finally {
       _refreshController
@@ -107,10 +103,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
     final transactions = ref.watch(transactionsProvider);
     final settings =
         ref.watch(settingsProvider).valueOrNull ?? AppSettings.defaults;
-    String money(num value) => MoneyFormatter.format(
-          value,
-          useThousands: settings.useThousands,
-        );
+    String money(num value) =>
+        MoneyFormatter.format(value, useThousands: settings.useThousands);
 
     return AppShell(
       title: AppStrings.dashboard,
@@ -165,7 +159,10 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                               end: 0.52,
                               offset: const Offset(0.2, 0),
                               child: MetricCard(
-                                label: AppTranslator.translate(context, 'مبيعات اليوم'),
+                                label: AppTranslator.translate(
+                                  context,
+                                  'مبيعات اليوم',
+                                ),
                                 value: money(data.todaySales),
                                 icon: Icons.payments_outlined,
                                 emphasis: true,
@@ -180,7 +177,10 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                               end: 0.59,
                               offset: const Offset(-0.2, 0),
                               child: MetricCard(
-                                label: AppTranslator.translate(context, 'ربح اليوم'),
+                                label: AppTranslator.translate(
+                                  context,
+                                  'ربح اليوم',
+                                ),
                                 value: money(data.todayProfit),
                                 icon: Icons.trending_up,
                               ),
@@ -206,7 +206,10 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                       end: 0.65,
                       offset: const Offset(0.22, 0),
                       child: MetricCard(
-                        label: AppTranslator.translate(context, 'الرصيد الفعّال'),
+                        label: AppTranslator.translate(
+                          context,
+                          'الرصيد الفعّال',
+                        ),
                         value: '${data.activeCredit}',
                         icon: Icons.account_balance_wallet_outlined,
                       ),
@@ -217,7 +220,10 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                       end: 0.71,
                       offset: const Offset(-0.22, 0),
                       child: MetricCard(
-                        label: AppTranslator.translate(context, 'قريب الانتهاء'),
+                        label: AppTranslator.translate(
+                          context,
+                          'قريب الانتهاء',
+                        ),
                         value: '${data.expiringSoonCredit}',
                         icon: Icons.timer_outlined,
                       ),
@@ -289,9 +295,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                                     fontWeight: FontWeight.w900,
                                   ),
                                 ),
-                                onTap: () => context.push(
-                                  '/transactions/${item.id}',
-                                ),
+                                onTap: () =>
+                                    context.push('/transactions/${item.id}'),
                               ),
                             Align(
                               alignment: Alignment.centerLeft,

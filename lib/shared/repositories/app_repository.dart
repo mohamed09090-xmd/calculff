@@ -50,9 +50,9 @@ class AppRepository {
     AppDatabase? database,
     CalculationEngine? calculationEngine,
     FefoAllocator? allocator,
-  })  : _database = database ?? AppDatabase.instance,
-        _calculationEngine = calculationEngine ?? const CalculationEngine(),
-        _allocator = allocator ?? const FefoAllocator();
+  }) : _database = database ?? AppDatabase.instance,
+       _calculationEngine = calculationEngine ?? const CalculationEngine(),
+       _allocator = allocator ?? const FefoAllocator();
 
   final AppDatabase _database;
   final CalculationEngine _calculationEngine;
@@ -62,11 +62,11 @@ class AppRepository {
   bool get hasPendingTransactionUndo => _pendingUndo != null;
 
   String? get pendingTransactionUndoMessage => switch (_pendingUndo?.kind) {
-        TransactionUndoKind.create => 'تم حفظ العملية',
-        TransactionUndoKind.edit => 'تم تعديل العملية وإعادة حساب المخزون',
-        TransactionUndoKind.delete => 'تم حذف العملية وإعادة حساب المخزون',
-        null => null,
-      };
+    TransactionUndoKind.create => 'تم حفظ العملية',
+    TransactionUndoKind.edit => 'تم تعديل العملية وإعادة حساب المخزون',
+    TransactionUndoKind.delete => 'تم حذف العملية وإعادة حساب المخزون',
+    null => null,
+  };
 
   Future<void> initialize() async {
     await _database.database;
@@ -241,7 +241,9 @@ class AppRepository {
       [id],
     );
     if ((usage.first['count'] as num).toInt() > 0) {
-      throw StateError('لا يمكن حذف عميل لديه عمليات. يمكنك أرشفته بدلًا من ذلك.');
+      throw StateError(
+        'لا يمكن حذف عميل لديه عمليات. يمكنك أرشفته بدلًا من ذلك.',
+      );
     }
     await db.delete('customers', where: 'id = ?', whereArgs: [id]);
   }
@@ -277,11 +279,14 @@ class AppRepository {
     DatabaseExecutor db,
     DateTime now,
   ) async {
-    final rows = await db.rawQuery('''
+    final rows = await db.rawQuery(
+      '''
       SELECT COALESCE(SUM(remaining_credit), 0) AS total
       FROM inventory_lots
       WHERE status = ? AND remaining_credit > 0 AND expires_at > ?
-    ''', [InventoryLotStatus.active.name, now.toIso8601String()]);
+    ''',
+      [InventoryLotStatus.active.name, now.toIso8601String()],
+    );
     return (rows.first['total'] as num).toInt();
   }
 
@@ -374,7 +379,10 @@ class AppRepository {
       );
       final packages = packageRows.map(CreditPackage.fromMap).toList();
       final createdAt = DateTime.parse(oldTransaction['created_at']! as String);
-      final availableInventory = await _getActiveInventoryCredit(txn, createdAt);
+      final availableInventory = await _getActiveInventoryCredit(
+        txn,
+        createdAt,
+      );
       final result = _calculationEngine.calculate(
         request: request,
         packages: packages,
@@ -461,7 +469,9 @@ class AppRepository {
           purchasedCredit: selection.package.credit,
           remainingCredit: selection.package.credit,
           purchaseCost: selection.package.priceDzd,
-          purchasedAt: createdAt.add(Duration(microseconds: createdLots.length)),
+          purchasedAt: createdAt.add(
+            Duration(microseconds: createdLots.length),
+          ),
           expiresAt: createdAt.add(
             Duration(hours: selection.package.validityHours),
           ),
@@ -513,7 +523,9 @@ class AppRepository {
     }
     if (result.request.mode == CalculationMode.gems &&
         result.gems != result.request.inputValue) {
-      throw StateError('عدّل عدد الجواهر إلى كمية متوافقة مع حزمة المنتج قبل الحفظ');
+      throw StateError(
+        'عدّل عدد الجواهر إلى كمية متوافقة مع حزمة المنتج قبل الحفظ',
+      );
     }
   }
 
@@ -572,7 +584,9 @@ class AppRepository {
       where.write(' AND source_transaction_id = ?');
       args.add(sourceTransactionId);
     } else {
-      where.write(' AND (source_transaction_id IS NULL OR source_transaction_id != ?)');
+      where.write(
+        ' AND (source_transaction_id IS NULL OR source_transaction_id != ?)',
+      );
       args.add(transactionId);
     }
     final rows = await db.query(
@@ -658,7 +672,9 @@ class AppRepository {
     );
     return TransactionDetails(
       transaction: SalesTransaction.fromMap(transactionRows.first),
-      items: itemRows.map(TransactionPackageItem.fromMap).toList(growable: false),
+      items: itemRows
+          .map(TransactionPackageItem.fromMap)
+          .toList(growable: false),
     );
   }
 
@@ -833,22 +849,28 @@ class AppRepository {
         COUNT(*) AS count
       FROM sales_transactions
     ''');
-    final today = await db.rawQuery('''
+    final today = await db.rawQuery(
+      '''
       SELECT
         COALESCE(SUM(charged_amount), 0) AS sales,
         COALESCE(SUM(cash_profit), 0) AS profit
       FROM sales_transactions
       WHERE created_at >= ?
-    ''', [dayStart]);
+    ''',
+      [dayStart],
+    );
     final warningHours = (await getSettings()).expiryWarningHours;
     final warningEnd = now.add(Duration(hours: warningHours)).toIso8601String();
-    final inventory = await db.rawQuery('''
+    final inventory = await db.rawQuery(
+      '''
       SELECT
         COALESCE(SUM(CASE WHEN status = 'active' THEN remaining_credit ELSE 0 END), 0) AS active,
         COALESCE(SUM(CASE WHEN status = 'expired' THEN remaining_credit ELSE 0 END), 0) AS expired,
         COALESCE(SUM(CASE WHEN status = 'active' AND expires_at <= ? THEN remaining_credit ELSE 0 END), 0) AS soon
       FROM inventory_lots
-    ''', [warningEnd]);
+    ''',
+      [warningEnd],
+    );
     final totalRow = totals.first;
     final todayRow = today.first;
     final inventoryRow = inventory.first;
@@ -874,8 +896,10 @@ class AppRepository {
     return AppSettings(
       useThousands: values['use_thousands'] == 'true',
       darkMode: values['dark_mode'] == 'true',
-      expiryWarningHours:
-          math.max(1, int.tryParse(values['expiry_warning_hours'] ?? '') ?? 24),
+      expiryWarningHours: math.max(
+        1,
+        int.tryParse(values['expiry_warning_hours'] ?? '') ?? 24,
+      ),
     );
   }
 
@@ -888,11 +912,10 @@ class AppRepository {
     };
     final batch = db.batch();
     for (final entry in values.entries) {
-      batch.insert(
-        'app_settings',
-        {'key': entry.key, 'value': entry.value},
-        conflictAlgorithm: ConflictAlgorithm.replace,
-      );
+      batch.insert('app_settings', {
+        'key': entry.key,
+        'value': entry.value,
+      }, conflictAlgorithm: ConflictAlgorithm.replace);
     }
     await batch.commit(noResult: true);
     await _rescheduleAllNotifications(settings: settings);

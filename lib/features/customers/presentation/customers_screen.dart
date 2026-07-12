@@ -2,13 +2,9 @@ import 'package:flutter/material.dart' hide Text;
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-
-
-
 import '../../../core/localization/localized_text.dart';
 
 import '../../../core/localization/app_translator.dart';
-
 
 import '../../../core/utils/date_utils.dart';
 import '../../../core/utils/money_formatter.dart';
@@ -52,7 +48,10 @@ class _CustomersScreenState extends ConsumerState<CustomersScreen> {
         children: [
           TextField(
             decoration: InputDecoration(
-              hintText: AppTranslator.translate(context, 'ابحث بالاسم أو رقم الهاتف'),
+              hintText: AppTranslator.translate(
+                context,
+                'ابحث بالاسم أو رقم الهاتف',
+              ),
               prefixIcon: Icon(Icons.search),
             ),
             onChanged: (value) =>
@@ -64,11 +63,13 @@ class _CustomersScreenState extends ConsumerState<CustomersScreen> {
               value: customers,
               onRetry: () => ref.invalidate(customersProvider),
               data: (items) {
-                final filtered = items.where((customer) {
-                  if (_query.isEmpty) return true;
-                  return customer.name.toLowerCase().contains(_query) ||
-                      (customer.phone?.contains(_query) ?? false);
-                }).toList(growable: false);
+                final filtered = items
+                    .where((customer) {
+                      if (_query.isEmpty) return true;
+                      return customer.name.toLowerCase().contains(_query) ||
+                          (customer.phone?.contains(_query) ?? false);
+                    })
+                    .toList(growable: false);
 
                 if (filtered.isEmpty) {
                   return _EmptyCustomers(
@@ -111,7 +112,9 @@ class _CustomersScreenState extends ConsumerState<CustomersScreen> {
     if (draft == null) return;
 
     try {
-      await ref.read(appRepositoryProvider).saveCustomer(
+      await ref
+          .read(appRepositoryProvider)
+          .saveCustomer(
             id: customer?.id,
             name: draft.name,
             phone: draft.phone,
@@ -130,9 +133,9 @@ class _CustomersScreenState extends ConsumerState<CustomersScreen> {
       }
     } catch (error) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(error.toString())),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(error.toString())));
       }
     }
   }
@@ -154,15 +157,16 @@ class _CustomersScreenState extends ConsumerState<CustomersScreen> {
       }
     } catch (error) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(error.toString())),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(error.toString())));
       }
     }
   }
 
   Future<void> _delete(Customer customer) async {
-    final confirmed = await showDialog<bool>(
+    final confirmed =
+        await showDialog<bool>(
           context: context,
           builder: (context) => AlertDialog(
             title: Text('حذف ${customer.name}؟'),
@@ -189,9 +193,9 @@ class _CustomersScreenState extends ConsumerState<CustomersScreen> {
       invalidateAppData(ref);
     } catch (error) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(error.toString())),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(error.toString())));
       }
     }
   }
@@ -322,9 +326,7 @@ class _CustomerCard extends StatelessWidget {
                           ? Icons.archive_outlined
                           : Icons.unarchive_outlined,
                     ),
-                    title: Text(
-                      customer.isActive ? 'أرشفة' : 'إعادة التفعيل',
-                    ),
+                    title: Text(customer.isActive ? 'أرشفة' : 'إعادة التفعيل'),
                   ),
                 ),
                 const PopupMenuItem(
@@ -456,7 +458,10 @@ class _CustomerEditorDialogState extends State<_CustomerEditorDialog> {
                 controller: _phoneController,
                 keyboardType: TextInputType.phone,
                 decoration: InputDecoration(
-                  labelText: AppTranslator.translate(context, 'رقم الهاتف — اختياري'),
+                  labelText: AppTranslator.translate(
+                    context,
+                    'رقم الهاتف — اختياري',
+                  ),
                   prefixIcon: Icon(Icons.phone_outlined),
                 ),
               ),
@@ -466,7 +471,10 @@ class _CustomerEditorDialogState extends State<_CustomerEditorDialog> {
                 minLines: 2,
                 maxLines: 4,
                 decoration: InputDecoration(
-                  labelText: AppTranslator.translate(context, 'ملاحظات — اختيارية'),
+                  labelText: AppTranslator.translate(
+                    context,
+                    'ملاحظات — اختيارية',
+                  ),
                   prefixIcon: Icon(Icons.notes_outlined),
                 ),
               ),

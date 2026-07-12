@@ -7,10 +7,10 @@ class AppLockState {
   });
 
   const AppLockState.disabled()
-      : enabled = false,
-        locked = false,
-        failedAttempts = 0,
-        lockedUntil = null;
+    : enabled = false,
+      locked = false,
+      failedAttempts = 0,
+      lockedUntil = null;
 
   final bool enabled;
   final bool locked;

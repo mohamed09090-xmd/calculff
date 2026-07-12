@@ -4,13 +4,9 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-
-
-
 import '../../../core/localization/localized_text.dart';
 
 import '../../../core/localization/app_translator.dart';
-
 
 import '../../../core/widgets/app_shell.dart';
 import '../../../core/widgets/customer_autocomplete.dart';
@@ -22,10 +18,7 @@ import '../../../shared/models/transaction_details.dart';
 import '../../../shared/providers/app_providers.dart';
 
 class TransactionEditScreen extends ConsumerStatefulWidget {
-  const TransactionEditScreen({
-    super.key,
-    required this.transactionId,
-  });
+  const TransactionEditScreen({super.key, required this.transactionId});
 
   final String transactionId;
 
@@ -34,8 +27,7 @@ class TransactionEditScreen extends ConsumerStatefulWidget {
       _TransactionEditScreenState();
 }
 
-class _TransactionEditScreenState
-    extends ConsumerState<TransactionEditScreen> {
+class _TransactionEditScreenState extends ConsumerState<TransactionEditScreen> {
   final _formKey = GlobalKey<FormState>();
   final _customerController = TextEditingController();
   final _customerFocusNode = FocusNode();
@@ -92,17 +84,17 @@ class _TransactionEditScreenState
     _mode = transaction.mode;
     _useInventory = transaction.useInventory;
     _product = data.products.cast<Product?>().firstWhere(
-          (product) => product?.id == transaction.productId,
-          orElse: () => null,
-        );
+      (product) => product?.id == transaction.productId,
+      orElse: () => null,
+    );
   }
 
   String get _inputLabel => switch (_mode) {
-        CalculationMode.customerAmount => 'المبلغ المدفوع بالدينار',
-        CalculationMode.gems => 'عدد الجواهر المطلوبة',
-        CalculationMode.credit => 'الرصيد المطلوب',
-        CalculationMode.directProduct => 'وحدة واحدة من المنتج',
-      };
+    CalculationMode.customerAmount => 'المبلغ المدفوع بالدينار',
+    CalculationMode.gems => 'عدد الجواهر المطلوبة',
+    CalculationMode.credit => 'الرصيد المطلوب',
+    CalculationMode.directProduct => 'وحدة واحدة من المنتج',
+  };
 
   @override
   Widget build(BuildContext context) {
@@ -132,13 +124,15 @@ class _TransactionEditScreenState
 
           final data = snapshot.data!;
           _initialize(data);
-          final relevantProducts = data.products.where((product) {
-            if (_mode == CalculationMode.directProduct) {
-              return product.isDirectProduct;
-            }
-            if (_mode == CalculationMode.credit) return false;
-            return product.isGemProduct;
-          }).toList(growable: false);
+          final relevantProducts = data.products
+              .where((product) {
+                if (_mode == CalculationMode.directProduct) {
+                  return product.isDirectProduct;
+                }
+                if (_mode == CalculationMode.credit) return false;
+                return product.isGemProduct;
+              })
+              .toList(growable: false);
           if (_requiresProduct &&
               (_product == null || !relevantProducts.contains(_product))) {
             _product = relevantProducts.isEmpty ? null : relevantProducts.first;
@@ -204,10 +198,10 @@ class _TransactionEditScreenState
                           onSelectionChanged: _saving
                               ? null
                               : (selection) => setState(() {
-                                    _mode = selection.first;
-                                    _valueController.clear();
-                                    _product = null;
-                                  }),
+                                  _mode = selection.first;
+                                  _valueController.clear();
+                                  _product = null;
+                                }),
                         ),
                       ),
                       const SizedBox(height: 12),
@@ -230,8 +224,9 @@ class _TransactionEditScreenState
                           onChanged: _saving
                               ? null
                               : (value) => setState(() => _product = value),
-                          validator: (value) =>
-                              value == null ? AppTranslator.translate(context, 'اختر المنتج') : null,
+                          validator: (value) => value == null
+                              ? AppTranslator.translate(context, 'اختر المنتج')
+                              : null,
                         ),
                       if (_requiresProduct) const SizedBox(height: 12),
                       if (_mode == CalculationMode.directProduct &&
@@ -270,8 +265,7 @@ class _TransactionEditScreenState
                         value: _useInventory,
                         onChanged: _saving
                             ? null
-                            : (value) =>
-                                setState(() => _useInventory = value),
+                            : (value) => setState(() => _useInventory = value),
                       ),
                     ],
                   ),
@@ -296,8 +290,8 @@ class _TransactionEditScreenState
                 ),
                 const SizedBox(height: 18),
                 FilledButton.icon(
-                  onPressed: _saving ||
-                          (_requiresProduct && relevantProducts.isEmpty)
+                  onPressed:
+                      _saving || (_requiresProduct && relevantProducts.isEmpty)
                       ? null
                       : _save,
                   icon: _saving
@@ -346,7 +340,8 @@ class _TransactionEditScreenState
 
   Future<void> _save() async {
     if (!(_formKey.currentState?.validate() ?? false)) return;
-    final confirmed = await showDialog<bool>(
+    final confirmed =
+        await showDialog<bool>(
           context: context,
           builder: (context) => AlertDialog(
             title: const Text('حفظ تعديل العملية؟'),
@@ -371,7 +366,9 @@ class _TransactionEditScreenState
     FocusScope.of(context).unfocus();
     setState(() => _saving = true);
     try {
-      await ref.read(appRepositoryProvider).editTransaction(
+      await ref
+          .read(appRepositoryProvider)
+          .editTransaction(
             transactionId: widget.transactionId,
             request: CalculationRequest(
               mode: _mode,
@@ -390,9 +387,9 @@ class _TransactionEditScreenState
       }
     } catch (error) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(error.toString())),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(error.toString())));
       }
     } finally {
       if (mounted) setState(() => _saving = false);

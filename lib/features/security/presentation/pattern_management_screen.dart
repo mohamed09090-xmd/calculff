@@ -4,10 +4,6 @@ import 'package:flutter/material.dart' hide Text;
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-
-
-
-
 import '../../../core/localization/localized_text.dart';
 
 import '../../../core/security/pattern_lock_service.dart';
@@ -19,10 +15,7 @@ enum PatternManagementMode { enable, change, disable }
 enum _PatternStep { verifyCurrent, create, confirm }
 
 class PatternManagementScreen extends ConsumerStatefulWidget {
-  const PatternManagementScreen({
-    super.key,
-    required this.mode,
-  });
+  const PatternManagementScreen({super.key, required this.mode});
 
   final PatternManagementMode mode;
 
@@ -150,22 +143,22 @@ class _PatternManagementScreenState
                         ),
                       )
                     : _message == null
-                        ? Text(
-                            'يجب المرور على 4 نقاط مختلفة على الأقل.',
-                            key: const ValueKey('hint'),
-                            style: theme.textTheme.bodySmall,
-                          )
-                        : Text(
-                            _message!,
-                            key: ValueKey(_message),
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              color: _status == PatternPadStatus.error
-                                  ? theme.colorScheme.error
-                                  : theme.colorScheme.primary,
-                              fontWeight: FontWeight.w800,
-                            ),
-                          ),
+                    ? Text(
+                        'يجب المرور على 4 نقاط مختلفة على الأقل.',
+                        key: const ValueKey('hint'),
+                        style: theme.textTheme.bodySmall,
+                      )
+                    : Text(
+                        _message!,
+                        key: ValueKey(_message),
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          color: _status == PatternPadStatus.error
+                              ? theme.colorScheme.error
+                              : theme.colorScheme.primary,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
               ),
               const SizedBox(height: 12),
               if (_busy) const LinearProgressIndicator(),
@@ -177,31 +170,32 @@ class _PatternManagementScreenState
   }
 
   String get _screenTitle => switch (widget.mode) {
-        PatternManagementMode.enable => 'تفعيل قفل النمط',
-        PatternManagementMode.change => 'تغيير نمط القفل',
-        PatternManagementMode.disable => 'إيقاف قفل النمط',
-      };
+    PatternManagementMode.enable => 'تفعيل قفل النمط',
+    PatternManagementMode.change => 'تغيير نمط القفل',
+    PatternManagementMode.disable => 'إيقاف قفل النمط',
+  };
 
   IconData get _stepIcon => switch (_step) {
-        _PatternStep.verifyCurrent => Icons.lock_open_outlined,
-        _PatternStep.create => Icons.gesture_outlined,
-        _PatternStep.confirm => Icons.verified_outlined,
-      };
+    _PatternStep.verifyCurrent => Icons.lock_open_outlined,
+    _PatternStep.create => Icons.gesture_outlined,
+    _PatternStep.confirm => Icons.verified_outlined,
+  };
 
   String get _stepTitle => switch (_step) {
-        _PatternStep.verifyCurrent => 'ارسم النمط الحالي',
-        _PatternStep.create => 'أنشئ نمطًا جديدًا',
-        _PatternStep.confirm => 'أعد رسم النمط للتأكيد',
-      };
+    _PatternStep.verifyCurrent => 'ارسم النمط الحالي',
+    _PatternStep.create => 'أنشئ نمطًا جديدًا',
+    _PatternStep.confirm => 'أعد رسم النمط للتأكيد',
+  };
 
   String get _stepDescription => switch (_step) {
-        _PatternStep.verifyCurrent => widget.mode == PatternManagementMode.disable
-            ? 'يجب التحقق من النمط قبل إيقاف القفل.'
-            : 'تحقق من النمط الحالي قبل استبداله.',
-        _PatternStep.create =>
-          'مرر إصبعك بين النقاط. تجنب الأنماط السهلة والمستقيمة.',
-        _PatternStep.confirm => 'ارسم النمط الجديد نفسه مرة أخرى.',
-      };
+    _PatternStep.verifyCurrent =>
+      widget.mode == PatternManagementMode.disable
+          ? 'يجب التحقق من النمط قبل إيقاف القفل.'
+          : 'تحقق من النمط الحالي قبل استبداله.',
+    _PatternStep.create =>
+      'مرر إصبعك بين النقاط. تجنب الأنماط السهلة والمستقيمة.',
+    _PatternStep.confirm => 'ارسم النمط الجديد نفسه مرة أخرى.',
+  };
 
   Future<void> _handlePattern(List<int> pattern) async {
     if (_busy || _isLockedOut) return;
@@ -287,7 +281,9 @@ class _PatternManagementScreenState
       if (widget.mode == PatternManagementMode.enable) {
         await ref.read(appLockProvider.notifier).enablePattern(pattern);
       } else {
-        final result = await ref.read(appLockProvider.notifier).changePattern(
+        final result = await ref
+            .read(appLockProvider.notifier)
+            .changePattern(
               currentPattern: _currentPattern!,
               newPattern: pattern,
             );

@@ -14,9 +14,11 @@ class GameCreditApp extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final themePreference = ref.watch(themeModeProvider).valueOrNull ??
+    final themePreference =
+        ref.watch(themeModeProvider).valueOrNull ??
         AppThemeModePreference.system;
-    final languagePreference = ref.watch(appLanguageProvider).valueOrNull ??
+    final languagePreference =
+        ref.watch(appLanguageProvider).valueOrNull ??
         AppLanguagePreference.arabic;
 
     return MaterialApp.router(
@@ -28,10 +30,7 @@ class GameCreditApp extends ConsumerWidget {
       darkTheme: AppTheme.dark(),
       themeMode: themePreference.themeMode,
       locale: languagePreference.locale,
-      supportedLocales: const [
-        Locale('ar', 'DZ'),
-        Locale('fr', 'FR'),
-      ],
+      supportedLocales: const [Locale('ar', 'DZ'), Locale('fr', 'FR')],
       localizationsDelegates: const [
         GlobalMaterialLocalizations.delegate,
         GlobalWidgetsLocalizations.delegate,
@@ -39,9 +38,7 @@ class GameCreditApp extends ConsumerWidget {
       ],
       builder: (context, child) => Directionality(
         textDirection: languagePreference.textDirection,
-        child: AppLockGate(
-          child: child ?? const SizedBox.shrink(),
-        ),
+        child: AppLockGate(child: child ?? const SizedBox.shrink()),
       ),
       routerConfig: appRouter,
     );

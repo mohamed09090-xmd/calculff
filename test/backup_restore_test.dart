@@ -94,9 +94,9 @@ void main() {
       ..remove('customers');
     final legacyTransactions = (legacy['sales_transactions']! as List)
         .map(
-          (raw) => Map<String, Object?>.from(
-            (raw as Map).cast<String, Object?>(),
-          )..remove('customer_id'),
+          (raw) =>
+              Map<String, Object?>.from((raw as Map).cast<String, Object?>())
+                ..remove('customer_id'),
         )
         .toList(growable: false);
     legacy['sales_transactions'] = legacyTransactions;

@@ -43,28 +43,28 @@ class InventoryLot {
       );
 
   Map<String, Object?> toMap() => {
-        'id': id,
-        'package_id': packageId,
-        'package_name_snapshot': packageNameSnapshot,
-        'purchased_credit': purchasedCredit,
-        'remaining_credit': remainingCredit,
-        'purchase_cost': purchaseCost,
-        'purchased_at': purchasedAt.toIso8601String(),
-        'expires_at': expiresAt.toIso8601String(),
-        'status': status.name,
-        'source_transaction_id': sourceTransactionId,
-      };
+    'id': id,
+    'package_id': packageId,
+    'package_name_snapshot': packageNameSnapshot,
+    'purchased_credit': purchasedCredit,
+    'remaining_credit': remainingCredit,
+    'purchase_cost': purchaseCost,
+    'purchased_at': purchasedAt.toIso8601String(),
+    'expires_at': expiresAt.toIso8601String(),
+    'status': status.name,
+    'source_transaction_id': sourceTransactionId,
+  };
 
   factory InventoryLot.fromMap(Map<String, Object?> map) => InventoryLot(
-        id: map['id']! as String,
-        packageId: map['package_id']! as String,
-        packageNameSnapshot: map['package_name_snapshot']! as String,
-        purchasedCredit: (map['purchased_credit'] as num).toInt(),
-        remainingCredit: (map['remaining_credit'] as num).toInt(),
-        purchaseCost: (map['purchase_cost'] as num).toInt(),
-        purchasedAt: DateTime.parse(map['purchased_at']! as String),
-        expiresAt: DateTime.parse(map['expires_at']! as String),
-        status: InventoryLotStatus.values.byName(map['status']! as String),
-        sourceTransactionId: map['source_transaction_id'] as String?,
-      );
+    id: map['id']! as String,
+    packageId: map['package_id']! as String,
+    packageNameSnapshot: map['package_name_snapshot']! as String,
+    purchasedCredit: (map['purchased_credit'] as num).toInt(),
+    remainingCredit: (map['remaining_credit'] as num).toInt(),
+    purchaseCost: (map['purchase_cost'] as num).toInt(),
+    purchasedAt: DateTime.parse(map['purchased_at']! as String),
+    expiresAt: DateTime.parse(map['expires_at']! as String),
+    status: InventoryLotStatus.values.byName(map['status']! as String),
+    sourceTransactionId: map['source_transaction_id'] as String?,
+  );
 }

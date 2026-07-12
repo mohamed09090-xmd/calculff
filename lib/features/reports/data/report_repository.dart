@@ -4,14 +4,11 @@ import '../../../shared/models/report.dart';
 
 class ReportRepository {
   ReportRepository({AppDatabase? database})
-      : _database = database ?? AppDatabase.instance;
+    : _database = database ?? AppDatabase.instance;
 
   final AppDatabase _database;
 
-  Future<ReportSummary> getReport(
-    ReportPeriod period, {
-    DateTime? now,
-  }) async {
+  Future<ReportSummary> getReport(ReportPeriod period, {DateTime? now}) async {
     final generatedAt = now ?? DateTime.now();
     final window = period.window(generatedAt);
     final db = await _database.database;
@@ -60,8 +57,7 @@ class ReportRepository {
       endExclusive: window.endExclusive,
     );
     final topCustomers = await _rankings(
-      groupExpression:
-          "COALESCE(NULLIF(customer_name, ''), 'عميل غير مسمى')",
+      groupExpression: "COALESCE(NULLIF(customer_name, ''), 'عميل غير مسمى')",
       start: window.start,
       endExclusive: window.endExclusive,
     );
@@ -176,9 +172,11 @@ class ReportRepository {
       final firstMonth = DateTime(start.year, start.month);
       final lastMonth = DateTime(now.year, now.month);
       final points = <ReportPoint>[];
-      for (var cursor = firstMonth;
-          !cursor.isAfter(lastMonth);
-          cursor = DateTime(cursor.year, cursor.month + 1)) {
+      for (
+        var cursor = firstMonth;
+        !cursor.isAfter(lastMonth);
+        cursor = DateTime(cursor.year, cursor.month + 1)
+      ) {
         final key = _monthKey(cursor);
         final value = values[key] ?? (sales: 0, profit: 0);
         points.add(
@@ -195,9 +193,11 @@ class ReportRepository {
 
     final effectiveEnd = endExclusive ?? now.add(const Duration(days: 1));
     final points = <ReportPoint>[];
-    for (var cursor = DateTime(start.year, start.month, start.day);
-        cursor.isBefore(effectiveEnd);
-        cursor = cursor.add(const Duration(days: 1))) {
+    for (
+      var cursor = DateTime(start.year, start.month, start.day);
+      cursor.isBefore(effectiveEnd);
+      cursor = cursor.add(const Duration(days: 1))
+    ) {
       final key = _dayKey(cursor);
       final value = values[key] ?? (sales: 0, profit: 0);
       points.add(
@@ -242,10 +242,7 @@ class ReportRepository {
 }
 
 class _SqlRange {
-  const _SqlRange({
-    required this.whereClause,
-    required this.arguments,
-  });
+  const _SqlRange({required this.whereClause, required this.arguments});
 
   final String whereClause;
   final List<Object?> arguments;

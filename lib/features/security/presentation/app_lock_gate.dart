@@ -4,10 +4,6 @@ import 'package:flutter/material.dart' hide Text;
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-
-
-
-
 import '../../../core/localization/localized_text.dart';
 
 import '../../../core/constants/app_strings.dart';
@@ -17,10 +13,7 @@ import '../../../shared/providers/app_lock_provider.dart';
 import 'pattern_lock_pad.dart';
 
 class AppLockGate extends ConsumerStatefulWidget {
-  const AppLockGate({
-    super.key,
-    required this.child,
-  });
+  const AppLockGate({super.key, required this.child});
 
   final Widget child;
 
@@ -203,18 +196,12 @@ class _PatternUnlockScreenState extends ConsumerState<_PatternUnlockScreen> {
               ),
               const Spacer(),
               if (_verifying)
-                const SizedBox(
-                  width: 150,
-                  child: LinearProgressIndicator(),
-                )
+                const SizedBox(width: 150, child: LinearProgressIndicator())
               else
                 const Text(
                   'النمط محفوظ بشكل مشفر على هذا الجهاز ولا يدخل ضمن النسخ الاحتياطية.',
                   textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: Color(0x99FFF8E7),
-                    fontSize: 12,
-                  ),
+                  style: TextStyle(color: Color(0x99FFF8E7), fontSize: 12),
                 ),
             ],
           ),
@@ -308,9 +295,7 @@ class _LockLoadingScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return const ColoredBox(
       color: Color(0xFF21453B),
-      child: Center(
-        child: CircularProgressIndicator(color: Color(0xFFE0A02B)),
-      ),
+      child: Center(child: CircularProgressIndicator(color: Color(0xFFE0A02B))),
     );
   }
 }

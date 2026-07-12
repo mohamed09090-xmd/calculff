@@ -6,17 +6,16 @@ enum AppThemeModePreference { system, light, dark }
 
 extension AppThemeModePreferenceX on AppThemeModePreference {
   ThemeMode get themeMode => switch (this) {
-        AppThemeModePreference.system => ThemeMode.system,
-        AppThemeModePreference.light => ThemeMode.light,
-        AppThemeModePreference.dark => ThemeMode.dark,
-      };
+    AppThemeModePreference.system => ThemeMode.system,
+    AppThemeModePreference.light => ThemeMode.light,
+    AppThemeModePreference.dark => ThemeMode.dark,
+  };
 
   bool isDark(Brightness platformBrightness) => switch (this) {
-        AppThemeModePreference.system =>
-          platformBrightness == Brightness.dark,
-        AppThemeModePreference.light => false,
-        AppThemeModePreference.dark => true,
-      };
+    AppThemeModePreference.system => platformBrightness == Brightness.dark,
+    AppThemeModePreference.light => false,
+    AppThemeModePreference.dark => true,
+  };
 }
 
 class ThemeModeController extends AsyncNotifier<AppThemeModePreference> {
@@ -52,13 +51,11 @@ class ThemeModeController extends AsyncNotifier<AppThemeModePreference> {
   }
 
   Future<void> setDarkMode(bool enabled) => setMode(
-        enabled
-            ? AppThemeModePreference.dark
-            : AppThemeModePreference.light,
-      );
+    enabled ? AppThemeModePreference.dark : AppThemeModePreference.light,
+  );
 }
 
 final themeModeProvider =
     AsyncNotifierProvider<ThemeModeController, AppThemeModePreference>(
-  ThemeModeController.new,
-);
+      ThemeModeController.new,
+    );

@@ -23,23 +23,23 @@ class TransactionPackageItem {
   final int quantity;
 
   CreditPackage asPackage() => CreditPackage(
-        id: packageId,
-        name: packageNameSnapshot,
-        priceDzd: priceSnapshot,
-        credit: creditSnapshot,
-        validityHours: validityHoursSnapshot,
-      );
+    id: packageId,
+    name: packageNameSnapshot,
+    priceDzd: priceSnapshot,
+    credit: creditSnapshot,
+    validityHours: validityHoursSnapshot,
+  );
 
   Map<String, Object?> toMap() => {
-        'id': id,
-        'transaction_id': transactionId,
-        'package_id': packageId,
-        'package_name_snapshot': packageNameSnapshot,
-        'credit_snapshot': creditSnapshot,
-        'price_snapshot': priceSnapshot,
-        'validity_hours_snapshot': validityHoursSnapshot,
-        'quantity': quantity,
-      };
+    'id': id,
+    'transaction_id': transactionId,
+    'package_id': packageId,
+    'package_name_snapshot': packageNameSnapshot,
+    'credit_snapshot': creditSnapshot,
+    'price_snapshot': priceSnapshot,
+    'validity_hours_snapshot': validityHoursSnapshot,
+    'quantity': quantity,
+  };
 
   factory TransactionPackageItem.fromMap(Map<String, Object?> map) =>
       TransactionPackageItem(

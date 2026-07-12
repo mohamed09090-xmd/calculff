@@ -45,25 +45,21 @@ abstract final class AppTheme {
       minimumSize: const Size.fromHeight(52),
       backgroundColor: dark ? scheme.primary : null,
       foregroundColor: dark ? scheme.onPrimary : null,
-      disabledBackgroundColor:
-          dark ? scheme.surfaceContainerHighest : null,
-      disabledForegroundColor:
-          dark ? scheme.onSurfaceVariant.withValues(alpha: 0.62) : null,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(14),
-      ),
-      textStyle: const TextStyle(
-        fontWeight: FontWeight.w800,
-        fontSize: 16,
-      ),
+      disabledBackgroundColor: dark ? scheme.surfaceContainerHighest : null,
+      disabledForegroundColor: dark
+          ? scheme.onSurfaceVariant.withValues(alpha: 0.62)
+          : null,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+      textStyle: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16),
     );
 
     return ThemeData(
       useMaterial3: true,
       brightness: brightness,
       colorScheme: scheme,
-      scaffoldBackgroundColor:
-          dark ? const Color(0xFF101512) : const Color(0xFFF4F1E9),
+      scaffoldBackgroundColor: dark
+          ? const Color(0xFF101512)
+          : const Color(0xFFF4F1E9),
       cardTheme: CardThemeData(
         elevation: 0,
         margin: EdgeInsets.zero,
@@ -111,8 +107,9 @@ abstract final class AppTheme {
                 backgroundColor: scheme.primary,
                 foregroundColor: scheme.onPrimary,
                 disabledBackgroundColor: scheme.surfaceContainerHighest,
-                disabledForegroundColor:
-                    scheme.onSurfaceVariant.withValues(alpha: 0.62),
+                disabledForegroundColor: scheme.onSurfaceVariant.withValues(
+                  alpha: 0.62,
+                ),
               ),
             )
           : const ElevatedButtonThemeData(),
@@ -125,9 +122,7 @@ abstract final class AppTheme {
       segmentedButtonTheme: SegmentedButtonThemeData(
         style: ButtonStyle(
           shape: WidgetStatePropertyAll(
-            RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
+            RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           ),
           backgroundColor: dark
               ? WidgetStateProperty.resolveWith((states) {

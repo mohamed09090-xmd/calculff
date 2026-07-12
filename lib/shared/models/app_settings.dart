@@ -19,16 +19,15 @@ class AppSettings {
     int? expiryWarningHours,
     int? creditSaleReferenceCredit,
     int? creditSaleReferencePriceDzd,
-  }) =>
-      AppSettings(
-        useThousands: useThousands ?? this.useThousands,
-        darkMode: darkMode ?? this.darkMode,
-        expiryWarningHours: expiryWarningHours ?? this.expiryWarningHours,
-        creditSaleReferenceCredit:
-            creditSaleReferenceCredit ?? this.creditSaleReferenceCredit,
-        creditSaleReferencePriceDzd:
-            creditSaleReferencePriceDzd ?? this.creditSaleReferencePriceDzd,
-      );
+  }) => AppSettings(
+    useThousands: useThousands ?? this.useThousands,
+    darkMode: darkMode ?? this.darkMode,
+    expiryWarningHours: expiryWarningHours ?? this.expiryWarningHours,
+    creditSaleReferenceCredit:
+        creditSaleReferenceCredit ?? this.creditSaleReferenceCredit,
+    creditSaleReferencePriceDzd:
+        creditSaleReferencePriceDzd ?? this.creditSaleReferencePriceDzd,
+  );
 
   static const defaults = AppSettings(
     useThousands: false,

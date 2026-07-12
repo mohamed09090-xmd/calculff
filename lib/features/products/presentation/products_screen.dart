@@ -3,13 +3,9 @@ import 'package:flutter/material.dart' hide Text;
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-
-
-
 import '../../../core/localization/localized_text.dart';
 
 import '../../../core/localization/app_translator.dart';
-
 
 import '../../../core/constants/app_strings.dart';
 import '../../../core/utils/id_generator.dart';
@@ -44,7 +40,8 @@ class ProductsScreen extends ConsumerWidget {
         value: products,
         onRetry: () => ref.invalidate(productsProvider),
         data: (items) {
-          if (items.isEmpty) return const Center(child: Text('لا توجد منتجات.'));
+          if (items.isEmpty)
+            return const Center(child: Text('لا توجد منتجات.'));
           return ListView.separated(
             padding: const EdgeInsets.only(bottom: 88),
             itemCount: items.length,
@@ -53,10 +50,10 @@ class ProductsScreen extends ConsumerWidget {
               final product = items[index];
               final subtitle = product.isDirectProduct
                   ? 'منتج مباشر • ${product.creditPerUnit} رصيد • '
-                      '${MoneyFormatter.format(pricing.priceFor(product.creditPerUnit), useThousands: settings.useThousands)}'
+                        '${MoneyFormatter.format(pricing.priceFor(product.creditPerUnit), useThousands: settings.useThousands)}'
                   : '${product.gemsPerUnit} جوهرة • '
-                      '${product.creditPerUnit} رصيد • '
-                      '${MoneyFormatter.format(product.salePriceDzd, useThousands: settings.useThousands)}';
+                        '${product.creditPerUnit} رصيد • '
+                        '${MoneyFormatter.format(product.salePriceDzd, useThousands: settings.useThousands)}';
               return Card(
                 child: ListTile(
                   contentPadding: const EdgeInsets.symmetric(
@@ -68,8 +65,8 @@ class ProductsScreen extends ConsumerWidget {
                       !product.isActive
                           ? Icons.block
                           : product.isDirectProduct
-                              ? Icons.inventory_2_outlined
-                              : Icons.diamond_outlined,
+                          ? Icons.inventory_2_outlined
+                          : Icons.diamond_outlined,
                     ),
                   ),
                   title: Row(
@@ -214,7 +211,9 @@ class _ProductDialogState extends State<_ProductDialog> {
               const SizedBox(height: 12),
               TextFormField(
                 controller: _name,
-                decoration: InputDecoration(labelText: AppTranslator.translate(context, 'اسم المنتج')),
+                decoration: InputDecoration(
+                  labelText: AppTranslator.translate(context, 'اسم المنتج'),
+                ),
                 validator: (value) => value == null || value.trim().isEmpty
                     ? AppTranslator.translate(context, 'الاسم مطلوب')
                     : null,
@@ -241,7 +240,10 @@ class _ProductDialogState extends State<_ProductDialog> {
                 maxLines: 4,
                 maxLength: 250,
                 decoration: InputDecoration(
-                  labelText: AppTranslator.translate(context, 'الوصف أو الملاحظات (اختياري)'),
+                  labelText: AppTranslator.translate(
+                    context,
+                    'الوصف أو الملاحظات (اختياري)',
+                  ),
                   alignLabelWithHint: true,
                 ),
               ),
@@ -278,7 +280,9 @@ class _ProductDialogState extends State<_ProductDialog> {
       controller: controller,
       keyboardType: TextInputType.number,
       inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-      decoration: InputDecoration(labelText: AppTranslator.translate(context, label)),
+      decoration: InputDecoration(
+        labelText: AppTranslator.translate(context, label),
+      ),
       validator: (value) {
         final parsed = int.tryParse(value ?? '');
         return parsed == null || parsed <= 0
@@ -298,11 +302,9 @@ class _ProductDialogState extends State<_ProductDialog> {
         id: old?.id ?? IdGenerator.next('product'),
         name: _name.text.trim(),
         type: _type,
-        gemsPerUnit:
-            _type == ProductType.gems ? int.parse(_gems.text) : 0,
+        gemsPerUnit: _type == ProductType.gems ? int.parse(_gems.text) : 0,
         creditPerUnit: int.parse(_credit.text),
-        salePriceDzd:
-            _type == ProductType.gems ? int.parse(_price.text) : 0,
+        salePriceDzd: _type == ProductType.gems ? int.parse(_price.text) : 0,
         description: description.isEmpty ? null : description,
         isActive: _active,
         createdAt: old?.createdAt ?? DateTime.now(),

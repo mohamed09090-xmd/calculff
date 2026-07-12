@@ -29,7 +29,10 @@ void main() {
     expect(result.remainingPurchasedCredit, 30);
     expect(result.cashProfit, 1800);
     expect(
-      {for (final item in result.optimization!.selections) item.package.id: item.quantity},
+      {
+        for (final item in result.optimization!.selections)
+          item.package.id: item.quantity,
+      },
       {'pkg_2000': 2, 'pkg_110': 1},
     );
   });

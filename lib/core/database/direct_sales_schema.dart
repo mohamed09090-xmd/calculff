@@ -32,9 +32,7 @@ class DirectSalesSchema {
     });
   }
 
-  static Future<void> normalizeLegacyTransactions(
-    DatabaseExecutor db,
-  ) async {
+  static Future<void> normalizeLegacyTransactions(DatabaseExecutor db) async {
     await db.execute('''
       UPDATE sales_transactions
       SET credit_cost_used = charged_amount - cash_profit
@@ -122,10 +120,9 @@ class DirectSalesSchema {
     required String key,
     required String value,
   }) async {
-    await db.insert(
-      'app_settings',
-      {'key': key, 'value': value},
-      conflictAlgorithm: ConflictAlgorithm.ignore,
-    );
+    await db.insert('app_settings', {
+      'key': key,
+      'value': value,
+    }, conflictAlgorithm: ConflictAlgorithm.ignore);
   }
 }

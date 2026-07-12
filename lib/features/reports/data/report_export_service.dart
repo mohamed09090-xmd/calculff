@@ -11,13 +11,9 @@ import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:screenshot/screenshot.dart';
 
-
-
-
 import '../../../core/localization/localized_text.dart';
 
 import '../../../core/localization/app_translator.dart';
-
 
 import '../../../core/utils/money_formatter.dart';
 import '../../../shared/models/app_settings.dart';
@@ -27,35 +23,32 @@ enum ReportExportFormat { csv, pdf, png }
 
 extension ReportExportFormatX on ReportExportFormat {
   String get label => switch (this) {
-        ReportExportFormat.csv => 'CSV',
-        ReportExportFormat.pdf => 'PDF',
-        ReportExportFormat.png => 'صورة PNG',
-      };
+    ReportExportFormat.csv => 'CSV',
+    ReportExportFormat.pdf => 'PDF',
+    ReportExportFormat.png => 'صورة PNG',
+  };
 
   String get extension => switch (this) {
-        ReportExportFormat.csv => 'csv',
-        ReportExportFormat.pdf => 'pdf',
-        ReportExportFormat.png => 'png',
-      };
+    ReportExportFormat.csv => 'csv',
+    ReportExportFormat.pdf => 'pdf',
+    ReportExportFormat.png => 'png',
+  };
 
   String get mimeType => switch (this) {
-        ReportExportFormat.csv => 'text/csv',
-        ReportExportFormat.pdf => 'application/pdf',
-        ReportExportFormat.png => 'image/png',
-      };
+    ReportExportFormat.csv => 'text/csv',
+    ReportExportFormat.pdf => 'application/pdf',
+    ReportExportFormat.png => 'image/png',
+  };
 
   IconData get icon => switch (this) {
-        ReportExportFormat.csv => Icons.table_chart_outlined,
-        ReportExportFormat.pdf => Icons.picture_as_pdf_outlined,
-        ReportExportFormat.png => Icons.image_outlined,
-      };
+    ReportExportFormat.csv => Icons.table_chart_outlined,
+    ReportExportFormat.pdf => Icons.picture_as_pdf_outlined,
+    ReportExportFormat.png => Icons.image_outlined,
+  };
 }
 
 class ReportExportResult {
-  const ReportExportResult({
-    required this.file,
-    required this.format,
-  });
+  const ReportExportResult({required this.file, required this.format});
 
   final File file;
   final ReportExportFormat format;
@@ -65,7 +58,7 @@ class ReportExportResult {
 
 class ReportExportService {
   ReportExportService({ScreenshotController? screenshotController})
-      : _screenshotController = screenshotController ?? ScreenshotController();
+    : _screenshotController = screenshotController ?? ScreenshotController();
 
   final ScreenshotController _screenshotController;
 
@@ -140,9 +133,7 @@ class ReportExportService {
       ..writeln('الفترة,المبيعات,الربح');
 
     for (final point in report.points) {
-      buffer.writeln(
-        '${_csv(point.label)},${point.sales},${point.profit}',
-      );
+      buffer.writeln('${_csv(point.label)},${point.sales},${point.profit}');
     }
 
     buffer
@@ -197,11 +188,8 @@ class ReportExportService {
           child: Material(
             color: const Color(0xFFF5F1E7),
             child: Directionality(
-              textDirection: ui.TextDirection.rtl,
-              child: _ReportExportDocument(
-                report: report,
-                settings: settings,
-              ),
+              textDirection: Directionality.of(context),
+              child: _ReportExportDocument(report: report, settings: settings),
             ),
           ),
         ),
@@ -233,9 +221,11 @@ class ReportExportService {
       (source.width * usablePdfHeight / usablePdfWidth).floor(),
     );
 
-    for (var offsetY = 0;
-        offsetY < source.height;
-        offsetY += sourceHeightPerPage) {
+    for (
+      var offsetY = 0;
+      offsetY < source.height;
+      offsetY += sourceHeightPerPage
+    ) {
       final sliceHeight = math.min(
         sourceHeightPerPage,
         source.height - offsetY,
@@ -250,12 +240,7 @@ class ReportExportService {
           source.width.toDouble(),
           sliceHeight.toDouble(),
         ),
-        ui.Rect.fromLTWH(
-          0,
-          0,
-          source.width.toDouble(),
-          sliceHeight.toDouble(),
-        ),
+        ui.Rect.fromLTWH(0, 0, source.width.toDouble(), sliceHeight.toDouble()),
         ui.Paint(),
       );
       final picture = recorder.endRecording();
@@ -272,9 +257,8 @@ class ReportExportService {
         pw.Page(
           pageFormat: PdfPageFormat.a4,
           margin: const pw.EdgeInsets.all(margin),
-          build: (_) => pw.Center(
-            child: pw.Image(memoryImage, fit: pw.BoxFit.contain),
-          ),
+          build: (_) =>
+              pw.Center(child: pw.Image(memoryImage, fit: pw.BoxFit.contain)),
         ),
       );
     }
@@ -286,20 +270,15 @@ class ReportExportService {
 }
 
 class _ReportExportDocument extends StatelessWidget {
-  const _ReportExportDocument({
-    required this.report,
-    required this.settings,
-  });
+  const _ReportExportDocument({required this.report, required this.settings});
 
   final ReportSummary report;
   final AppSettings settings;
 
   @override
   Widget build(BuildContext context) {
-    String money(num value) => MoneyFormatter.format(
-          value,
-          useThousands: settings.useThousands,
-        );
+    String money(num value) =>
+        MoneyFormatter.format(value, useThousands: settings.useThousands);
     final scheme = Theme.of(context).colorScheme;
 
     return Container(
@@ -324,8 +303,9 @@ class _ReportExportDocument extends StatelessWidget {
               _Metric(
                 label: AppTranslator.translate(context, 'الربح الصافي'),
                 value: money(report.current.profit),
-                accent:
-                    report.current.profit < 0 ? scheme.error : scheme.secondary,
+                accent: report.current.profit < 0
+                    ? scheme.error
+                    : scheme.secondary,
               ),
               _Metric(
                 label: AppTranslator.translate(context, 'التكلفة'),
@@ -387,10 +367,7 @@ class _ReportExportDocument extends StatelessWidget {
           Text(
             'تقرير محلي تم إنشاؤه من بيانات التطبيق - لا يتضمن بيانات دخول أو معلومات سرية.',
             textAlign: TextAlign.center,
-            style: TextStyle(
-              color: scheme.onSurfaceVariant,
-              fontSize: 14,
-            ),
+            style: TextStyle(color: scheme.onSurfaceVariant, fontSize: 14),
           ),
         ],
       ),
@@ -435,10 +412,7 @@ class _ExportHeader extends StatelessWidget {
           const SizedBox(height: 6),
           Text(
             'تم الإنشاء: ${DateFormat('dd/MM/yyyy • HH:mm').format(report.generatedAt)}',
-            style: const TextStyle(
-              color: Color(0xFFBFD0C7),
-              fontSize: 16,
-            ),
+            style: const TextStyle(color: Color(0xFFBFD0C7), fontSize: 16),
           ),
         ],
       ),

@@ -6,13 +6,9 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-
-
-
 import '../../../core/localization/localized_text.dart';
 
 import '../../../core/localization/app_translator.dart';
-
 
 import '../../../core/constants/app_strings.dart';
 import '../../../shared/providers/app_providers.dart';
@@ -173,7 +169,10 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
                           ),
                           loading: () => _LoadingFooter(
                             progress: loaderProgress,
-                            label: AppTranslator.translate(context, 'جاري تهيئة البيانات...'),
+                            label: AppTranslator.translate(
+                              context,
+                              'جاري تهيئة البيانات...',
+                            ),
                           ),
                           error: (error, stack) => _SplashError(
                             error: error,
@@ -321,16 +320,18 @@ class _SplashBackdropPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final center = Offset(size.width * 0.5, size.height * 0.43);
-    final reveal = Curves.easeOutCubic.transform(_interval(progress, 0.18, 0.9));
+    final reveal = Curves.easeOutCubic.transform(
+      _interval(progress, 0.18, 0.9),
+    );
     final paint = Paint()
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1;
 
     for (var index = 0; index < 4; index++) {
       final radius = (115 + (index * 42)) * (0.9 + (0.1 * reveal));
-      paint.color = const Color(0xFFE0A02B).withAlpha(
-        ((18 - (index * 3)) * reveal).round(),
-      );
+      paint.color = const Color(
+        0xFFE0A02B,
+      ).withAlpha(((18 - (index * 3)) * reveal).round());
       canvas.drawCircle(center, radius, paint);
     }
 
@@ -385,14 +386,10 @@ class _BrandMarkPainter extends CustomPainter {
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1.4;
     for (var index = 0; index < 3; index++) {
-      glowPaint.color = const Color(0xFFE0A02B).withAlpha(
-        ((54 - (index * 13)) * ringProgress).round(),
-      );
-      canvas.drawCircle(
-        center,
-        (69 + (index * 13)) * ringProgress,
-        glowPaint,
-      );
+      glowPaint.color = const Color(
+        0xFFE0A02B,
+      ).withAlpha(((54 - (index * 13)) * ringProgress).round());
+      canvas.drawCircle(center, (69 + (index * 13)) * ringProgress, glowPaint);
     }
 
     final baseY = size.height * 0.61;

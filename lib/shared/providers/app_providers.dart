@@ -19,8 +19,8 @@ final appRepositoryProvider = Provider<AppRepository>(
 
 final inventoryAdjustmentRepositoryProvider =
     Provider<InventoryAdjustmentRepository>(
-  (ref) => InventoryAdjustmentRepository(),
-);
+      (ref) => InventoryAdjustmentRepository(),
+    );
 
 final dashboardRepositoryProvider = Provider<DashboardRepository>(
   (ref) => DashboardRepository(),
@@ -58,7 +58,9 @@ final inventoryProvider = FutureProvider<List<InventoryLot>>((ref) async {
   return ref.read(appRepositoryProvider).getInventoryLots();
 });
 
-final transactionsProvider = FutureProvider<List<SalesTransaction>>((ref) async {
+final transactionsProvider = FutureProvider<List<SalesTransaction>>((
+  ref,
+) async {
   final transactions = await ref.read(appRepositoryProvider).getTransactions();
   return transactions
       .where(
@@ -84,8 +86,7 @@ class SettingsController extends AsyncNotifier<AppSettings> {
   }
 }
 
-final settingsProvider =
-    AsyncNotifierProvider<SettingsController, AppSettings>(
+final settingsProvider = AsyncNotifierProvider<SettingsController, AppSettings>(
   SettingsController.new,
 );
 
@@ -104,8 +105,8 @@ class CalculationController extends Notifier<CalculationResult?> {
 
 final calculationProvider =
     NotifierProvider<CalculationController, CalculationResult?>(
-  CalculationController.new,
-);
+      CalculationController.new,
+    );
 
 void invalidateAppData(WidgetRef ref) {
   ref

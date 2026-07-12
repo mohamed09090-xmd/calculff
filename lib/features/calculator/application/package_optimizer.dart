@@ -74,12 +74,12 @@ class PackageOptimizer {
     for (var index = 0; index < active.length; index++) {
       final quantity = winner.counts[index] ?? 0;
       if (quantity > 0) {
-        selections.add(PackageSelection(package: active[index], quantity: quantity));
+        selections.add(
+          PackageSelection(package: active[index], quantity: quantity),
+        );
       }
     }
-    selections.sort(
-      (a, b) => b.package.credit.compareTo(a.package.credit),
-    );
+    selections.sort((a, b) => b.package.credit.compareTo(a.package.credit));
     return OptimizationResult(
       requiredCredit: requiredCredit,
       selections: selections,
@@ -131,11 +131,11 @@ class _Candidate {
   });
 
   const _Candidate.empty()
-      : cost = 0,
-        packageCount = 0,
-        minimumValidityHours = 0,
-        validityScore = 0,
-        counts = const {};
+    : cost = 0,
+      packageCount = 0,
+      minimumValidityHours = 0,
+      validityScore = 0,
+      counts = const {};
 
   final int cost;
   final int packageCount;
@@ -152,8 +152,8 @@ class _Candidate {
       minimumValidityHours: packageCount == 0
           ? package.validityHours
           : (minimumValidityHours < package.validityHours
-              ? minimumValidityHours
-              : package.validityHours),
+                ? minimumValidityHours
+                : package.validityHours),
       validityScore: validityScore + package.validityHours,
       counts: nextCounts,
     );

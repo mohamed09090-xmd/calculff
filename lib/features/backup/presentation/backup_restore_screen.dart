@@ -8,13 +8,9 @@ import 'package:intl/intl.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 
-
-
-
 import '../../../core/localization/localized_text.dart';
 
 import '../../../core/localization/app_translator.dart';
-
 
 import '../../../core/constants/app_strings.dart';
 import '../../../core/database/app_database.dart';
@@ -89,7 +85,9 @@ class _BackupRestoreScreenState extends ConsumerState<BackupRestoreScreen> {
                 SizedBox(height: 6),
                 Text('• دعم النسخ القديمة وتحويل أسماء العملاء تلقائيًا.'),
                 SizedBox(height: 6),
-                Text('• تنفيذ الاستيراد داخل معاملة واحدة قابلة للتراجع عند الخطأ.'),
+                Text(
+                  '• تنفيذ الاستيراد داخل معاملة واحدة قابلة للتراجع عند الخطأ.',
+                ),
                 SizedBox(height: 6),
                 Text('• عدم حذف البيانات الحالية إذا كان الملف تالفًا.'),
               ],
@@ -134,7 +132,9 @@ class _BackupRestoreScreenState extends ConsumerState<BackupRestoreScreen> {
       final data = await ref.read(appRepositoryProvider).exportBackup();
       final preview = AppDatabase.inspectBackup(data);
       final directory = await getApplicationDocumentsDirectory();
-      final timestamp = DateFormat('yyyy-MM-dd-HH-mm-ss').format(DateTime.now());
+      final timestamp = DateFormat(
+        'yyyy-MM-dd-HH-mm-ss',
+      ).format(DateTime.now());
       final file = File(
         '${directory.path}/game-credit-backup-v${preview.version}-$timestamp.json',
       );
@@ -142,7 +142,8 @@ class _BackupRestoreScreenState extends ConsumerState<BackupRestoreScreen> {
       await Share.shareXFiles(
         [XFile(file.path, mimeType: 'application/json')],
         subject: shareSubject,
-        text: '${preview.transactionCount} عملية • '
+        text:
+            '${preview.transactionCount} عملية • '
             '${preview.customerCount} عميل',
       );
       _message('تم إنشاء نسخة تحتوي على ${preview.transactionCount} عملية.');
@@ -223,15 +224,27 @@ class _BackupRestoreScreenState extends ConsumerState<BackupRestoreScreen> {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _PreviewRow(label: 'إصدار النسخة', value: '${preview.version}'),
+                  _PreviewRow(
+                    label: 'إصدار النسخة',
+                    value: '${preview.version}',
+                  ),
                   _PreviewRow(label: 'تاريخ التصدير', value: exportedAt),
-                  _PreviewRow(label: 'العملاء', value: '${preview.customerCount}'),
+                  _PreviewRow(
+                    label: 'العملاء',
+                    value: '${preview.customerCount}',
+                  ),
                   _PreviewRow(
                     label: AppTranslator.translate(context, 'العمليات'),
                     value: '${preview.transactionCount}',
                   ),
-                  _PreviewRow(label: 'المنتجات', value: '${preview.productCount}'),
-                  _PreviewRow(label: 'الباقات', value: '${preview.packageCount}'),
+                  _PreviewRow(
+                    label: 'المنتجات',
+                    value: '${preview.productCount}',
+                  ),
+                  _PreviewRow(
+                    label: 'الباقات',
+                    value: '${preview.packageCount}',
+                  ),
                   _PreviewRow(
                     label: AppTranslator.translate(context, 'رزم المخزون'),
                     value: '${preview.inventoryLotCount}',
@@ -241,9 +254,7 @@ class _BackupRestoreScreenState extends ConsumerState<BackupRestoreScreen> {
                     Container(
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: Theme.of(context)
-                            .colorScheme
-                            .secondaryContainer,
+                        color: Theme.of(context).colorScheme.secondaryContainer,
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: const Text(
@@ -296,9 +307,9 @@ class _BackupRestoreScreenState extends ConsumerState<BackupRestoreScreen> {
 
   void _message(String message) {
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message)),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
   }
 }
 

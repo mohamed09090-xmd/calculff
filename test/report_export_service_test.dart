@@ -19,12 +19,7 @@ void main() {
     ),
     previous: null,
     points: const [
-      ReportPoint(
-        key: '2026-07-12',
-        label: '12/7',
-        sales: 3500,
-        profit: 1100,
-      ),
+      ReportPoint(key: '2026-07-12', label: '12/7', sales: 3500, profit: 1100),
     ],
     topProducts: const [
       ReportRankingItem(

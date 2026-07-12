@@ -5,13 +5,9 @@ import 'package:flutter/material.dart' hide Text;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-
-
-
 import '../../../core/localization/localized_text.dart';
 
 import '../../../core/localization/app_translator.dart';
-
 
 import '../../../core/constants/app_strings.dart';
 import '../../../core/utils/date_utils.dart';
@@ -25,8 +21,7 @@ class TransactionsScreen extends ConsumerStatefulWidget {
   const TransactionsScreen({super.key});
 
   @override
-  ConsumerState<TransactionsScreen> createState() =>
-      _TransactionsScreenState();
+  ConsumerState<TransactionsScreen> createState() => _TransactionsScreenState();
 }
 
 class _TransactionsScreenState extends ConsumerState<TransactionsScreen> {
@@ -63,7 +58,10 @@ class _TransactionsScreenState extends ConsumerState<TransactionsScreen> {
         children: [
           TextField(
             decoration: InputDecoration(
-              hintText: AppTranslator.translate(context, 'ابحث باسم العميل أو المنتج'),
+              hintText: AppTranslator.translate(
+                context,
+                'ابحث باسم العميل أو المنتج',
+              ),
               prefixIcon: Icon(Icons.search),
             ),
             onChanged: (value) =>
@@ -75,12 +73,15 @@ class _TransactionsScreenState extends ConsumerState<TransactionsScreen> {
               value: transactions,
               onRetry: () => ref.invalidate(transactionsProvider),
               data: (items) {
-                final filtered = items.where((item) {
-                  if (_query.isEmpty) return true;
-                  final customer = item.customerName.toLowerCase();
-                  final product = item.displayProductName.toLowerCase();
-                  return customer.contains(_query) || product.contains(_query);
-                }).toList(growable: false);
+                final filtered = items
+                    .where((item) {
+                      if (_query.isEmpty) return true;
+                      final customer = item.customerName.toLowerCase();
+                      final product = item.displayProductName.toLowerCase();
+                      return customer.contains(_query) ||
+                          product.contains(_query);
+                    })
+                    .toList(growable: false);
                 if (filtered.isEmpty) {
                   return const Center(child: Text('لا توجد عمليات مطابقة.'));
                 }
@@ -121,8 +122,7 @@ class _TransactionsScreenState extends ConsumerState<TransactionsScreen> {
                             color: profitColor,
                           ),
                         ),
-                        onTap: () =>
-                            context.push('/transactions/${item.id}'),
+                        onTap: () => context.push('/transactions/${item.id}'),
                       ),
                     );
                   },

@@ -23,14 +23,14 @@ class EnhancedAppRepository extends AppRepository {
     AppDatabase? database,
     CalculationEngine? calculationEngine,
     FefoAllocator? allocator,
-  })  : _database = database ?? AppDatabase.instance,
-        _engine = calculationEngine ?? const CalculationEngine(),
-        _allocator = allocator ?? const FefoAllocator(),
-        super(
-          database: database ?? AppDatabase.instance,
-          calculationEngine: calculationEngine,
-          allocator: allocator,
-        );
+  }) : _database = database ?? AppDatabase.instance,
+       _engine = calculationEngine ?? const CalculationEngine(),
+       _allocator = allocator ?? const FefoAllocator(),
+       super(
+         database: database ?? AppDatabase.instance,
+         calculationEngine: calculationEngine,
+         allocator: allocator,
+       );
 
   final AppDatabase _database;
   final CalculationEngine _engine;
@@ -92,22 +92,14 @@ class EnhancedAppRepository extends AppRepository {
     await super.saveSettings(settings);
     final db = await _database.database;
     final batch = db.batch();
-    batch.insert(
-      'app_settings',
-      {
-        'key': 'credit_sale_reference_credit',
-        'value': '${settings.creditSaleReferenceCredit}',
-      },
-      conflictAlgorithm: ConflictAlgorithm.replace,
-    );
-    batch.insert(
-      'app_settings',
-      {
-        'key': 'credit_sale_reference_price_dzd',
-        'value': '${settings.creditSaleReferencePriceDzd}',
-      },
-      conflictAlgorithm: ConflictAlgorithm.replace,
-    );
+    batch.insert('app_settings', {
+      'key': 'credit_sale_reference_credit',
+      'value': '${settings.creditSaleReferenceCredit}',
+    }, conflictAlgorithm: ConflictAlgorithm.replace);
+    batch.insert('app_settings', {
+      'key': 'credit_sale_reference_price_dzd',
+      'value': '${settings.creditSaleReferencePriceDzd}',
+    }, conflictAlgorithm: ConflictAlgorithm.replace);
     await batch.commit(noResult: true);
   }
 
@@ -135,11 +127,7 @@ class EnhancedAppRepository extends AppRepository {
       ),
     );
     final existingCost = request.useInventory
-        ? _estimateCostFromLots(
-            lots,
-            result.inventoryCreditUsed,
-            now,
-          )
+        ? _estimateCostFromLots(lots, result.inventoryCreditUsed, now)
         : 0;
     final newLots = _virtualLots(result, now);
     final newCost = _estimateCostFromLots(
@@ -342,7 +330,8 @@ class EnhancedAppRepository extends AppRepository {
     required DateTime createdAt,
   }) async {
     final product = result.request.product;
-    final productName = product?.name ??
+    final productName =
+        product?.name ??
         (result.request.mode == CalculationMode.credit
             ? 'بيع رصيد مباشر'
             : null);
@@ -439,9 +428,9 @@ class EnhancedAppRepository extends AppRepository {
     final itemsByTransaction = <String, List<Map<String, Object?>>>{};
     for (final item in allItems) {
       final id = item['transaction_id']! as String;
-      itemsByTransaction.putIfAbsent(id, () => []).add(
-            Map<String, Object?>.from(item),
-          );
+      itemsByTransaction
+          .putIfAbsent(id, () => [])
+          .add(Map<String, Object?>.from(item));
     }
     final packageRows = await db.query(
       'packages',
@@ -485,7 +474,8 @@ class EnhancedAppRepository extends AppRepository {
           customerName: replacement.customer.name,
           mode: result.request.mode,
           productId: product?.id,
-          productNameSnapshot: product?.name ??
+          productNameSnapshot:
+              product?.name ??
               (result.request.mode == CalculationMode.credit
                   ? 'بيع رصيد مباشر'
                   : null),
@@ -527,7 +517,8 @@ class EnhancedAppRepository extends AppRepository {
         items: itemsByTransaction[transactionId] ?? const [],
       );
     }
-    if (!replacementFound) throw StateError('العملية المطلوب تعديلها غير موجودة');
+    if (!replacementFound)
+      throw StateError('العملية المطلوب تعديلها غير موجودة');
   }
 
   Future<void> _replayStoredTransaction(
@@ -564,8 +555,9 @@ class EnhancedAppRepository extends AppRepository {
           purchasedCredit: credit,
           remainingCredit: credit,
           purchaseCost: price,
-          purchasedAt:
-              transaction.createdAt.add(Duration(microseconds: lotIndex++)),
+          purchasedAt: transaction.createdAt.add(
+            Duration(microseconds: lotIndex++),
+          ),
           expiresAt: transaction.createdAt.add(Duration(hours: validity)),
           status: InventoryLotStatus.active,
           sourceTransactionId: transaction.id,
@@ -628,8 +620,9 @@ class EnhancedAppRepository extends AppRepository {
           remainingCredit: selection.package.credit,
           purchaseCost: selection.package.priceDzd,
           purchasedAt: createdAt.add(Duration(microseconds: lotIndex++)),
-          expiresAt:
-              createdAt.add(Duration(hours: selection.package.validityHours)),
+          expiresAt: createdAt.add(
+            Duration(hours: selection.package.validityHours),
+          ),
           status: InventoryLotStatus.active,
           sourceTransactionId: transactionId,
         );
@@ -713,10 +706,7 @@ class EnhancedAppRepository extends AppRepository {
         'created_at': now.toIso8601String(),
       });
     }
-    return _CreditConsumption(
-      amount: allocation.allocatedCredit,
-      cost: cost,
-    );
+    return _CreditConsumption(amount: allocation.allocatedCredit, cost: cost);
   }
 
   int _allocatedCost(InventoryLot lot, int amount) {
@@ -724,16 +714,12 @@ class EnhancedAppRepository extends AppRepository {
     final consumedAfter = consumedBefore + amount;
     final costBefore =
         ((lot.purchaseCost * consumedBefore) / lot.purchasedCredit).round();
-    final costAfter =
-        ((lot.purchaseCost * consumedAfter) / lot.purchasedCredit).round();
+    final costAfter = ((lot.purchaseCost * consumedAfter) / lot.purchasedCredit)
+        .round();
     return costAfter - costBefore;
   }
 
-  int _estimateCostFromLots(
-    List<InventoryLot> lots,
-    int amount,
-    DateTime now,
-  ) {
+  int _estimateCostFromLots(List<InventoryLot> lots, int amount, DateTime now) {
     if (amount <= 0) return 0;
     final allocation = _allocator.allocate(
       requiredCredit: amount,
@@ -762,8 +748,9 @@ class EnhancedAppRepository extends AppRepository {
             remainingCredit: selection.package.credit,
             purchaseCost: selection.package.priceDzd,
             purchasedAt: now.add(Duration(microseconds: index)),
-            expiresAt:
-                now.add(Duration(hours: selection.package.validityHours)),
+            expiresAt: now.add(
+              Duration(hours: selection.package.validityHours),
+            ),
             status: InventoryLotStatus.active,
           ),
         );
@@ -773,11 +760,14 @@ class EnhancedAppRepository extends AppRepository {
   }
 
   Future<int> _availableCredit(DatabaseExecutor db, DateTime at) async {
-    final rows = await db.rawQuery('''
+    final rows = await db.rawQuery(
+      '''
       SELECT COALESCE(SUM(remaining_credit), 0) AS total
       FROM inventory_lots
       WHERE status = ? AND remaining_credit > 0 AND expires_at > ?
-    ''', [InventoryLotStatus.active.name, at.toIso8601String()]);
+    ''',
+      [InventoryLotStatus.active.name, at.toIso8601String()],
+    );
     return (rows.first['total'] as num).toInt();
   }
 
@@ -825,7 +815,9 @@ class EnhancedAppRepository extends AppRepository {
     }
     if (result.request.mode == CalculationMode.gems &&
         result.gems != result.request.inputValue) {
-      throw StateError('عدّل عدد الجواهر إلى كمية متوافقة مع حزمة المنتج قبل الحفظ');
+      throw StateError(
+        'عدّل عدد الجواهر إلى كمية متوافقة مع حزمة المنتج قبل الحفظ',
+      );
     }
     if (result.request.mode == CalculationMode.directProduct &&
         result.request.product?.type != ProductType.direct) {
@@ -841,8 +833,10 @@ class EnhancedAppRepository extends AppRepository {
     return AppSettings(
       useThousands: values['use_thousands'] == 'true',
       darkMode: values['dark_mode'] == 'true',
-      expiryWarningHours:
-          math.max(1, int.tryParse(values['expiry_warning_hours'] ?? '') ?? 24),
+      expiryWarningHours: math.max(
+        1,
+        int.tryParse(values['expiry_warning_hours'] ?? '') ?? 24,
+      ),
       creditSaleReferenceCredit: math.max(
         1,
         int.tryParse(values['credit_sale_reference_credit'] ?? '') ?? 240,

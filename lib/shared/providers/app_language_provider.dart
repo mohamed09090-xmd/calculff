@@ -8,14 +8,14 @@ enum AppLanguagePreference { arabic, french }
 
 extension AppLanguagePreferenceX on AppLanguagePreference {
   Locale get locale => switch (this) {
-        AppLanguagePreference.arabic => const Locale('ar', 'DZ'),
-        AppLanguagePreference.french => const Locale('fr', 'FR'),
-      };
+    AppLanguagePreference.arabic => const Locale('ar', 'DZ'),
+    AppLanguagePreference.french => const Locale('fr', 'FR'),
+  };
 
   TextDirection get textDirection => switch (this) {
-        AppLanguagePreference.arabic => TextDirection.rtl,
-        AppLanguagePreference.french => TextDirection.ltr,
-      };
+    AppLanguagePreference.arabic => TextDirection.rtl,
+    AppLanguagePreference.french => TextDirection.ltr,
+  };
 
   String get languageCode => locale.languageCode;
 }
@@ -58,5 +58,5 @@ class AppLanguageController extends AsyncNotifier<AppLanguagePreference> {
 
 final appLanguageProvider =
     AsyncNotifierProvider<AppLanguageController, AppLanguagePreference>(
-  AppLanguageController.new,
-);
+      AppLanguageController.new,
+    );

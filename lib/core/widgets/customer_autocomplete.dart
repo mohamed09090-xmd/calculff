@@ -2,13 +2,9 @@ import 'package:flutter/material.dart' hide Text;
 
 import 'package:flutter/services.dart';
 
-
-
-
 import '../localization/localized_text.dart';
 
 import '../localization/app_translator.dart';
-
 
 import '../../shared/models/customer.dart';
 
@@ -42,41 +38,45 @@ class CustomerAutocomplete extends StatelessWidget {
       displayStringForOption: (customer) => customer.name,
       optionsBuilder: (textValue) {
         final query = textValue.text.trim().toLowerCase();
-        final matches = customers.where((customer) {
-          if (query.isEmpty) return true;
-          return customer.name.toLowerCase().contains(query) ||
-              (customer.phone?.contains(query) ?? false);
-        }).take(8);
+        final matches = customers
+            .where((customer) {
+              if (query.isEmpty) return true;
+              return customer.name.toLowerCase().contains(query) ||
+                  (customer.phone?.contains(query) ?? false);
+            })
+            .take(8);
         return matches;
       },
       onSelected: onSelected,
-      fieldViewBuilder: (
-        context,
-        textController,
-        fieldFocusNode,
-        onFieldSubmitted,
-      ) {
-        return TextFormField(
-          controller: textController,
-          focusNode: fieldFocusNode,
-          autofocus: autofocus,
-          enabled: enabled,
-          textCapitalization: TextCapitalization.words,
-          textInputAction: TextInputAction.done,
-          autofillHints: const [AutofillHints.name],
-          inputFormatters: [LengthLimitingTextInputFormatter(80)],
-          decoration: InputDecoration(
-            labelText: AppTranslator.translate(context, 'اسم العميل'),
-            hintText: AppTranslator.translate(context, 'ابحث أو اكتب اسم عميل جديد'),
-            prefixIcon: Icon(Icons.badge_outlined),
-            suffixIcon: Icon(Icons.expand_more_rounded),
-            helperText: AppTranslator.translate(context, 'الاسم الجديد سيُضاف إلى قائمة العملاء تلقائيًا.'),
-          ),
-          validator: validator,
-          onChanged: onTextChanged,
-          onFieldSubmitted: (_) => onFieldSubmitted(),
-        );
-      },
+      fieldViewBuilder:
+          (context, textController, fieldFocusNode, onFieldSubmitted) {
+            return TextFormField(
+              controller: textController,
+              focusNode: fieldFocusNode,
+              autofocus: autofocus,
+              enabled: enabled,
+              textCapitalization: TextCapitalization.words,
+              textInputAction: TextInputAction.done,
+              autofillHints: const [AutofillHints.name],
+              inputFormatters: [LengthLimitingTextInputFormatter(80)],
+              decoration: InputDecoration(
+                labelText: AppTranslator.translate(context, 'اسم العميل'),
+                hintText: AppTranslator.translate(
+                  context,
+                  'ابحث أو اكتب اسم عميل جديد',
+                ),
+                prefixIcon: Icon(Icons.badge_outlined),
+                suffixIcon: Icon(Icons.expand_more_rounded),
+                helperText: AppTranslator.translate(
+                  context,
+                  'الاسم الجديد سيُضاف إلى قائمة العملاء تلقائيًا.',
+                ),
+              ),
+              validator: validator,
+              onChanged: onTextChanged,
+              onFieldSubmitted: (_) => onFieldSubmitted(),
+            );
+          },
       optionsViewBuilder: (context, select, options) {
         final entries = options.toList(growable: false);
         if (entries.isEmpty) return const SizedBox.shrink();
@@ -105,7 +105,9 @@ class CustomerAutocomplete extends StatelessWidget {
                     ),
                     subtitle: customer.phone == null
                         ? Text('${customer.transactionCount} عملية')
-                        : Text('${customer.phone} • ${customer.transactionCount} عملية'),
+                        : Text(
+                            '${customer.phone} • ${customer.transactionCount} عملية',
+                          ),
                     trailing: customer.isActive
                         ? null
                         : const Icon(Icons.archive_outlined),

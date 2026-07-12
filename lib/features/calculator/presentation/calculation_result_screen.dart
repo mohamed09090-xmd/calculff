@@ -3,10 +3,6 @@ import 'package:flutter/material.dart' hide Text;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-
-
-
-
 import '../../../core/localization/localized_text.dart';
 
 import '../../../core/widgets/app_shell.dart';
@@ -34,11 +30,10 @@ class CalculationResultScreen extends ConsumerWidget {
         ),
       );
     }
-    final exactGems = result.request.mode != CalculationMode.gems ||
+    final exactGems =
+        result.request.mode != CalculationMode.gems ||
         result.gems == result.request.inputValue;
-    final savable = result.requiredCredit > 0 &&
-        result.units > 0 &&
-        exactGems;
+    final savable = result.requiredCredit > 0 && result.units > 0 && exactGems;
     return AppShell(
       title: 'نتيجة الحساب',
       body: ListView(

@@ -4,13 +4,9 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-
-
-
 import '../../../core/localization/localized_text.dart';
 
 import '../../../core/localization/app_translator.dart';
-
 
 import '../../../core/constants/app_strings.dart';
 import '../../../core/utils/money_formatter.dart';
@@ -45,11 +41,11 @@ class _CalculatorScreenState extends ConsumerState<CalculatorScreen> {
   }
 
   String get _inputLabel => switch (_mode) {
-        CalculationMode.customerAmount => 'المبلغ المدفوع بالدينار',
-        CalculationMode.gems => 'عدد الجواهر المطلوبة',
-        CalculationMode.credit => 'الرصيد المطلوب',
-        CalculationMode.directProduct => 'وحدة واحدة من المنتج',
-      };
+    CalculationMode.customerAmount => 'المبلغ المدفوع بالدينار',
+    CalculationMode.gems => 'عدد الجواهر المطلوبة',
+    CalculationMode.credit => 'الرصيد المطلوب',
+    CalculationMode.directProduct => 'وحدة واحدة من المنتج',
+  };
 
   bool get _requiresInput => _mode != CalculationMode.directProduct;
   bool get _requiresProduct => _mode != CalculationMode.credit;
@@ -69,13 +65,15 @@ class _CalculatorScreenState extends ConsumerState<CalculatorScreen> {
         value: products,
         onRetry: () => ref.invalidate(activeProductsProvider),
         data: (items) {
-          final relevantProducts = items.where((product) {
-            if (_mode == CalculationMode.directProduct) {
-              return product.isDirectProduct;
-            }
-            if (_mode == CalculationMode.credit) return false;
-            return product.isGemProduct;
-          }).toList(growable: false);
+          final relevantProducts = items
+              .where((product) {
+                if (_mode == CalculationMode.directProduct) {
+                  return product.isDirectProduct;
+                }
+                if (_mode == CalculationMode.credit) return false;
+                return product.isGemProduct;
+              })
+              .toList(growable: false);
           if (_requiresProduct &&
               (_product == null || !relevantProducts.contains(_product))) {
             _product = relevantProducts.isEmpty ? null : relevantProducts.first;
@@ -156,8 +154,9 @@ class _CalculatorScreenState extends ConsumerState<CalculatorScreen> {
                           ],
                           onChanged: (value) =>
                               setState(() => _product = value),
-                          validator: (value) =>
-                              value == null ? AppTranslator.translate(context, 'اختر منتجًا') : null,
+                          validator: (value) => value == null
+                              ? AppTranslator.translate(context, 'اختر منتجًا')
+                              : null,
                         ),
                       if (_requiresProduct) const SizedBox(height: 12),
                       if (_requiresInput)
@@ -168,7 +167,10 @@ class _CalculatorScreenState extends ConsumerState<CalculatorScreen> {
                             FilteringTextInputFormatter.digitsOnly,
                           ],
                           decoration: InputDecoration(
-                            labelText: AppTranslator.translate(context, _inputLabel),
+                            labelText: AppTranslator.translate(
+                              context,
+                              _inputLabel,
+                            ),
                             prefixIcon: const Icon(Icons.pin_outlined),
                           ),
                           validator: (value) {
@@ -183,9 +185,9 @@ class _CalculatorScreenState extends ConsumerState<CalculatorScreen> {
                         Container(
                           padding: const EdgeInsets.all(14),
                           decoration: BoxDecoration(
-                            color: Theme.of(context)
-                                .colorScheme
-                                .surfaceContainerHighest,
+                            color: Theme.of(
+                              context,
+                            ).colorScheme.surfaceContainerHighest,
                             borderRadius: BorderRadius.circular(14),
                           ),
                           child: Column(
@@ -197,7 +199,9 @@ class _CalculatorScreenState extends ConsumerState<CalculatorScreen> {
                                   fontWeight: FontWeight.w900,
                                 ),
                               ),
-                              if (selectedDirect.description?.trim().isNotEmpty ??
+                              if (selectedDirect.description
+                                      ?.trim()
+                                      .isNotEmpty ??
                                   false) ...[
                                 const SizedBox(height: 6),
                                 Text(selectedDirect.description!),
@@ -250,7 +254,8 @@ class _CalculatorScreenState extends ConsumerState<CalculatorScreen> {
                 ],
                 const SizedBox(height: 16),
                 FilledButton.icon(
-                  onPressed: _submitting ||
+                  onPressed:
+                      _submitting ||
                           (_requiresProduct && relevantProducts.isEmpty)
                       ? null
                       : _calculate,
@@ -279,7 +284,9 @@ class _CalculatorScreenState extends ConsumerState<CalculatorScreen> {
     if (!_formKey.currentState!.validate()) return;
     setState(() => _submitting = true);
     try {
-      await ref.read(calculationProvider.notifier).calculate(
+      await ref
+          .read(calculationProvider.notifier)
+          .calculate(
             CalculationRequest(
               mode: _mode,
               product: _requiresProduct ? _product : null,
@@ -292,9 +299,9 @@ class _CalculatorScreenState extends ConsumerState<CalculatorScreen> {
       if (mounted) context.push('/calculate/result');
     } catch (error) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(error.toString())),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(error.toString())));
       }
     } finally {
       if (mounted) setState(() => _submitting = false);

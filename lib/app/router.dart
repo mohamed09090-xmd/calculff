@@ -17,10 +17,7 @@ import '../features/transactions/presentation/transaction_details_screen.dart';
 import '../features/transactions/presentation/transaction_edit_screen.dart';
 import '../features/transactions/presentation/transactions_screen.dart';
 
-CustomTransitionPage<void> _animatedPage(
-  GoRouterState state,
-  Widget child,
-) {
+CustomTransitionPage<void> _animatedPage(GoRouterState state, Widget child) {
   return CustomTransitionPage<void>(
     key: state.pageKey,
     transitionDuration: const Duration(milliseconds: 260),

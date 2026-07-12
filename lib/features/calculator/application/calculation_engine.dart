@@ -48,7 +48,8 @@ class CalculationEngine {
         if (remainder != 0) {
           final lower = units * product.gemsPerUnit;
           final upper = (units + 1) * product.gemsPerUnit;
-          warning = 'الكمية غير متوافقة مع الحزمة. الأقرب: $lower أو $upper جوهرة.';
+          warning =
+              'الكمية غير متوافقة مع الحزمة. الأقرب: $lower أو $upper جوهرة.';
         }
         gems = units * product.gemsPerUnit;
         chargedAmount = units * product.salePriceDzd;
@@ -75,8 +76,8 @@ class CalculationEngine {
 
     final inventoryUsed = request.useInventory
         ? (availableInventoryCredit < requiredCredit
-            ? availableInventoryCredit
-            : requiredCredit)
+              ? availableInventoryCredit
+              : requiredCredit)
         : 0;
     final additional = requiredCredit - inventoryUsed;
     final optimization = additional == 0

@@ -1,10 +1,5 @@
 import 'package:flutter/material.dart' hide Text;
 
-
-
-
-
-
 import '../../../core/localization/localized_text.dart';
 
 import '../../../core/utils/money_formatter.dart';
@@ -24,13 +19,11 @@ class CalculationSummary extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    String money(num value) => MoneyFormatter.format(
-          value,
-          useThousands: settings.useThousands,
-        );
+    String money(num value) =>
+        MoneyFormatter.format(value, useThousands: settings.useThousands);
     final mode = result.request.mode;
-    final isGemSale = mode == CalculationMode.customerAmount ||
-        mode == CalculationMode.gems;
+    final isGemSale =
+        mode == CalculationMode.customerAmount || mode == CalculationMode.gems;
     final isDirectProduct = mode == CalculationMode.directProduct;
     return Column(
       children: [
@@ -70,9 +63,7 @@ class CalculationSummary extends StatelessWidget {
           const SizedBox(height: 12),
         ],
         SectionCard(
-          title: mode == CalculationMode.credit
-              ? 'بيع الرصيد'
-              : 'نتيجة العميل',
+          title: mode == CalculationMode.credit ? 'بيع الرصيد' : 'نتيجة العميل',
           icon: Icons.person_outline,
           child: _Rows(
             rows: [
@@ -98,7 +89,10 @@ class CalculationSummary extends StatelessWidget {
               _Rows(
                 rows: [
                   ('من المخزون', '${result.inventoryCreditUsed}'),
-                  ('المطلوب شراؤه/تغطيته', '${result.additionalCreditRequired}'),
+                  (
+                    'المطلوب شراؤه/تغطيته',
+                    '${result.additionalCreditRequired}',
+                  ),
                   ('الرصيد المشتَرى', '${result.purchasedCredit}'),
                   ('الرصيد المتبقي', '${result.remainingPurchasedCredit}'),
                 ],
@@ -115,9 +109,9 @@ class CalculationSummary extends StatelessWidget {
                           height: 34,
                           alignment: Alignment.center,
                           decoration: BoxDecoration(
-                            color: Theme.of(context)
-                                .colorScheme
-                                .primaryContainer,
+                            color: Theme.of(
+                              context,
+                            ).colorScheme.primaryContainer,
                             borderRadius: BorderRadius.circular(10),
                           ),
                           child: Text(
@@ -183,22 +177,19 @@ class _Rows extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Column(
-        children: [
-          for (var index = 0; index < rows.length; index++) ...[
-            Row(
-              children: [
-                Expanded(child: Text(rows[index].$1)),
-                Text(
-                  rows[index].$2,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w900,
-                    fontSize: 16,
-                  ),
-                ),
-              ],
+    children: [
+      for (var index = 0; index < rows.length; index++) ...[
+        Row(
+          children: [
+            Expanded(child: Text(rows[index].$1)),
+            Text(
+              rows[index].$2,
+              style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16),
             ),
-            if (index != rows.length - 1) const Divider(height: 20),
           ],
-        ],
-      );
+        ),
+        if (index != rows.length - 1) const Divider(height: 20),
+      ],
+    ],
+  );
 }

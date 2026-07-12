@@ -16,11 +16,11 @@ class InventoryAdjustmentRepository {
     FefoAllocator? allocator,
     NotificationService? notificationService,
     bool scheduleNotifications = true,
-  })  : _database = database ?? AppDatabase.instance,
-        _allocator = allocator ?? const FefoAllocator(),
-        _notificationService = scheduleNotifications
-            ? (notificationService ?? NotificationService.instance)
-            : null;
+  }) : _database = database ?? AppDatabase.instance,
+       _allocator = allocator ?? const FefoAllocator(),
+       _notificationService = scheduleNotifications
+           ? (notificationService ?? NotificationService.instance)
+           : null;
 
   static const additionProductId = '__inventory_adjustment_add__';
   static const removalProductId = '__inventory_adjustment_remove__';
@@ -44,7 +44,8 @@ class InventoryAdjustmentRepository {
       throw StateError('اسم الرصيد يجب أن يكون بين حرفين و80 حرفًا');
     }
     if (amount <= 0) throw StateError('كمية الرصيد يجب أن تكون أكبر من صفر');
-    if (purchaseCost < 0) throw StateError('تكلفة الشراء لا يمكن أن تكون سالبة');
+    if (purchaseCost < 0)
+      throw StateError('تكلفة الشراء لا يمكن أن تكون سالبة');
     if (!expiresAt.isAfter(now)) {
       throw StateError('تاريخ الانتهاء يجب أن يكون بعد الوقت الحالي');
     }
@@ -212,10 +213,7 @@ class InventoryAdjustmentRepository {
 
       await txn.update(
         'sales_transactions',
-        {
-          'credit_cost_used': creditCost,
-          'cash_profit': -creditCost,
-        },
+        {'credit_cost_used': creditCost, 'cash_profit': -creditCost},
         where: 'id = ?',
         whereArgs: [transactionId],
       );
@@ -227,7 +225,8 @@ class InventoryAdjustmentRepository {
 
   Future<List<InventoryMovement>> getMovements(String lotId) async {
     final db = await _database.database;
-    final rows = await db.rawQuery('''
+    final rows = await db.rawQuery(
+      '''
       SELECT
         m.id,
         m.lot_id,
@@ -250,7 +249,9 @@ class InventoryAdjustmentRepository {
       LEFT JOIN sales_transactions t ON t.id = m.transaction_id
       WHERE m.lot_id = ?
       ORDER BY m.created_at DESC, m.id DESC
-    ''', [additionProductId, removalProductId, lotId]);
+    ''',
+      [additionProductId, removalProductId, lotId],
+    );
     return rows.map(InventoryMovement.fromMap).toList(growable: false);
   }
 
@@ -259,8 +260,8 @@ class InventoryAdjustmentRepository {
     final consumedAfter = consumedBefore + amount;
     final costBefore =
         ((lot.purchaseCost * consumedBefore) / lot.purchasedCredit).round();
-    final costAfter =
-        ((lot.purchaseCost * consumedAfter) / lot.purchasedCredit).round();
+    final costAfter = ((lot.purchaseCost * consumedAfter) / lot.purchasedCredit)
+        .round();
     return costAfter - costBefore;
   }
 
