@@ -154,9 +154,9 @@ class ReportSummary {
 
   bool get hasData => current.transactionCount > 0;
 
-  double? salesChangePercent => _change(current.sales, previous?.sales);
-  double? profitChangePercent => _change(current.profit, previous?.profit);
-  double? transactionChangePercent =>
+  double? get salesChangePercent => _change(current.sales, previous?.sales);
+  double? get profitChangePercent => _change(current.profit, previous?.profit);
+  double? get transactionChangePercent =>
       _change(current.transactionCount, previous?.transactionCount);
 
   static double? _change(int currentValue, int? previousValue) {
