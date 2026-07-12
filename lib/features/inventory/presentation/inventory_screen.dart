@@ -4,9 +4,10 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 
+import '../../../core/localization/localized_text.dart';
+
 import '../../../core/localization/app_translator.dart';
 
-import '../../../core/localization/localized_text.dart';
 
 import '../../../core/constants/app_strings.dart';
 import '../../../core/utils/date_utils.dart';
@@ -513,7 +514,7 @@ class _AddCreditDialogState extends State<_AddCreditDialog> {
                 ),
                 validator: (value) {
                   final text = value?.trim() ?? '';
-                  return text.length < 2 ? 'اكتب اسمًا واضحًا' : null;
+                  return text.length < 2 ? AppTranslator.translate(context, 'اكتب اسمًا واضحًا') : null;
                 },
               ),
               const SizedBox(height: 10),
@@ -714,7 +715,7 @@ class _RemoveCreditDialogState extends State<_RemoveCreditDialog> {
                 ),
                 validator: (value) {
                   final text = value?.trim() ?? '';
-                  return text.length < 2 ? 'اكتب سبب الخصم' : null;
+                  return text.length < 2 ? AppTranslator.translate(context, 'اكتب سبب الخصم') : null;
                 },
               ),
               const Text(

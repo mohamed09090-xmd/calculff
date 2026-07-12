@@ -5,9 +5,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 
+import '../../../core/localization/localized_text.dart';
+
 import '../../../core/localization/app_translator.dart';
 
-import '../../../core/localization/localized_text.dart';
 
 import '../../../core/constants/app_strings.dart';
 import '../../../core/utils/money_formatter.dart';
@@ -154,7 +155,7 @@ class _CalculatorScreenState extends ConsumerState<CalculatorScreen> {
                           onChanged: (value) =>
                               setState(() => _product = value),
                           validator: (value) =>
-                              value == null ? 'اختر منتجًا' : null,
+                              value == null ? AppTranslator.translate(context, 'اختر منتجًا') : null,
                         ),
                       if (_requiresProduct) const SizedBox(height: 12),
                       if (_requiresInput)

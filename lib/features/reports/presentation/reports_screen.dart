@@ -8,9 +8,10 @@ import 'package:intl/intl.dart';
 import 'package:share_plus/share_plus.dart';
 
 
+import '../../../core/localization/localized_text.dart';
+
 import '../../../core/localization/app_translator.dart';
 
-import '../../../core/localization/localized_text.dart';
 
 import '../../../core/utils/money_formatter.dart';
 import '../../../core/widgets/app_shell.dart';

@@ -5,6 +5,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 
+
+import '../../../core/localization/app_translator.dart';
+
 import '../../../core/localization/localized_text.dart';
 
 import '../../../core/widgets/app_shell.dart';
@@ -226,7 +229,7 @@ class _TransactionEditScreenState
                               ? null
                               : (value) => setState(() => _product = value),
                           validator: (value) =>
-                              value == null ? 'اختر المنتج' : null,
+                              value == null ? AppTranslator.translate(context, 'اختر المنتج') : null,
                         ),
                       if (_requiresProduct) const SizedBox(height: 12),
                       if (_mode == CalculationMode.directProduct &&

@@ -4,6 +4,7 @@ import '../localization/localized_text.dart';
 
 
 
+
 class SectionCard extends StatelessWidget {
   const SectionCard({
     super.key,

@@ -4,9 +4,10 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 
+import '../../../core/localization/localized_text.dart';
+
 import '../../../core/localization/app_translator.dart';
 
-import '../../../core/localization/localized_text.dart';
 
 import '../../../core/constants/app_strings.dart';
 import '../../../core/utils/id_generator.dart';
@@ -211,9 +212,9 @@ class _ProductDialogState extends State<_ProductDialog> {
               const SizedBox(height: 12),
               TextFormField(
                 controller: _name,
-                decoration: InputDecoration(labelText: 'اسم المنتج'),
+                decoration: InputDecoration(labelText: AppTranslator.translate(context, 'اسم المنتج')),
                 validator: (value) => value == null || value.trim().isEmpty
-                    ? 'الاسم مطلوب'
+                    ? AppTranslator.translate(context, 'الاسم مطلوب')
                     : null,
               ),
               const SizedBox(height: 10),
@@ -275,11 +276,11 @@ class _ProductDialogState extends State<_ProductDialog> {
       controller: controller,
       keyboardType: TextInputType.number,
       inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-      decoration: InputDecoration(labelText: label),
+      decoration: InputDecoration(labelText: AppTranslator.translate(context, label)),
       validator: (value) {
         final parsed = int.tryParse(value ?? '');
         return parsed == null || parsed <= 0
-            ? 'أدخل رقمًا أكبر من صفر'
+            ? AppTranslator.translate(context, 'أدخل رقمًا أكبر من صفر')
             : null;
       },
     );

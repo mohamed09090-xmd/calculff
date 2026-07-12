@@ -4,6 +4,9 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 
+
+import '../../../core/localization/app_translator.dart';
+
 import '../../../core/localization/localized_text.dart';
 
 import '../../../core/constants/app_strings.dart';
@@ -135,8 +138,8 @@ class _PackageDialogState extends State<_PackageDialog> {
               children: [
                 TextFormField(
                   controller: _name,
-                  decoration: const InputDecoration(labelText: 'اسم الباقة'),
-                  validator: (value) => value == null || value.trim().isEmpty ? 'الاسم مطلوب' : null,
+                  decoration: InputDecoration(labelText: AppTranslator.translate(context, 'اسم الباقة')),
+                  validator: (value) => value == null || value.trim().isEmpty ? AppTranslator.translate(context, 'الاسم مطلوب') : null,
                 ),
                 const SizedBox(height: 10),
                 _numberField(_credit, 'رصيد الألعاب'),
@@ -177,10 +180,10 @@ class _PackageDialogState extends State<_PackageDialog> {
         controller: controller,
         keyboardType: TextInputType.number,
         inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-        decoration: InputDecoration(labelText: label),
+        decoration: InputDecoration(labelText: AppTranslator.translate(context, label)),
         validator: (value) {
           final parsed = int.tryParse(value ?? '');
-          return parsed == null || parsed <= 0 ? 'قيمة غير صالحة' : null;
+          return parsed == null || parsed <= 0 ? AppTranslator.translate(context, 'قيمة غير صالحة') : null;
         },
       );
 
