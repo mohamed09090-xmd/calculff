@@ -1,5 +1,7 @@
 import 'package:flutter/widgets.dart';
 
+import 'french_catalog.dart';
+
 abstract final class AppTranslator {
   static bool isFrench(BuildContext context) =>
       Localizations.localeOf(context).languageCode == 'fr';
@@ -10,7 +12,7 @@ abstract final class AppTranslator {
   static String translateForLanguage(String source, String languageCode) {
     if (languageCode != 'fr' || source.trim().isEmpty) return source;
 
-    final exact = _exactFrench[source];
+    final exact = _exactFrench[source] ?? additionalFrenchTranslations[source];
     if (exact != null) return exact;
 
     var result = source;
@@ -47,7 +49,13 @@ abstract final class AppTranslator {
         )
         .replaceAll('٪', '%');
 
-    for (final entry in _phraseFrench.entries) {
+    final phrases = <MapEntry<String, String>>[
+      ...additionalFrenchPhrases.entries,
+      ..._phraseFrench.entries,
+    ]..sort(
+        (first, second) => second.key.length.compareTo(first.key.length),
+      );
+    for (final entry in phrases) {
       result = result.replaceAll(entry.key, entry.value);
     }
 

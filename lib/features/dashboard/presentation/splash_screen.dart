@@ -8,6 +8,9 @@ import 'package:go_router/go_router.dart';
 
 
 
+
+import '../../../core/localization/app_translator.dart';
+
 import '../../../core/localization/localized_text.dart';
 
 import '../../../core/constants/app_strings.dart';
@@ -169,7 +172,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
                           ),
                           loading: () => _LoadingFooter(
                             progress: loaderProgress,
-                            label: 'جاري تهيئة البيانات...',
+                            label: AppTranslator.translate(context, 'جاري تهيئة البيانات...'),
                           ),
                           error: (error, stack) => _SplashError(
                             error: error,

@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 
+
 import '../../../core/localization/localized_text.dart';
 
 import '../../../core/localization/app_translator.dart';
@@ -520,14 +521,14 @@ class _AddCreditDialogState extends State<_AddCreditDialog> {
               const SizedBox(height: 10),
               _numberField(
                 controller: _amount,
-                label: 'كمية الرصيد',
+                label: AppTranslator.translate(context, 'كمية الرصيد'),
                 icon: Icons.toll_outlined,
                 allowZero: false,
               ),
               const SizedBox(height: 10),
               _numberField(
                 controller: _cost,
-                label: 'تكلفة شراء الرصيد بالدينار',
+                label: AppTranslator.translate(context, 'تكلفة شراء الرصيد بالدينار'),
                 icon: Icons.payments_outlined,
                 allowZero: true,
               ),

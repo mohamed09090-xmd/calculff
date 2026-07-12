@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 
+
 import '../../../core/localization/localized_text.dart';
 
 import '../../../core/localization/app_translator.dart';
@@ -241,7 +242,7 @@ class _TransactionDetailsScreenState
         content: Text(message),
         duration: const Duration(seconds: 8),
         action: SnackBarAction(
-          label: 'تراجع',
+          label: AppTranslator.translate(context, 'تراجع'),
           onPressed: () async {
             final result = await repository.undoLastTransactionChange();
             invalidateAppData(ref);

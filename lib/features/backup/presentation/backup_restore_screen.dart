@@ -9,6 +9,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 
 
+
 import '../../../core/localization/localized_text.dart';
 
 import '../../../core/localization/app_translator.dart';
@@ -221,13 +222,13 @@ class _BackupRestoreScreenState extends ConsumerState<BackupRestoreScreen> {
                   _PreviewRow(label: 'تاريخ التصدير', value: exportedAt),
                   _PreviewRow(label: 'العملاء', value: '${preview.customerCount}'),
                   _PreviewRow(
-                    label: 'العمليات',
+                    label: AppTranslator.translate(context, 'العمليات'),
                     value: '${preview.transactionCount}',
                   ),
                   _PreviewRow(label: 'المنتجات', value: '${preview.productCount}'),
                   _PreviewRow(label: 'الباقات', value: '${preview.packageCount}'),
                   _PreviewRow(
-                    label: 'رزم المخزون',
+                    label: AppTranslator.translate(context, 'رزم المخزون'),
                     value: '${preview.inventoryLotCount}',
                   ),
                   if (preview.isLegacy) ...[

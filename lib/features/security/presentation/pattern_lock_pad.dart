@@ -2,6 +2,8 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
+import '../../../core/localization/app_translator.dart';
+
 import '../../../core/security/pattern_path.dart';
 
 enum PatternPadStatus { idle, error, success }
@@ -85,7 +87,7 @@ class _PatternLockPadState extends State<PatternLockPad> {
     };
 
     return Semantics(
-      label: 'لوحة رسم نمط من تسع نقاط',
+      label: AppTranslator.translate(context, 'لوحة رسم نمط من تسع نقاط'),
       hint: 'مرر إصبعك فوق أربع نقاط أو أكثر ثم ارفعه',
       child: SizedBox.square(
         dimension: widget.size,

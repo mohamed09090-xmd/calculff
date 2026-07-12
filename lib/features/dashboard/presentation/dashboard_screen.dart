@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 
+
 import '../../../core/localization/localized_text.dart';
 
 import '../../../core/localization/app_translator.dart';
@@ -163,7 +164,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                               end: 0.52,
                               offset: const Offset(0.2, 0),
                               child: MetricCard(
-                                label: 'مبيعات اليوم',
+                                label: AppTranslator.translate(context, 'مبيعات اليوم'),
                                 value: money(data.todaySales),
                                 icon: Icons.payments_outlined,
                                 emphasis: true,
@@ -178,7 +179,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                               end: 0.59,
                               offset: const Offset(-0.2, 0),
                               child: MetricCard(
-                                label: 'ربح اليوم',
+                                label: AppTranslator.translate(context, 'ربح اليوم'),
                                 value: money(data.todayProfit),
                                 icon: Icons.trending_up,
                               ),
@@ -204,7 +205,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                       end: 0.65,
                       offset: const Offset(0.22, 0),
                       child: MetricCard(
-                        label: 'الرصيد الفعّال',
+                        label: AppTranslator.translate(context, 'الرصيد الفعّال'),
                         value: '${data.activeCredit}',
                         icon: Icons.account_balance_wallet_outlined,
                       ),
@@ -215,7 +216,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                       end: 0.71,
                       offset: const Offset(-0.22, 0),
                       child: MetricCard(
-                        label: 'قريب الانتهاء',
+                        label: AppTranslator.translate(context, 'قريب الانتهاء'),
                         value: '${data.expiringSoonCredit}',
                         icon: Icons.timer_outlined,
                       ),
@@ -226,7 +227,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                       end: 0.78,
                       offset: const Offset(0.22, 0),
                       child: MetricCard(
-                        label: 'إجمالي الربح',
+                        label: AppTranslator.translate(context, 'إجمالي الربح'),
                         value: money(data.totalProfit),
                         icon: Icons.show_chart,
                       ),
@@ -237,7 +238,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                       end: 0.84,
                       offset: const Offset(-0.22, 0),
                       child: MetricCard(
-                        label: 'عدد العمليات',
+                        label: AppTranslator.translate(context, 'عدد العمليات'),
                         value: '${data.transactionCount}',
                         icon: Icons.receipt_long_outlined,
                       ),

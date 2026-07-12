@@ -8,6 +8,7 @@ import 'package:intl/intl.dart';
 import 'package:share_plus/share_plus.dart';
 
 
+
 import '../../../core/localization/localized_text.dart';
 
 import '../../../core/localization/app_translator.dart';
@@ -379,26 +380,26 @@ class _ReportContent extends StatelessWidget {
           childAspectRatio: 1.14,
           children: [
             _MetricCard(
-              label: 'المبيعات',
+              label: AppTranslator.translate(context, 'المبيعات'),
               value: money(report.current.sales),
               icon: Icons.payments_outlined,
               changePercent: report.salesChangePercent,
               emphasis: true,
             ),
             _MetricCard(
-              label: 'الربح الصافي',
+              label: AppTranslator.translate(context, 'الربح الصافي'),
               value: money(report.current.profit),
               icon: Icons.trending_up,
               changePercent: report.profitChangePercent,
               negative: report.current.profit < 0,
             ),
             _MetricCard(
-              label: 'التكلفة',
+              label: AppTranslator.translate(context, 'التكلفة'),
               value: money(report.current.cost),
               icon: Icons.shopping_cart_checkout_outlined,
             ),
             _MetricCard(
-              label: 'العمليات',
+              label: AppTranslator.translate(context, 'العمليات'),
               value: '${report.current.transactionCount}',
               icon: Icons.receipt_long_outlined,
               changePercent: report.transactionChangePercent,
@@ -414,23 +415,23 @@ class _ReportContent extends StatelessWidget {
             runSpacing: 10,
             children: [
               _CompactMetric(
-                label: 'العملاء',
+                label: AppTranslator.translate(context, 'العملاء'),
                 value: '${report.current.customerCount}',
               ),
               _CompactMetric(
-                label: 'متوسط العملية',
+                label: AppTranslator.translate(context, 'متوسط العملية'),
                 value: money(report.current.averageSale),
               ),
               _CompactMetric(
-                label: 'متوسط الربح',
+                label: AppTranslator.translate(context, 'متوسط الربح'),
                 value: money(report.current.averageProfit),
               ),
               _CompactMetric(
-                label: 'الرصيد المطلوب',
+                label: AppTranslator.translate(context, 'الرصيد المطلوب'),
                 value: '${report.current.requiredCredit}',
               ),
               _CompactMetric(
-                label: 'الرصيد المشتَرى',
+                label: AppTranslator.translate(context, 'الرصيد المشتَرى'),
                 value: '${report.current.purchasedCredit}',
               ),
             ],
