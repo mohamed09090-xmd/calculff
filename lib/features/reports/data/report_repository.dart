@@ -1,4 +1,5 @@
 import '../../../core/database/app_database.dart';
+import '../../../core/database/direct_sales_schema.dart';
 import '../../../shared/models/report.dart';
 
 class ReportRepository {
@@ -14,6 +15,7 @@ class ReportRepository {
     final generatedAt = now ?? DateTime.now();
     final window = period.window(generatedAt);
     final db = await _database.database;
+    await DirectSalesSchema.ensure(db);
 
     DateTime? reportStart = window.start;
     if (period == ReportPeriod.allTime) {
