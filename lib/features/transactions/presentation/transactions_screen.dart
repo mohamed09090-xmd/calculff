@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -20,6 +22,19 @@ class TransactionsScreen extends ConsumerStatefulWidget {
 
 class _TransactionsScreenState extends ConsumerState<TransactionsScreen> {
   String _query = '';
+  bool _undoScheduled = false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final showUndo =
+        GoRouterState.of(context).uri.queryParameters['undo'] == '1';
+    if (!showUndo || _undoScheduled) return;
+    _undoScheduled = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) unawaited(_showUndoSnackBar());
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -30,6 +45,7 @@ class _TransactionsScreenState extends ConsumerState<TransactionsScreen> {
       title: AppStrings.transactions,
       actions: [
         IconButton(
+          tooltip: 'تحديث',
           onPressed: () => ref.invalidate(transactionsProvider),
           icon: const Icon(Icons.refresh),
         ),
@@ -110,5 +126,32 @@ class _TransactionsScreenState extends ConsumerState<TransactionsScreen> {
         ],
       ),
     );
+  }
+
+  Future<void> _showUndoSnackBar() async {
+    final repository = ref.read(appRepositoryProvider);
+    final message = repository.pendingTransactionUndoMessage;
+    if (message == null) return;
+
+    final controller = ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        duration: const Duration(seconds: 8),
+        action: SnackBarAction(
+          label: 'تراجع',
+          onPressed: () async {
+            final result = await repository.undoLastTransactionChange();
+            invalidateAppData(ref);
+            if (!mounted || result == null) return;
+            ref.invalidate(transactionsProvider);
+            context.go('/transactions');
+          },
+        ),
+      ),
+    );
+    final reason = await controller.closed;
+    if (reason != SnackBarClosedReason.action) {
+      repository.clearPendingTransactionUndo();
+    }
   }
 }
