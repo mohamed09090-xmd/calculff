@@ -52,10 +52,9 @@ class SettingsScreen extends ConsumerWidget {
                 data: (lock) => _SecuritySettings(
                   lock: lock,
                   onToggle: (enabled) =>
-                      _togglePatternLock(context, ref, enabled),
+                      _togglePatternLock(context, enabled),
                   onChange: () => _openPatternFlow(
                     context,
-                    ref,
                     PatternManagementMode.change,
                   ),
                   onLockNow: () {
@@ -132,12 +131,10 @@ class SettingsScreen extends ConsumerWidget {
 
   Future<void> _togglePatternLock(
     BuildContext context,
-    WidgetRef ref,
     bool enabled,
   ) async {
     await _openPatternFlow(
       context,
-      ref,
       enabled
           ? PatternManagementMode.enable
           : PatternManagementMode.disable,
@@ -146,7 +143,6 @@ class SettingsScreen extends ConsumerWidget {
 
   Future<void> _openPatternFlow(
     BuildContext context,
-    WidgetRef ref,
     PatternManagementMode mode,
   ) async {
     final changed = await Navigator.of(context).push<bool>(
