@@ -44,12 +44,14 @@ class _AppLockGateState extends ConsumerState<AppLockGate>
       case AppLifecycleState.hidden:
       case AppLifecycleState.detached:
         _backgroundedAt ??= DateTime.now();
+        return;
       case AppLifecycleState.resumed:
         final backgroundedAt = _backgroundedAt;
         _backgroundedAt = null;
         if (backgroundedAt != null) {
           ref.read(appLockProvider.notifier).lock();
         }
+        return;
       case AppLifecycleState.inactive:
         return;
     }
@@ -228,6 +230,7 @@ class _PatternUnlockScreenState extends ConsumerState<_PatternUnlockScreen> {
             _status = PatternPadStatus.success;
             _message = 'تم فتح التطبيق';
           });
+          return;
         case PatternVerificationStatus.invalid:
           final remaining =
               PatternLockService.maxAttempts - result.failedAttempts;
@@ -236,6 +239,7 @@ class _PatternUnlockScreenState extends ConsumerState<_PatternUnlockScreen> {
             _message = 'النمط غير صحيح. بقيت $remaining محاولات.';
           });
           _clearPadSoon();
+          return;
         case PatternVerificationStatus.lockedOut:
           setState(() {
             _lockedUntil = result.lockedUntil;
@@ -243,8 +247,10 @@ class _PatternUnlockScreenState extends ConsumerState<_PatternUnlockScreen> {
           });
           _padController.clear();
           _startTimer();
+          return;
         case PatternVerificationStatus.notEnabled:
           await ref.read(appLockProvider.notifier).refresh();
+          return;
       }
     } catch (error) {
       if (mounted) {
