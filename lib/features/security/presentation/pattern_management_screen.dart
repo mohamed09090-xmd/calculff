@@ -60,17 +60,14 @@ class _PatternManagementScreenState
     final until = _lockedUntil;
     if (until == null) return 0;
     final milliseconds = until.difference(DateTime.now()).inMilliseconds;
-    if (milliseconds <= 0) return 0;
-    return (milliseconds / 1000).ceil();
+    return milliseconds <= 0 ? 0 : (milliseconds / 1000).ceil();
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Scaffold(
-      appBar: AppBar(
-        title: Text(_screenTitle),
-      ),
+      appBar: AppBar(title: Text(_screenTitle)),
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
@@ -132,11 +129,14 @@ class _PatternManagementScreenState
                               color: theme.colorScheme.onErrorContainer,
                             ),
                             const SizedBox(width: 8),
-                            Text(
-                              'محاولات كثيرة. انتظر $_remainingSeconds ثانية.',
-                              style: TextStyle(
-                                color: theme.colorScheme.onErrorContainer,
-                                fontWeight: FontWeight.w800,
+                            Flexible(
+                              child: Text(
+                                'محاولات كثيرة. انتظر $_remainingSeconds ثانية.',
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  color: theme.colorScheme.onErrorContainer,
+                                  fontWeight: FontWeight.w800,
+                                ),
                               ),
                             ),
                           ],
@@ -209,6 +209,7 @@ class _PatternManagementScreenState
     switch (_step) {
       case _PatternStep.verifyCurrent:
         await _verifyCurrent(pattern);
+        return;
       case _PatternStep.create:
         _newPattern = List<int>.from(pattern);
         setState(() {
@@ -217,8 +218,10 @@ class _PatternManagementScreenState
           _message = 'تم تسجيل النمط. أعد رسمه للتأكيد.';
         });
         _clearPadSoon();
+        return;
       case _PatternStep.confirm:
         await _confirmNew(pattern);
+        return;
     }
   }
 
@@ -240,9 +243,7 @@ class _PatternManagementScreenState
         return;
       }
 
-      final result = await ref
-          .read(patternLockServiceProvider)
-          .verify(pattern);
+      final result = await ref.read(patternLockServiceProvider).verify(pattern);
       if (!mounted) return;
       if (result.status == PatternVerificationStatus.success) {
         _currentPattern = List<int>.from(pattern);
