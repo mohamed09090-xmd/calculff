@@ -1,7 +1,7 @@
 name: game_credit_profit_manager
-description: تطبيق عربي محلي لإدارة رصيد الألعاب والأرباح.
+description: تطبيق عربي وفرنسي محلي لإدارة رصيد الألعاب والأرباح.
 publish_to: "none"
-version: 1.7.0+10
+version: 1.8.0+11
 
 environment:
   sdk: ">=3.10.0 <4.0.0"
