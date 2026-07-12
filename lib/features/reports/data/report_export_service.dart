@@ -66,29 +66,22 @@ class ReportExportService {
     required AppSettings settings,
     BuildContext? context,
   }) async {
-    final directory = await getApplicationDocumentsDirectory();
-    final timestamp = DateFormat('yyyy-MM-dd-HH-mm').format(DateTime.now());
-    final fileName =
-        'game-credit-report-${report.period.name}-$timestamp.${format.extension}';
-    final file = File('${directory.path}/$fileName');
+    String? textContent;
+    Uint8List? binaryContent;
 
     switch (format) {
       case ReportExportFormat.csv:
-        await file.writeAsString(
-          '\uFEFF${buildCsv(report)}',
-          flush: true,
-        );
+        textContent = '\uFEFF${buildCsv(report)}';
         break;
       case ReportExportFormat.png:
         if (context == null) {
           throw StateError('سياق الواجهة مطلوب لإنشاء صورة التقرير');
         }
-        final bytes = await _captureReport(
+        binaryContent = await _captureReport(
           context: context,
           report: report,
           settings: settings,
         );
-        await file.writeAsBytes(bytes, flush: true);
         break;
       case ReportExportFormat.pdf:
         if (context == null) {
@@ -99,9 +92,20 @@ class ReportExportService {
           report: report,
           settings: settings,
         );
-        final pdfBytes = await _buildPdf(imageBytes);
-        await file.writeAsBytes(pdfBytes, flush: true);
+        binaryContent = await _buildPdf(imageBytes);
         break;
+    }
+
+    final directory = await getApplicationDocumentsDirectory();
+    final timestamp = DateFormat('yyyy-MM-dd-HH-mm').format(DateTime.now());
+    final fileName =
+        'game-credit-report-${report.period.name}-$timestamp.${format.extension}';
+    final file = File('${directory.path}/$fileName');
+
+    if (textContent != null) {
+      await file.writeAsString(textContent, flush: true);
+    } else {
+      await file.writeAsBytes(binaryContent!, flush: true);
     }
 
     return ReportExportResult(file: file, format: format);
@@ -184,7 +188,7 @@ class ReportExportService {
           child: Material(
             color: const Color(0xFFF5F1E7),
             child: Directionality(
-              textDirection: TextDirection.rtl,
+              textDirection: ui.TextDirection.rtl,
               child: _ReportExportDocument(
                 report: report,
                 settings: settings,
@@ -254,8 +258,7 @@ class ReportExportService {
         codec.dispose();
         throw StateError('تعذر تقسيم صورة التقرير إلى صفحات PDF');
       }
-      final bytes = data.buffer.asUint8List();
-      final memoryImage = pw.MemoryImage(bytes);
+      final memoryImage = pw.MemoryImage(data.buffer.asUint8List());
       document.addPage(
         pw.Page(
           pageFormat: PdfPageFormat.a4,
@@ -298,70 +301,29 @@ class _ReportExportDocument extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Container(
-            padding: const EdgeInsets.all(28),
-            decoration: BoxDecoration(
-              color: const Color(0xFF21453B),
-              borderRadius: BorderRadius.circular(28),
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'تقرير مدير رصيد الألعاب',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 34,
-                    fontWeight: FontWeight.w900,
-                  ),
-                ),
-                const SizedBox(height: 10),
-                Text(
-                  '${report.period.label} • ${_periodDescription(report)}',
-                  style: const TextStyle(
-                    color: Color(0xFFDCE7E1),
-                    fontSize: 19,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  'تم الإنشاء: ${DateFormat('dd/MM/yyyy • HH:mm').format(report.generatedAt)}',
-                  style: const TextStyle(
-                    color: Color(0xFFBFD0C7),
-                    fontSize: 16,
-                  ),
-                ),
-              ],
-            ),
-          ),
+          _ExportHeader(report: report),
           const SizedBox(height: 22),
           Wrap(
             spacing: 16,
             runSpacing: 16,
             children: [
-              _ExportMetricCard(
-                width: 408,
+              _Metric(
                 label: 'المبيعات',
                 value: money(report.current.sales),
                 accent: scheme.primary,
               ),
-              _ExportMetricCard(
-                width: 408,
+              _Metric(
                 label: 'الربح الصافي',
                 value: money(report.current.profit),
                 accent:
                     report.current.profit < 0 ? scheme.error : scheme.secondary,
               ),
-              _ExportMetricCard(
-                width: 408,
+              _Metric(
                 label: 'التكلفة',
                 value: money(report.current.cost),
                 accent: scheme.tertiary,
               ),
-              _ExportMetricCard(
-                width: 408,
+              _Metric(
                 label: 'عدد العمليات',
                 value: '${report.current.transactionCount}',
                 accent: scheme.primary,
@@ -369,29 +331,29 @@ class _ReportExportDocument extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 22),
-          _ExportSection(
+          _Section(
             title: 'ملخص تشغيلي',
             child: Wrap(
               spacing: 12,
               runSpacing: 12,
               children: [
-                _ExportCompactMetric(
+                _CompactMetric(
                   label: 'العملاء',
                   value: '${report.current.customerCount}',
                 ),
-                _ExportCompactMetric(
+                _CompactMetric(
                   label: 'متوسط العملية',
                   value: money(report.current.averageSale),
                 ),
-                _ExportCompactMetric(
+                _CompactMetric(
                   label: 'متوسط الربح',
                   value: money(report.current.averageProfit),
                 ),
-                _ExportCompactMetric(
+                _CompactMetric(
                   label: 'الرصيد المطلوب',
                   value: '${report.current.requiredCredit}',
                 ),
-                _ExportCompactMetric(
+                _CompactMetric(
                   label: 'الرصيد المشتَرى',
                   value: '${report.current.purchasedCredit}',
                 ),
@@ -399,35 +361,15 @@ class _ReportExportDocument extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 22),
-          _ExportSection(
-            title: 'اتجاه المبيعات والربح',
-            child: report.points.isEmpty
-                ? const Padding(
-                    padding: EdgeInsets.symmetric(vertical: 36),
-                    child: Center(child: Text('لا توجد بيانات كافية للرسم.')),
-                  )
-                : SizedBox(
-                    height: 260,
-                    child: CustomPaint(
-                      painter: _ExportChartPainter(
-                        points: report.points.length > 12
-                            ? report.points.sublist(report.points.length - 12)
-                            : report.points,
-                        salesColor: scheme.primary,
-                        profitColor: scheme.secondary,
-                        lossColor: scheme.error,
-                      ),
-                    ),
-                  ),
-          ),
+          _TrendSection(points: report.points, money: money),
           const SizedBox(height: 22),
-          _ExportRankingSection(
+          _RankingSection(
             title: 'أفضل المنتجات',
             items: report.topProducts,
             money: money,
           ),
           const SizedBox(height: 22),
-          _ExportRankingSection(
+          _RankingSection(
             title: 'أفضل العملاء',
             items: report.topCustomers,
             money: money,
@@ -439,6 +381,54 @@ class _ReportExportDocument extends StatelessWidget {
             style: TextStyle(
               color: scheme.onSurfaceVariant,
               fontSize: 14,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ExportHeader extends StatelessWidget {
+  const _ExportHeader({required this.report});
+
+  final ReportSummary report;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(28),
+      decoration: BoxDecoration(
+        color: const Color(0xFF21453B),
+        borderRadius: BorderRadius.circular(28),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'تقرير مدير رصيد الألعاب',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 34,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+          const SizedBox(height: 10),
+          Text(
+            '${report.period.label} • ${_periodDescription(report)}',
+            style: const TextStyle(
+              color: Color(0xFFDCE7E1),
+              fontSize: 19,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            'تم الإنشاء: ${DateFormat('dd/MM/yyyy • HH:mm').format(report.generatedAt)}',
+            style: const TextStyle(
+              color: Color(0xFFBFD0C7),
+              fontSize: 16,
             ),
           ),
         ],
@@ -460,15 +450,13 @@ class _ReportExportDocument extends StatelessWidget {
   }
 }
 
-class _ExportMetricCard extends StatelessWidget {
-  const _ExportMetricCard({
-    required this.width,
+class _Metric extends StatelessWidget {
+  const _Metric({
     required this.label,
     required this.value,
     required this.accent,
   });
 
-  final double width;
   final String label;
   final String value;
   final Color accent;
@@ -476,7 +464,7 @@ class _ExportMetricCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: width,
+      width: 408,
       padding: const EdgeInsets.all(22),
       decoration: BoxDecoration(
         color: Colors.white,
@@ -508,8 +496,8 @@ class _ExportMetricCard extends StatelessWidget {
   }
 }
 
-class _ExportSection extends StatelessWidget {
-  const _ExportSection({required this.title, required this.child});
+class _Section extends StatelessWidget {
+  const _Section({required this.title, required this.child});
 
   final String title;
   final Widget child;
@@ -538,8 +526,8 @@ class _ExportSection extends StatelessWidget {
   }
 }
 
-class _ExportCompactMetric extends StatelessWidget {
-  const _ExportCompactMetric({required this.label, required this.value});
+class _CompactMetric extends StatelessWidget {
+  const _CompactMetric({required this.label, required this.value});
 
   final String label;
   final String value;
@@ -571,8 +559,44 @@ class _ExportCompactMetric extends StatelessWidget {
   }
 }
 
-class _ExportRankingSection extends StatelessWidget {
-  const _ExportRankingSection({
+class _TrendSection extends StatelessWidget {
+  const _TrendSection({required this.points, required this.money});
+
+  final List<ReportPoint> points;
+  final String Function(num value) money;
+
+  @override
+  Widget build(BuildContext context) {
+    final visiblePoints = points.length > 30
+        ? points.sublist(points.length - 30)
+        : points;
+    return _Section(
+      title: 'اتجاه المبيعات والربح',
+      child: visiblePoints.isEmpty
+          ? const Text('لا توجد بيانات كافية ضمن هذه الفترة.')
+          : Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const _TableHeader(
+                  first: 'الفترة',
+                  second: 'المبيعات',
+                  third: 'الربح',
+                ),
+                for (final point in visiblePoints)
+                  _TableRow(
+                    first: point.label,
+                    second: money(point.sales),
+                    third: money(point.profit),
+                    negative: point.profit < 0,
+                  ),
+              ],
+            ),
+    );
+  }
+}
+
+class _RankingSection extends StatelessWidget {
+  const _RankingSection({
     required this.title,
     required this.items,
     required this.money,
@@ -584,148 +608,107 @@ class _ExportRankingSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return _ExportSection(
+    return _Section(
       title: title,
       child: items.isEmpty
           ? const Text('لا توجد بيانات ضمن هذه الفترة.')
           : Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                for (var index = 0; index < items.length; index++) ...[
-                  Container(
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                    child: Row(
-                      children: [
-                        CircleAvatar(
-                          radius: 18,
-                          child: Text('${index + 1}'),
-                        ),
-                        const SizedBox(width: 12),
-                        SizedBox(
-                          width: 420,
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                items[index].label,
-                                maxLines: 2,
-                                overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(
-                                  fontSize: 17,
-                                  fontWeight: FontWeight.w800,
-                                ),
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                '${items[index].transactionCount} عملية • مبيعات ${money(items[index].sales)}',
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        SizedBox(
-                          width: 210,
-                          child: Text(
-                            money(items[index].profit),
-                            textAlign: TextAlign.left,
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.w900,
-                              color: items[index].profit < 0
-                                  ? Theme.of(context).colorScheme.error
-                                  : Theme.of(context).colorScheme.primary,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
+                const _TableHeader(
+                  first: 'الاسم',
+                  second: 'المبيعات',
+                  third: 'الربح',
+                ),
+                for (final item in items)
+                  _TableRow(
+                    first: '${item.label} (${item.transactionCount})',
+                    second: money(item.sales),
+                    third: money(item.profit),
+                    negative: item.profit < 0,
                   ),
-                  if (index != items.length - 1) const Divider(height: 1),
-                ],
               ],
             ),
     );
   }
 }
 
-class _ExportChartPainter extends CustomPainter {
-  const _ExportChartPainter({
-    required this.points,
-    required this.salesColor,
-    required this.profitColor,
-    required this.lossColor,
+class _TableHeader extends StatelessWidget {
+  const _TableHeader({
+    required this.first,
+    required this.second,
+    required this.third,
   });
 
-  final List<ReportPoint> points;
-  final Color salesColor;
-  final Color profitColor;
-  final Color lossColor;
+  final String first;
+  final String second;
+  final String third;
 
   @override
-  void paint(Canvas canvas, Size size) {
-    if (points.isEmpty) return;
-    final maximum = points.fold<int>(1, (value, point) {
-      return math.max(value, math.max(point.sales.abs(), point.profit.abs()));
-    });
-    const labelHeight = 34.0;
-    final chartHeight = size.height - labelHeight;
-    final slotWidth = size.width / points.length;
-    final barWidth = math.min(18.0, slotWidth * 0.24);
-    final textStyle = TextStyle(
-      color: Colors.grey.shade700,
-      fontSize: 12,
-      fontWeight: FontWeight.w600,
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        children: [
+          Expanded(flex: 4, child: Text(first)),
+          Expanded(flex: 3, child: Text(second)),
+          Expanded(flex: 3, child: Text(third)),
+        ],
+      ),
     );
-
-    for (var index = 0; index < points.length; index++) {
-      final point = points[index];
-      final centerX = slotWidth * index + slotWidth / 2;
-      final salesHeight = chartHeight * (point.sales.abs() / maximum);
-      final profitHeight = chartHeight * (point.profit.abs() / maximum);
-      final salesRect = RRect.fromRectAndRadius(
-        Rect.fromLTWH(
-          centerX - barWidth - 2,
-          chartHeight - salesHeight,
-          barWidth,
-          math.max(3, salesHeight),
-        ),
-        const Radius.circular(6),
-      );
-      final profitRect = RRect.fromRectAndRadius(
-        Rect.fromLTWH(
-          centerX + 2,
-          chartHeight - profitHeight,
-          barWidth,
-          math.max(3, profitHeight),
-        ),
-        const Radius.circular(6),
-      );
-      canvas.drawRRect(salesRect, Paint()..color = salesColor);
-      canvas.drawRRect(
-        profitRect,
-        Paint()..color = point.profit < 0 ? lossColor : profitColor,
-      );
-
-      final painter = TextPainter(
-        text: TextSpan(text: point.label, style: textStyle),
-        textDirection: TextDirection.rtl,
-        textAlign: TextAlign.center,
-        maxLines: 1,
-        ellipsis: '…',
-      )..layout(maxWidth: slotWidth - 4);
-      painter.paint(
-        canvas,
-        Offset(centerX - painter.width / 2, chartHeight + 10),
-      );
-      painter.dispose();
-    }
   }
+}
+
+class _TableRow extends StatelessWidget {
+  const _TableRow({
+    required this.first,
+    required this.second,
+    required this.third,
+    this.negative = false,
+  });
+
+  final String first;
+  final String second;
+  final String third;
+  final bool negative;
 
   @override
-  bool shouldRepaint(covariant _ExportChartPainter oldDelegate) =>
-      oldDelegate.points != points ||
-      oldDelegate.salesColor != salesColor ||
-      oldDelegate.profitColor != profitColor ||
-      oldDelegate.lossColor != lossColor;
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
+      decoration: const BoxDecoration(
+        border: Border(bottom: BorderSide(color: Color(0xFFE1E3E1))),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            flex: 4,
+            child: Text(
+              first,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(fontWeight: FontWeight.w700),
+            ),
+          ),
+          Expanded(flex: 3, child: Text(second)),
+          Expanded(
+            flex: 3,
+            child: Text(
+              third,
+              style: TextStyle(
+                fontWeight: FontWeight.w800,
+                color: negative
+                    ? Theme.of(context).colorScheme.error
+                    : Theme.of(context).colorScheme.primary,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }
