@@ -21,6 +21,10 @@ class CalculationSummary extends StatelessWidget {
           value,
           useThousands: settings.useThousands,
         );
+    final mode = result.request.mode;
+    final isGemSale = mode == CalculationMode.customerAmount ||
+        mode == CalculationMode.gems;
+    final isDirectProduct = mode == CalculationMode.directProduct;
     return Column(
       children: [
         if (result.warning != null) ...[
@@ -32,22 +36,49 @@ class CalculationSummary extends StatelessWidget {
           ),
           const SizedBox(height: 12),
         ],
+        if (isDirectProduct) ...[
+          SectionCard(
+            title: result.request.product?.name ?? 'منتج مباشر',
+            icon: Icons.inventory_2_outlined,
+            accent: Theme.of(context).colorScheme.secondary,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (result.request.product?.description?.trim().isNotEmpty ??
+                    false)
+                  Text(result.request.product!.description!),
+                if (result.request.product?.description?.trim().isNotEmpty ??
+                    false)
+                  const SizedBox(height: 10),
+                _Rows(
+                  rows: [
+                    ('الكمية', 'وحدة واحدة'),
+                    ('الرصيد المطلوب', '${result.requiredCredit}'),
+                    ('سعر البيع الثابت', money(result.chargedAmount)),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 12),
+        ],
         SectionCard(
-          title: 'نتيجة العميل',
+          title: mode == CalculationMode.credit
+              ? 'بيع الرصيد'
+              : 'نتيجة العميل',
           icon: Icons.person_outline,
           child: _Rows(
             rows: [
-              if (result.request.mode != CalculationMode.credit)
-                ('عدد الحزم', '${result.units}'),
-              if (result.request.mode != CalculationMode.credit)
-                ('عدد الجواهر', '${result.gems}'),
-              if (result.request.mode != CalculationMode.credit)
-                ('المبلغ المدفوع', money(result.customerPaid)),
-              if (result.request.mode != CalculationMode.credit)
-                ('المبلغ المحتسب', money(result.chargedAmount)),
-              if (result.request.mode == CalculationMode.customerAmount)
+              if (isGemSale) ('عدد الحزم', '${result.units}'),
+              if (isGemSale) ('عدد الجواهر', '${result.gems}'),
+              if (isGemSale) ('المبلغ المدفوع', money(result.customerPaid)),
+              if (isGemSale) ('المبلغ المحتسب', money(result.chargedAmount)),
+              if (mode == CalculationMode.customerAmount)
                 ('المبلغ المعاد', money(result.customerChange)),
-              ('الرصيد المطلوب', '${result.requiredCredit}'),
+              if (mode == CalculationMode.credit)
+                ('سعر البيع الثابت', money(result.chargedAmount)),
+              if (!isDirectProduct)
+                ('الرصيد المطلوب', '${result.requiredCredit}'),
             ],
           ),
         ),
@@ -77,20 +108,31 @@ class CalculationSummary extends StatelessWidget {
                           height: 34,
                           alignment: Alignment.center,
                           decoration: BoxDecoration(
-                            color: Theme.of(context).colorScheme.primaryContainer,
+                            color: Theme.of(context)
+                                .colorScheme
+                                .primaryContainer,
                             borderRadius: BorderRadius.circular(10),
                           ),
-                          child: Text('×${selection.quantity}', style: const TextStyle(fontWeight: FontWeight.w900)),
+                          child: Text(
+                            '×${selection.quantity}',
+                            style: const TextStyle(fontWeight: FontWeight.w900),
+                          ),
                         ),
                         const SizedBox(width: 10),
-                        Expanded(child: Text(selection.package.name, style: const TextStyle(fontWeight: FontWeight.w800))),
+                        Expanded(
+                          child: Text(
+                            selection.package.name,
+                            style: const TextStyle(fontWeight: FontWeight.w800),
+                          ),
+                        ),
                         Text(money(selection.totalCost)),
                       ],
                     ),
                   ),
                 const SizedBox(height: 4),
                 Text(
-                  'أقصر صلاحية ضمن الخطة: ${_validity(result.optimization!.minimumValidityHours)}',
+                  'أقصر صلاحية ضمن الخطة: '
+                  '${_validity(result.optimization!.minimumValidityHours)}',
                   style: Theme.of(context).textTheme.bodySmall,
                 ),
               ] else
@@ -101,23 +143,23 @@ class CalculationSummary extends StatelessWidget {
             ],
           ),
         ),
-        if (result.request.mode != CalculationMode.credit) ...[
-          const SizedBox(height: 12),
-          SectionCard(
-            title: 'الربح النقدي',
-            icon: Icons.trending_up,
-            accent: result.cashProfit >= 0
-                ? Theme.of(context).colorScheme.primary
-                : Theme.of(context).colorScheme.error,
-            child: _Rows(
-              rows: [
-                ('تكلفة الباقات الجديدة', money(result.newPackagesCost)),
-                ('الربح النقدي', money(result.cashProfit)),
-                ('هامش الربح', '${result.marginPercent.toStringAsFixed(1)}%'),
-              ],
-            ),
+        const SizedBox(height: 12),
+        SectionCard(
+          title: 'النتيجة المالية',
+          icon: Icons.trending_up,
+          accent: result.cashProfit >= 0
+              ? Theme.of(context).colorScheme.primary
+              : Theme.of(context).colorScheme.error,
+          child: _Rows(
+            rows: [
+              ('سعر البيع', money(result.chargedAmount)),
+              ('تكلفة الرصيد المستعمل', money(result.creditCostUsed)),
+              ('المبلغ المدفوع الآن للباقات', money(result.newPackagesCost)),
+              ('الربح', money(result.cashProfit)),
+              ('هامش الربح', '${result.marginPercent.toStringAsFixed(1)}%'),
+            ],
           ),
-        ],
+        ),
       ],
     );
   }
@@ -139,7 +181,13 @@ class _Rows extends StatelessWidget {
             Row(
               children: [
                 Expanded(child: Text(rows[index].$1)),
-                Text(rows[index].$2, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16)),
+                Text(
+                  rows[index].$2,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w900,
+                    fontSize: 16,
+                  ),
+                ),
               ],
             ),
             if (index != rows.length - 1) const Divider(height: 20),
