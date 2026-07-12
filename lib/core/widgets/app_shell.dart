@@ -114,7 +114,7 @@ class _AppDrawerState extends State<_AppDrawer>
     super.initState();
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 600),
+      duration: const Duration(milliseconds: 640),
       value: 1,
     );
   }
@@ -154,6 +154,11 @@ class _AppDrawerState extends State<_AppDrawer>
         route: '/customers',
       ),
       (
+        label: AppStrings.reports,
+        icon: Icons.analytics_outlined,
+        route: '/reports',
+      ),
+      (
         label: AppStrings.products,
         icon: Icons.diamond_outlined,
         route: '/products',
@@ -187,7 +192,7 @@ class _AppDrawerState extends State<_AppDrawer>
 
     final headerAnimation = CurvedAnimation(
       parent: _controller,
-      curve: const Interval(0, 0.48, curve: Curves.easeOutBack),
+      curve: const Interval(0, 0.46, curve: Curves.easeOutBack),
     );
 
     return NavigationDrawer(
@@ -239,8 +244,8 @@ class _AppDrawerState extends State<_AppDrawer>
             animation: CurvedAnimation(
               parent: _controller,
               curve: Interval(
-                0.14 + (index * 0.058),
-                (0.5 + (index * 0.055)).clamp(0.0, 1.0),
+                0.12 + (index * 0.052),
+                (0.47 + (index * 0.05)).clamp(0.0, 1.0),
                 curve: Curves.easeOutCubic,
               ),
             ),
