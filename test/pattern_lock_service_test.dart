@@ -84,8 +84,8 @@ void main() {
   });
 
   test('لا يقبل نمطًا أقصر من أربع نقاط', () async {
-    expect(
-      () => service.enable(const [0, 1, 2]),
+    await expectLater(
+      service.enable(const [0, 1, 2]),
       throwsA(isA<FormatException>()),
     );
   });
