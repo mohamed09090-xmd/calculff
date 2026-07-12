@@ -14,7 +14,8 @@ class TransactionsScreen extends ConsumerStatefulWidget {
   const TransactionsScreen({super.key});
 
   @override
-  ConsumerState<TransactionsScreen> createState() => _TransactionsScreenState();
+  ConsumerState<TransactionsScreen> createState() =>
+      _TransactionsScreenState();
 }
 
 class _TransactionsScreenState extends ConsumerState<TransactionsScreen> {
@@ -23,7 +24,8 @@ class _TransactionsScreenState extends ConsumerState<TransactionsScreen> {
   @override
   Widget build(BuildContext context) {
     final transactions = ref.watch(transactionsProvider);
-    final settings = ref.watch(settingsProvider).valueOrNull ?? AppSettings.defaults;
+    final settings =
+        ref.watch(settingsProvider).valueOrNull ?? AppSettings.defaults;
     return AppShell(
       title: AppStrings.transactions,
       actions: [
@@ -36,10 +38,11 @@ class _TransactionsScreenState extends ConsumerState<TransactionsScreen> {
         children: [
           TextField(
             decoration: const InputDecoration(
-              hintText: 'ابحث باسم المنتج',
+              hintText: 'ابحث باسم العميل أو المنتج',
               prefixIcon: Icon(Icons.search),
             ),
-            onChanged: (value) => setState(() => _query = value.trim().toLowerCase()),
+            onChanged: (value) =>
+                setState(() => _query = value.trim().toLowerCase()),
           ),
           const SizedBox(height: 12),
           Expanded(
@@ -49,9 +52,14 @@ class _TransactionsScreenState extends ConsumerState<TransactionsScreen> {
               data: (items) {
                 final filtered = items.where((item) {
                   if (_query.isEmpty) return true;
-                  return (item.productNameSnapshot ?? 'حساب رصيد').toLowerCase().contains(_query);
+                  final customer = item.customerName.toLowerCase();
+                  final product =
+                      (item.productNameSnapshot ?? 'حساب رصيد').toLowerCase();
+                  return customer.contains(_query) || product.contains(_query);
                 }).toList(growable: false);
-                if (filtered.isEmpty) return const Center(child: Text('لا توجد عمليات مطابقة.'));
+                if (filtered.isEmpty) {
+                  return const Center(child: Text('لا توجد عمليات مطابقة.'));
+                }
                 return ListView.separated(
                   itemCount: filtered.length,
                   separatorBuilder: (_, __) => const SizedBox(height: 10),
@@ -60,18 +68,38 @@ class _TransactionsScreenState extends ConsumerState<TransactionsScreen> {
                     final profitColor = item.cashProfit >= 0
                         ? Theme.of(context).colorScheme.primary
                         : Theme.of(context).colorScheme.error;
+                    final productName =
+                        item.productNameSnapshot ?? 'حساب رصيد';
                     return Card(
                       child: ListTile(
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                        leading: CircleAvatar(child: Text('${item.gems}')),
-                        title: Text(item.productNameSnapshot ?? 'حساب رصيد', style: const TextStyle(fontWeight: FontWeight.w900)),
-                        subtitle: Text('${AppDateUtils.format(item.createdAt)}\n${item.requiredCredit} رصيد'),
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 8,
+                        ),
+                        leading: CircleAvatar(
+                          child: Text(item.customerName.characters.first),
+                        ),
+                        title: Text(
+                          item.customerName,
+                          style: const TextStyle(fontWeight: FontWeight.w900),
+                        ),
+                        subtitle: Text(
+                          '$productName • ${item.requiredCredit} رصيد\n'
+                          '${AppDateUtils.format(item.createdAt)}',
+                        ),
                         isThreeLine: true,
                         trailing: Text(
-                          MoneyFormatter.format(item.cashProfit, useThousands: settings.useThousands),
-                          style: TextStyle(fontWeight: FontWeight.w900, color: profitColor),
+                          MoneyFormatter.format(
+                            item.cashProfit,
+                            useThousands: settings.useThousands,
+                          ),
+                          style: TextStyle(
+                            fontWeight: FontWeight.w900,
+                            color: profitColor,
+                          ),
                         ),
-                        onTap: () => context.push('/transactions/${item.id}'),
+                        onTap: () =>
+                            context.push('/transactions/${item.id}'),
                       ),
                     );
                   },
