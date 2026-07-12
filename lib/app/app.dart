@@ -21,7 +21,11 @@ class GameCreditApp extends ConsumerWidget {
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light(),
       darkTheme: AppTheme.dark(),
-      themeMode: settings.darkMode ? ThemeMode.dark : ThemeMode.light,
+      themeMode: switch (settings.themePreference) {
+        AppThemePreference.system => ThemeMode.system,
+        AppThemePreference.light => ThemeMode.light,
+        AppThemePreference.dark => ThemeMode.dark,
+      },
       locale: const Locale('ar', 'DZ'),
       supportedLocales: const [Locale('ar', 'DZ')],
       localizationsDelegates: const [
