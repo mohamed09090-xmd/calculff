@@ -29,9 +29,17 @@ void main() {
   });
 
   test('يضيف رصيدًا يدويًا مع التكلفة والانتهاء وسجل الحركة', () async {
-    final expiresAt = DateTime.now()
-        .add(const Duration(days: 2, hours: 3, minutes: 17))
-        .copyWith(microsecond: 0);
+    final rawExpiry =
+        DateTime.now().add(const Duration(days: 2, hours: 3, minutes: 17));
+    final expiresAt = DateTime(
+      rawExpiry.year,
+      rawExpiry.month,
+      rawExpiry.day,
+      rawExpiry.hour,
+      rawExpiry.minute,
+      rawExpiry.second,
+      rawExpiry.millisecond,
+    );
     final transactionId = await repository.addCredit(
       name: 'رصيد تجريبي',
       amount: 500,
