@@ -302,7 +302,7 @@ class _TransactionEditScreenState
           ),
         ) ??
         false;
-    if (!confirmed) return;
+    if (!mounted || !confirmed) return;
 
     FocusScope.of(context).unfocus();
     setState(() => _saving = true);
