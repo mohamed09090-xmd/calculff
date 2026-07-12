@@ -44,8 +44,14 @@ class ReportRepository {
       now: generatedAt,
     );
     final topProducts = await _rankings(
-      groupExpression:
-          "COALESCE(NULLIF(product_name_snapshot, ''), 'بيع رصيد مباشر')",
+      groupExpression: '''
+        CASE
+          WHEN mode = 'directProduct' THEN
+            COALESCE(NULLIF(product_name_snapshot, ''), 'منتج مباشر') || ' • منتج مباشر'
+          WHEN mode = 'credit' THEN 'بيع رصيد مباشر'
+          ELSE COALESCE(NULLIF(product_name_snapshot, ''), 'منتج غير مسمى')
+        END
+      ''',
       start: window.start,
       endExclusive: window.endExclusive,
     );
