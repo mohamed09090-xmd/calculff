@@ -5,6 +5,7 @@ import '../features/backup/presentation/backup_restore_screen.dart';
 import '../features/calculator/presentation/calculation_result_screen.dart';
 import '../features/calculator/presentation/calculator_screen.dart';
 import '../features/calculator/presentation/confirm_transaction_screen.dart';
+import '../features/customers/presentation/customers_screen.dart';
 import '../features/dashboard/presentation/dashboard_screen.dart';
 import '../features/dashboard/presentation/splash_screen.dart';
 import '../features/inventory/presentation/inventory_screen.dart';
@@ -12,6 +13,7 @@ import '../features/packages/presentation/packages_screen.dart';
 import '../features/products/presentation/products_screen.dart';
 import '../features/settings/presentation/settings_screen.dart';
 import '../features/transactions/presentation/transaction_details_screen.dart';
+import '../features/transactions/presentation/transaction_edit_screen.dart';
 import '../features/transactions/presentation/transactions_screen.dart';
 
 CustomTransitionPage<void> _animatedPage(
@@ -76,6 +78,11 @@ final GoRouter appRouter = GoRouter(
       ],
     ),
     GoRoute(
+      path: '/customers',
+      pageBuilder: (context, state) =>
+          _animatedPage(state, const CustomersScreen()),
+    ),
+    GoRoute(
       path: '/products',
       pageBuilder: (context, state) =>
           _animatedPage(state, const ProductsScreen()),
@@ -101,8 +108,20 @@ final GoRouter appRouter = GoRouter(
             state,
             TransactionDetailsScreen(
               transactionId: state.pathParameters['id']!,
+              showUndo: state.uri.queryParameters['undo'] == '1',
             ),
           ),
+          routes: [
+            GoRoute(
+              path: 'edit',
+              pageBuilder: (context, state) => _animatedPage(
+                state,
+                TransactionEditScreen(
+                  transactionId: state.pathParameters['id']!,
+                ),
+              ),
+            ),
+          ],
         ),
       ],
     ),
