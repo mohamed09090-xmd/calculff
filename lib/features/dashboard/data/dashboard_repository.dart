@@ -26,7 +26,10 @@ class DashboardRepository {
         COALESCE(SUM(cash_profit), 0) AS total_profit,
         COUNT(*) AS count
       FROM sales_transactions
-      WHERE mode NOT IN ('inventoryAddition', 'inventoryRemoval')
+      WHERE COALESCE(product_id, '') NOT IN (
+        '__inventory_adjustment_add__',
+        '__inventory_adjustment_remove__'
+      )
     ''');
     final today = await db.rawQuery('''
       SELECT
@@ -34,7 +37,10 @@ class DashboardRepository {
         COALESCE(SUM(cash_profit), 0) AS profit
       FROM sales_transactions
       WHERE created_at >= ?
-        AND mode NOT IN ('inventoryAddition', 'inventoryRemoval')
+        AND COALESCE(product_id, '') NOT IN (
+          '__inventory_adjustment_add__',
+          '__inventory_adjustment_remove__'
+        )
     ''', [dayStart]);
     final settingRows = await db.query(
       'app_settings',
