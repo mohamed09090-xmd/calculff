@@ -1,4 +1,11 @@
 const Map<String, String> additionalFrenchTranslations = {
+  'تقرير مدير رصيد الألعاب': 'Rapport du gestionnaire de crédit de jeux',
+  'الفترة': 'Période',
+  'تم الإنشاء': 'Créé le',
+  'المؤشر': 'Indicateur',
+  'القيمة': 'Valeur',
+  'الاتجاه الزمني': 'Évolution temporelle',
+  'العميل': 'Client',
   'منتج جديد': 'Nouveau produit',
   'لا توجد منتجات.': 'Aucun produit.',
   'مباشر': 'Direct',

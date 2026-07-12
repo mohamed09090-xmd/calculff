@@ -58,4 +58,16 @@ void main() {
     expect(ReportExportFormat.png.extension, 'png');
     expect(ReportExportFormat.png.mimeType, 'image/png');
   });
+
+  test('يبني CSV بالفرنسية عند اختيار الفرنسية', () {
+    final csv = ReportExportService.buildCsv(report, languageCode: 'fr');
+
+    expect(csv, contains('Rapport du gestionnaire de crédit de jeux'));
+    expect(csv, contains('Période,"7 derniers jours"'));
+    expect(csv, contains('Ventes,3500'));
+    expect(csv, contains('Coût,2400'));
+    expect(csv, contains('Bénéfice,1100'));
+    expect(csv, contains('Meilleurs produits'));
+    expect(csv, contains('Meilleurs clients'));
+  });
 }

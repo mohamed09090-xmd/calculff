@@ -73,7 +73,10 @@ class ReportExportService {
 
     switch (format) {
       case ReportExportFormat.csv:
-        textContent = '\uFEFF${buildCsv(report)}';
+        final languageCode = context == null
+            ? 'ar'
+            : Localizations.localeOf(context).languageCode;
+        textContent = '\uFEFF${buildCsv(report, languageCode: languageCode)}';
         break;
       case ReportExportFormat.png:
         if (context == null) {
@@ -113,24 +116,27 @@ class ReportExportService {
     return ReportExportResult(file: file, format: format);
   }
 
-  static String buildCsv(ReportSummary report) {
+  static String buildCsv(ReportSummary report, {String languageCode = 'ar'}) {
+    String tr(String value) =>
+        AppTranslator.translateForLanguage(value, languageCode);
+
     final buffer = StringBuffer()
-      ..writeln('تقرير مدير رصيد الألعاب')
-      ..writeln('الفترة,${_csv(report.period.label)}')
-      ..writeln('تم الإنشاء,${report.generatedAt.toIso8601String()}')
+      ..writeln(tr('تقرير مدير رصيد الألعاب'))
+      ..writeln('${tr('الفترة')},${_csv(tr(report.period.label))}')
+      ..writeln('${tr('تم الإنشاء')},${report.generatedAt.toIso8601String()}')
       ..writeln()
-      ..writeln('المؤشر,القيمة')
-      ..writeln('المبيعات,${report.current.sales}')
-      ..writeln('التكلفة,${report.current.cost}')
-      ..writeln('الربح,${report.current.profit}')
-      ..writeln('عدد العمليات,${report.current.transactionCount}')
-      ..writeln('عدد العملاء,${report.current.customerCount}')
-      ..writeln('متوسط العملية,${report.current.averageSale}')
-      ..writeln('الرصيد المطلوب,${report.current.requiredCredit}')
-      ..writeln('الرصيد المشتَرى,${report.current.purchasedCredit}')
+      ..writeln('${tr('المؤشر')},${tr('القيمة')}')
+      ..writeln('${tr('المبيعات')},${report.current.sales}')
+      ..writeln('${tr('التكلفة')},${report.current.cost}')
+      ..writeln('${tr('الربح')},${report.current.profit}')
+      ..writeln('${tr('عدد العمليات')},${report.current.transactionCount}')
+      ..writeln('${tr('عدد العملاء')},${report.current.customerCount}')
+      ..writeln('${tr('متوسط العملية')},${report.current.averageSale}')
+      ..writeln('${tr('الرصيد المطلوب')},${report.current.requiredCredit}')
+      ..writeln('${tr('الرصيد المشتَرى')},${report.current.purchasedCredit}')
       ..writeln()
-      ..writeln('الاتجاه الزمني')
-      ..writeln('الفترة,المبيعات,الربح');
+      ..writeln(tr('الاتجاه الزمني'))
+      ..writeln('${tr('الفترة')},${tr('المبيعات')},${tr('الربح')}');
 
     for (final point in report.points) {
       buffer.writeln('${_csv(point.label)},${point.sales},${point.profit}');
@@ -138,8 +144,10 @@ class ReportExportService {
 
     buffer
       ..writeln()
-      ..writeln('أفضل المنتجات')
-      ..writeln('المنتج,العمليات,المبيعات,الربح');
+      ..writeln(tr('أفضل المنتجات'))
+      ..writeln(
+        '${tr('المنتج')},${tr('العمليات')},${tr('المبيعات')},${tr('الربح')}',
+      );
     for (final item in report.topProducts) {
       buffer.writeln(
         '${_csv(item.label)},${item.transactionCount},${item.sales},${item.profit}',
@@ -148,8 +156,10 @@ class ReportExportService {
 
     buffer
       ..writeln()
-      ..writeln('أفضل العملاء')
-      ..writeln('العميل,العمليات,المبيعات,الربح');
+      ..writeln(tr('أفضل العملاء'))
+      ..writeln(
+        '${tr('العميل')},${tr('العمليات')},${tr('المبيعات')},${tr('الربح')}',
+      );
     for (final item in report.topCustomers) {
       buffer.writeln(
         '${_csv(item.label)},${item.transactionCount},${item.sales},${item.profit}',
