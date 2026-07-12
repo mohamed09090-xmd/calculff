@@ -3,6 +3,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../core/constants/app_strings.dart';
+import '../features/security/presentation/app_lock_gate.dart';
 import '../shared/models/app_settings.dart';
 import '../shared/providers/app_providers.dart';
 import 'router.dart';
@@ -13,7 +14,8 @@ class GameCreditApp extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final settings = ref.watch(settingsProvider).valueOrNull ?? AppSettings.defaults;
+    final settings =
+        ref.watch(settingsProvider).valueOrNull ?? AppSettings.defaults;
     return MaterialApp.router(
       title: AppStrings.appName,
       debugShowCheckedModeBanner: false,
@@ -29,7 +31,9 @@ class GameCreditApp extends ConsumerWidget {
       ],
       builder: (context, child) => Directionality(
         textDirection: TextDirection.rtl,
-        child: child ?? const SizedBox.shrink(),
+        child: AppLockGate(
+          child: child ?? const SizedBox.shrink(),
+        ),
       ),
       routerConfig: appRouter,
     );
