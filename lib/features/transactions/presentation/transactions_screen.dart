@@ -77,7 +77,7 @@ class _TransactionsScreenState extends ConsumerState<TransactionsScreen> {
                           vertical: 8,
                         ),
                         leading: CircleAvatar(
-                          child: Text(item.customerName.characters.first),
+                          child: Text(item.customerName.substring(0, 1)),
                         ),
                         title: Text(
                           item.customerName,
