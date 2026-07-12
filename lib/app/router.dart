@@ -11,6 +11,7 @@ import '../features/dashboard/presentation/splash_screen.dart';
 import '../features/inventory/presentation/inventory_screen.dart';
 import '../features/packages/presentation/packages_screen.dart';
 import '../features/products/presentation/products_screen.dart';
+import '../features/reports/presentation/reports_screen.dart';
 import '../features/settings/presentation/settings_screen.dart';
 import '../features/transactions/presentation/transaction_details_screen.dart';
 import '../features/transactions/presentation/transaction_edit_screen.dart';
@@ -81,6 +82,11 @@ final GoRouter appRouter = GoRouter(
       path: '/customers',
       pageBuilder: (context, state) =>
           _animatedPage(state, const CustomersScreen()),
+    ),
+    GoRoute(
+      path: '/reports',
+      pageBuilder: (context, state) =>
+          _animatedPage(state, const ReportsScreen()),
     ),
     GoRoute(
       path: '/products',
