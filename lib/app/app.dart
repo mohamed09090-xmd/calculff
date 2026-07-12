@@ -6,6 +6,8 @@ import '../features/security/presentation/app_lock_gate.dart';
 import 'router.dart';
 import 'theme.dart';
 
+const appThemeMode = ThemeMode.system;
+
 class GameCreditApp extends StatelessWidget {
   const GameCreditApp({super.key});
 
@@ -16,7 +18,7 @@ class GameCreditApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light(),
       darkTheme: AppTheme.dark(),
-      themeMode: ThemeMode.system,
+      themeMode: appThemeMode,
       locale: const Locale('ar', 'DZ'),
       supportedLocales: const [Locale('ar', 'DZ')],
       localizationsDelegates: const [
