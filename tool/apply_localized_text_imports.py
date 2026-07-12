@@ -8,13 +8,14 @@ ROOT = Path(__file__).resolve().parents[1]
 LIB = ROOT / "lib"
 TEXT_TARGET = LIB / "core" / "localization" / "localized_text.dart"
 TRANSLATOR_TARGET = LIB / "core" / "localization" / "app_translator.dart"
+CATALOG_TARGET = LIB / "core" / "localization" / "french_catalog.dart"
 MATERIAL_IMPORT = "import 'package:flutter/material.dart';"
 MATERIAL_HIDDEN_IMPORT = "import 'package:flutter/material.dart' hide Text;"
 
 DART_STRING = r"'(?:\\.|[^'\n])*'|\"(?:\\.|[^\"\n])*\""
 STRING_PROPERTY_PATTERN = re.compile(
     r"(?m)^(?P<indent>\s*)"
-    r"(?P<name>labelText|hintText|helperText|errorText|counterText|"
+    r"(?P<name>labelText|hintText|helperText|errorText|counterText|label|"
     r"semanticCounterText|tooltip|message|dialogTitle|subject|semanticsLabel)"
     rf":\s*(?P<literal>{DART_STRING}),\s*$"
 )
@@ -85,8 +86,39 @@ def _normalize_text_import(path: Path, source: str) -> str:
     return _insert_relative_import(source, localized_import)
 
 
+def _wire_french_catalog(source: str) -> str:
+    import_line = "import 'french_catalog.dart';"
+    if import_line not in source:
+        source = source.replace(
+            "import 'package:flutter/widgets.dart';",
+            "import 'package:flutter/widgets.dart';\n\nimport 'french_catalog.dart';",
+            1,
+        )
+
+    source = source.replace(
+        "    final exact = _exactFrench[source];",
+        "    final exact = _exactFrench[source] ?? additionalFrenchTranslations[source];",
+        1,
+    )
+
+    old_loop = """    for (final entry in _phraseFrench.entries) {
+      result = result.replaceAll(entry.key, entry.value);
+    }"""
+    new_loop = """    final phrases = <MapEntry<String, String>>[
+      ...additionalFrenchPhrases.entries,
+      ..._phraseFrench.entries,
+    ]..sort(
+        (first, second) => second.key.length.compareTo(first.key.length),
+      );
+    for (final entry in phrases) {
+      result = result.replaceAll(entry.key, entry.value);
+    }"""
+    source = source.replace(old_loop, new_loop, 1)
+    return source
+
+
 def _localize_string_properties(path: Path, source: str) -> str:
-    if path in {TEXT_TARGET, TRANSLATOR_TARGET}:
+    if path in {TEXT_TARGET, TRANSLATOR_TARGET, CATALOG_TARGET}:
         return source
     if "BuildContext context" not in source:
         return source
@@ -138,6 +170,7 @@ def _localize_string_properties(path: Path, source: str) -> str:
     updated = updated.replace("const InputDecoration(", "InputDecoration(")
     updated = updated.replace("const Tooltip(", "Tooltip(")
     updated = updated.replace("const IconButton(", "IconButton(")
+    updated = updated.replace("const SnackBarAction(", "SnackBarAction(")
     return _insert_relative_import(
         updated,
         _relative_import(path, TRANSLATOR_TARGET),
@@ -218,6 +251,8 @@ def main() -> None:
     for path in sorted(LIB.rglob("*.dart")):
         source = path.read_text(encoding="utf-8")
         updated = _normalize_text_import(path, source)
+        if path == TRANSLATOR_TARGET:
+            updated = _wire_french_catalog(updated)
         updated = _localize_string_properties(path, updated)
         if path == LIB / "features" / "settings" / "presentation" / "settings_screen.dart":
             updated = _add_language_settings(updated)
