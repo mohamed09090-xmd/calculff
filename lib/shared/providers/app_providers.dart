@@ -63,8 +63,8 @@ final transactionsProvider = FutureProvider<List<SalesTransaction>>((ref) async 
   return transactions
       .where(
         (item) =>
-            item.mode != CalculationMode.inventoryAddition &&
-            item.mode != CalculationMode.inventoryRemoval,
+            item.productId != InventoryAdjustmentRepository.additionProductId &&
+            item.productId != InventoryAdjustmentRepository.removalProductId,
       )
       .toList(growable: false);
 });
