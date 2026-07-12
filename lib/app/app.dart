@@ -14,18 +14,13 @@ class GameCreditApp extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final settings =
-        ref.watch(settingsProvider).valueOrNull ?? AppSettings.defaults;
+    ref.watch(settingsProvider).valueOrNull ?? AppSettings.defaults;
     return MaterialApp.router(
       title: AppStrings.appName,
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light(),
       darkTheme: AppTheme.dark(),
-      themeMode: switch (settings.themePreference) {
-        AppThemePreference.system => ThemeMode.system,
-        AppThemePreference.light => ThemeMode.light,
-        AppThemePreference.dark => ThemeMode.dark,
-      },
+      themeMode: ThemeMode.system,
       locale: const Locale('ar', 'DZ'),
       supportedLocales: const [Locale('ar', 'DZ')],
       localizationsDelegates: const [
