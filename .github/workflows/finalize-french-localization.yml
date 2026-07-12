@@ -1,0 +1,54 @@
+name: Finalize French localization sources
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/finalize-french-localization.yml
+
+permissions:
+  contents: write
+
+jobs:
+  finalize:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.44.0'
+          channel: stable
+          cache: true
+
+      - name: Make exported reports follow the selected direction
+        shell: python
+        run: |
+          from pathlib import Path
+
+          path = Path('lib/features/reports/data/report_export_service.dart')
+          source = path.read_text(encoding='utf-8')
+          old = 'textDirection: ui.TextDirection.rtl,'
+          new = 'textDirection: Directionality.of(context),'
+          if old not in source and new not in source:
+              raise SystemExit('Expected report direction statement was not found.')
+          path.write_text(source.replace(old, new, 1), encoding='utf-8')
+
+      - name: Format localized Dart sources
+        run: dart format lib test
+
+      - name: Commit finalized sources
+        shell: bash
+        run: |
+          set -euo pipefail
+          if git diff --quiet; then
+            echo "No source changes were required."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add lib test
+          git commit -m "Finalize French LTR localization"
+          git push origin HEAD:main
