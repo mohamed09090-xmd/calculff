@@ -22,7 +22,7 @@ class SalesTransaction {
     required this.additionalCreditRequired,
     required this.purchasedCredit,
     required this.newPackagesCost,
-    required this.creditCostUsed,
+    this.creditCostUsed = 0,
     required this.cashProfit,
   });
 
@@ -82,6 +82,9 @@ class SalesTransaction {
     final customerName = rawCustomerName == null || rawCustomerName.trim().isEmpty
         ? 'عميل سابق'
         : rawCustomerName.trim();
+    final chargedAmount = (map['charged_amount'] as num).toInt();
+    final cashProfit = (map['cash_profit'] as num).toInt();
+    final rawCreditCost = (map['credit_cost_used'] as num?)?.toInt();
 
     return SalesTransaction(
       id: map['id']! as String,
@@ -98,7 +101,7 @@ class SalesTransaction {
       units: (map['units'] as num).toInt(),
       gems: (map['gems'] as num).toInt(),
       customerPaid: (map['customer_paid'] as num).toInt(),
-      chargedAmount: (map['charged_amount'] as num).toInt(),
+      chargedAmount: chargedAmount,
       customerChange: (map['customer_change'] as num).toInt(),
       requiredCredit: (map['required_credit'] as num).toInt(),
       inventoryCreditUsed: (map['inventory_credit_used'] as num).toInt(),
@@ -106,10 +109,11 @@ class SalesTransaction {
           (map['additional_credit_required'] as num).toInt(),
       purchasedCredit: (map['purchased_credit'] as num).toInt(),
       newPackagesCost: (map['new_packages_cost'] as num).toInt(),
-      creditCostUsed: (map['credit_cost_used'] as num?)?.toInt() ??
-          ((map['charged_amount'] as num).toInt() -
-              (map['cash_profit'] as num).toInt()),
-      cashProfit: (map['cash_profit'] as num).toInt(),
+      creditCostUsed: rawCreditCost == null ||
+              (rawCreditCost == 0 && chargedAmount != cashProfit)
+          ? chargedAmount - cashProfit
+          : rawCreditCost,
+      cashProfit: cashProfit,
     );
   }
 }
