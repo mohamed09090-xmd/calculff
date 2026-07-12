@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:game_credit_profit_manager/core/database/app_database.dart';
 import 'package:game_credit_profit_manager/core/database/direct_sales_schema.dart';
 import 'package:game_credit_profit_manager/shared/models/calculation.dart';
 import 'package:game_credit_profit_manager/shared/models/inventory_lot.dart';
@@ -13,16 +14,15 @@ void main() {
   setUpAll(initializeFfiDatabaseTests);
 
   late Directory directory;
+  late AppDatabase database;
   late EnhancedAppRepository repository;
-  late dynamic database;
 
   setUp(() async {
     directory = await createDatabaseTestDirectory('direct_sales_');
-    final appDatabase = createTestAppDatabase(directory, 'direct-sales.db');
-    database = appDatabase;
-    final db = await appDatabase.database;
+    database = createTestAppDatabase(directory, 'direct-sales.db');
+    final db = await database.database;
     await DirectSalesSchema.ensure(db);
-    repository = EnhancedAppRepository(database: appDatabase);
+    repository = EnhancedAppRepository(database: database);
   });
 
   tearDown(() async {
