@@ -1,0 +1,93 @@
+name: Fix analyzer brace warnings
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/fix-analyzer-braces.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.44.0'
+          channel: stable
+          cache: true
+
+      - name: Add required flow-control braces
+        shell: bash
+        run: |
+          python3 <<'PY'
+          from pathlib import Path
+
+          replacements = {
+              'lib/features/inventory/data/inventory_adjustment_repository.dart': [
+                  (
+                      "    if (amount <= 0) throw StateError('كمية الرصيد يجب أن تكون أكبر من صفر');",
+                      """    if (amount <= 0) {
+            throw StateError('كمية الرصيد يجب أن تكون أكبر من صفر');
+          }""",
+                  ),
+                  (
+                      """    if (purchaseCost < 0)
+                throw StateError('تكلفة الشراء لا يمكن أن تكون سالبة');""",
+                      """    if (purchaseCost < 0) {
+            throw StateError('تكلفة الشراء لا يمكن أن تكون سالبة');
+          }""",
+                  ),
+              ],
+              'lib/features/products/presentation/products_screen.dart': [
+                  (
+                      """          if (items.isEmpty)
+                      return const Center(child: Text('لا توجد منتجات.'));""",
+                      """          if (items.isEmpty) {
+            return const Center(child: Text('لا توجد منتجات.'));
+          }""",
+                  ),
+              ],
+              'lib/shared/repositories/enhanced_app_repository.dart': [
+                  (
+                      """    if (!replacementFound)
+                throw StateError('العملية المطلوب تعديلها غير موجودة');""",
+                      """    if (!replacementFound) {
+            throw StateError('العملية المطلوب تعديلها غير موجودة');
+          }""",
+                  ),
+              ],
+          }
+
+          for filename, changes in replacements.items():
+              path = Path(filename)
+              source = path.read_text(encoding='utf-8')
+              for old, new in changes:
+                  if old in source:
+                      source = source.replace(old, new, 1)
+              path.write_text(source, encoding='utf-8')
+          PY
+
+      - name: Format Dart sources
+        run: dart format lib test
+
+      - name: Commit analyzer fixes
+        shell: bash
+        run: |
+          set -euo pipefail
+          if git diff --quiet; then
+            echo "No source changes were required."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add lib test
+          git commit -m "Fix analyzer brace warnings"
+          git push origin HEAD:main
