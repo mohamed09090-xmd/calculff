@@ -1,5 +1,7 @@
 import '../../../shared/models/calculation.dart';
 import '../../../shared/models/credit_package.dart';
+import '../../../shared/models/product.dart';
+import 'credit_sale_pricing.dart';
 import 'package_optimizer.dart';
 
 class CalculationEngine {
@@ -10,6 +12,7 @@ class CalculationEngine {
     required CalculationRequest request,
     required List<CreditPackage> packages,
     required int availableInventoryCredit,
+    required CreditSalePricing pricing,
   }) {
     if (request.inputValue < 0) {
       throw ArgumentError.value(request.inputValue, 'inputValue');
@@ -25,8 +28,7 @@ class CalculationEngine {
 
     switch (request.mode) {
       case CalculationMode.customerAmount:
-        final product = request.product ??
-            (throw ArgumentError('المنتج مطلوب للحساب حسب المبلغ'));
+        final product = _requireGemProduct(request.product);
         customerPaid = request.inputValue;
         units = customerPaid ~/ product.salePriceDzd;
         gems = units * product.gemsPerUnit;
@@ -34,10 +36,8 @@ class CalculationEngine {
         customerChange = customerPaid - chargedAmount;
         requiredCredit = units * product.creditPerUnit;
         if (units == 0) warning = 'المبلغ أقل من سعر أصغر حزمة للمنتج';
-        break;
       case CalculationMode.gems:
-        final product = request.product ??
-            (throw ArgumentError('المنتج مطلوب للحساب حسب الجواهر'));
+        final product = _requireGemProduct(request.product);
         final requestedGems = request.inputValue;
         units = requestedGems ~/ product.gemsPerUnit;
         final remainder = requestedGems % product.gemsPerUnit;
@@ -50,10 +50,20 @@ class CalculationEngine {
         chargedAmount = units * product.salePriceDzd;
         customerPaid = chargedAmount;
         requiredCredit = units * product.creditPerUnit;
-        break;
       case CalculationMode.credit:
         requiredCredit = request.inputValue;
-        break;
+        chargedAmount = pricing.priceFor(requiredCredit);
+        customerPaid = chargedAmount;
+        units = 1;
+      case CalculationMode.directProduct:
+        final product = request.product;
+        if (product == null || product.type != ProductType.direct) {
+          throw ArgumentError('المنتج المباشر مطلوب');
+        }
+        requiredCredit = product.creditPerUnit;
+        chargedAmount = pricing.priceFor(requiredCredit);
+        customerPaid = chargedAmount;
+        units = 1;
     }
 
     final inventoryUsed = request.useInventory
@@ -65,8 +75,6 @@ class CalculationEngine {
     final optimization = additional == 0
         ? null
         : optimizer.optimize(requiredCredit: additional, packages: packages);
-    final cost = optimization?.totalCost ?? 0;
-    final profit = chargedAmount - cost;
 
     return CalculationResult(
       request: request,
@@ -79,8 +87,16 @@ class CalculationEngine {
       inventoryCreditUsed: inventoryUsed,
       additionalCreditRequired: additional,
       optimization: optimization,
-      cashProfit: profit,
+      creditCostUsed: 0,
+      cashProfit: chargedAmount,
       warning: warning,
     );
+  }
+
+  Product _requireGemProduct(Product? product) {
+    if (product == null || product.type != ProductType.gems) {
+      throw ArgumentError('منتج الجواهر مطلوب');
+    }
+    return product;
   }
 }
