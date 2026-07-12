@@ -10,11 +10,40 @@ import '../../features/inventory/application/fefo_allocator.dart';
 import '../models/app_settings.dart';
 import '../models/calculation.dart';
 import '../models/credit_package.dart';
+import '../models/customer.dart';
 import '../models/dashboard_summary.dart';
 import '../models/inventory_lot.dart';
 import '../models/product.dart';
 import '../models/sales_transaction.dart';
 import '../models/transaction_details.dart';
+
+enum TransactionUndoKind { create, edit, delete }
+
+class TransactionUndoResult {
+  const TransactionUndoResult({
+    required this.kind,
+    required this.transactionId,
+    required this.transactionExistsAfterUndo,
+  });
+
+  final TransactionUndoKind kind;
+  final String transactionId;
+  final bool transactionExistsAfterUndo;
+}
+
+class _TransactionUndoSnapshot {
+  const _TransactionUndoSnapshot({
+    required this.kind,
+    required this.transactionId,
+    this.transaction,
+    this.items = const [],
+  });
+
+  final TransactionUndoKind kind;
+  final String transactionId;
+  final Map<String, Object?>? transaction;
+  final List<Map<String, Object?>> items;
+}
 
 class AppRepository {
   AppRepository({
@@ -28,6 +57,16 @@ class AppRepository {
   final AppDatabase _database;
   final CalculationEngine _calculationEngine;
   final FefoAllocator _allocator;
+  _TransactionUndoSnapshot? _pendingUndo;
+
+  bool get hasPendingTransactionUndo => _pendingUndo != null;
+
+  String? get pendingTransactionUndoMessage => switch (_pendingUndo?.kind) {
+        TransactionUndoKind.create => 'تم حفظ العملية',
+        TransactionUndoKind.edit => 'تم تعديل العملية وإعادة حساب المخزون',
+        TransactionUndoKind.delete => 'تم حذف العملية وإعادة حساب المخزون',
+        null => null,
+      };
 
   Future<void> initialize() async {
     await _database.database;
@@ -73,6 +112,140 @@ class AppRepository {
     );
   }
 
+  Future<List<Customer>> getCustomers({
+    bool activeOnly = false,
+    String? query,
+  }) async {
+    final db = await _database.database;
+    final conditions = <String>[];
+    final args = <Object?>[];
+    if (activeOnly) conditions.add('c.is_active = 1');
+    final normalizedQuery = query?.trim();
+    if (normalizedQuery != null && normalizedQuery.isNotEmpty) {
+      conditions.add('(c.name LIKE ? OR COALESCE(c.phone, \'\') LIKE ?)');
+      args
+        ..add('%$normalizedQuery%')
+        ..add('%$normalizedQuery%');
+    }
+    final where = conditions.isEmpty ? '' : 'WHERE ${conditions.join(' AND ')}';
+    final rows = await db.rawQuery('''
+      SELECT
+        c.*,
+        COUNT(t.id) AS transaction_count,
+        COALESCE(SUM(t.charged_amount), 0) AS total_spent,
+        COALESCE(SUM(t.cash_profit), 0) AS total_profit,
+        MAX(t.created_at) AS last_transaction_at
+      FROM customers c
+      LEFT JOIN sales_transactions t ON t.customer_id = c.id
+      $where
+      GROUP BY c.id
+      ORDER BY c.is_active DESC, c.name COLLATE NOCASE
+    ''', args);
+    return rows.map(Customer.fromMap).toList(growable: false);
+  }
+
+  Future<Customer> saveCustomer({
+    String? id,
+    required String name,
+    String? phone,
+    String? notes,
+    bool isActive = true,
+  }) async {
+    final normalizedName = _normalizeCustomerName(name);
+    final normalizedPhone = _nullableText(phone);
+    final normalizedNotes = _nullableText(notes);
+    final db = await _database.database;
+    final duplicate = await db.query(
+      'customers',
+      columns: ['id'],
+      where: id == null
+          ? 'LOWER(name) = LOWER(?)'
+          : 'LOWER(name) = LOWER(?) AND id != ?',
+      whereArgs: id == null ? [normalizedName] : [normalizedName, id],
+      limit: 1,
+    );
+    if (duplicate.isNotEmpty) {
+      throw StateError('يوجد عميل آخر بالاسم نفسه');
+    }
+
+    final now = DateTime.now();
+    if (id == null) {
+      final customer = Customer(
+        id: IdGenerator.next('customer'),
+        name: normalizedName,
+        phone: normalizedPhone,
+        notes: normalizedNotes,
+        isActive: isActive,
+        createdAt: now,
+        updatedAt: now,
+      );
+      await db.insert('customers', customer.toMap());
+      return customer;
+    }
+
+    final existing = await db.query(
+      'customers',
+      where: 'id = ?',
+      whereArgs: [id],
+      limit: 1,
+    );
+    if (existing.isEmpty) throw StateError('العميل غير موجود');
+    await db.transaction((txn) async {
+      await txn.update(
+        'customers',
+        {
+          'name': normalizedName,
+          'phone': normalizedPhone,
+          'notes': normalizedNotes,
+          'is_active': isActive ? 1 : 0,
+          'updated_at': now.toIso8601String(),
+        },
+        where: 'id = ?',
+        whereArgs: [id],
+      );
+      await txn.update(
+        'sales_transactions',
+        {'customer_name': normalizedName},
+        where: 'customer_id = ?',
+        whereArgs: [id],
+      );
+    });
+    return Customer.fromMap({
+      ...existing.first,
+      'name': normalizedName,
+      'phone': normalizedPhone,
+      'notes': normalizedNotes,
+      'is_active': isActive ? 1 : 0,
+      'updated_at': now.toIso8601String(),
+    });
+  }
+
+  Future<void> setCustomerActive(String id, bool isActive) async {
+    final db = await _database.database;
+    final changed = await db.update(
+      'customers',
+      {
+        'is_active': isActive ? 1 : 0,
+        'updated_at': DateTime.now().toIso8601String(),
+      },
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+    if (changed == 0) throw StateError('العميل غير موجود');
+  }
+
+  Future<void> deleteCustomer(String id) async {
+    final db = await _database.database;
+    final usage = await db.rawQuery(
+      'SELECT COUNT(*) AS count FROM sales_transactions WHERE customer_id = ?',
+      [id],
+    );
+    if ((usage.first['count'] as num).toInt() > 0) {
+      throw StateError('لا يمكن حذف عميل لديه عمليات. يمكنك أرشفته بدلًا من ذلك.');
+    }
+    await db.delete('customers', where: 'id = ?', whereArgs: [id]);
+  }
+
   Future<void> refreshExpiredLots({DateTime? now}) async {
     final db = await _database.database;
     final timestamp = (now ?? DateTime.now()).toIso8601String();
@@ -97,11 +270,18 @@ class AppRepository {
   Future<int> getActiveInventoryCredit() async {
     await refreshExpiredLots();
     final db = await _database.database;
+    return _getActiveInventoryCredit(db, DateTime.now());
+  }
+
+  Future<int> _getActiveInventoryCredit(
+    DatabaseExecutor db,
+    DateTime now,
+  ) async {
     final rows = await db.rawQuery('''
       SELECT COALESCE(SUM(remaining_credit), 0) AS total
       FROM inventory_lots
       WHERE status = ? AND remaining_credit > 0 AND expires_at > ?
-    ''', [InventoryLotStatus.active.name, DateTime.now().toIso8601String()]);
+    ''', [InventoryLotStatus.active.name, now.toIso8601String()]);
     return (rows.first['total'] as num).toInt();
   }
 
@@ -118,17 +298,213 @@ class AppRepository {
   Future<String> saveTransaction(
     CalculationResult result, {
     required String customerName,
+    String? customerId,
   }) async {
-    final normalizedCustomerName = customerName.trim().replaceAll(
-          RegExp(r'\s+'),
-          ' ',
+    _validateSavableResult(result);
+    final db = await _database.database;
+    final transactionId = IdGenerator.next('txn');
+    final now = DateTime.now();
+
+    await db.transaction((txn) async {
+      final customer = await _resolveCustomer(
+        txn,
+        customerId: customerId,
+        customerName: customerName,
+      );
+      await _insertTransaction(
+        txn,
+        result: result,
+        customer: customer,
+        transactionId: transactionId,
+        createdAt: now,
+      );
+    });
+
+    _pendingUndo = _TransactionUndoSnapshot(
+      kind: TransactionUndoKind.create,
+      transactionId: transactionId,
+    );
+    await _rescheduleAllNotifications();
+    return transactionId;
+  }
+
+  Future<String> editTransaction({
+    required String transactionId,
+    required CalculationRequest request,
+    required String customerName,
+    String? customerId,
+  }) async {
+    final db = await _database.database;
+    _TransactionUndoSnapshot? undoSnapshot;
+
+    await db.transaction((txn) async {
+      final transactionRows = await txn.query(
+        'sales_transactions',
+        where: 'id = ?',
+        whereArgs: [transactionId],
+        limit: 1,
+      );
+      if (transactionRows.isEmpty) throw StateError('العملية غير موجودة');
+      final itemRows = await txn.query(
+        'transaction_items',
+        where: 'transaction_id = ?',
+        whereArgs: [transactionId],
+      );
+      final oldTransaction = Map<String, Object?>.from(transactionRows.first);
+      undoSnapshot = _TransactionUndoSnapshot(
+        kind: TransactionUndoKind.edit,
+        transactionId: transactionId,
+        transaction: oldTransaction,
+        items: itemRows
+            .map((row) => Map<String, Object?>.from(row))
+            .toList(growable: false),
+      );
+
+      await txn.delete(
+        'sales_transactions',
+        where: 'id = ?',
+        whereArgs: [transactionId],
+      );
+      await _rebuildInventory(txn);
+
+      final packageRows = await txn.query(
+        'packages',
+        where: 'is_active = 1',
+        orderBy: 'credit ASC',
+      );
+      final packages = packageRows.map(CreditPackage.fromMap).toList();
+      final createdAt = DateTime.parse(oldTransaction['created_at']! as String);
+      final availableInventory = await _getActiveInventoryCredit(txn, createdAt);
+      final result = _calculationEngine.calculate(
+        request: request,
+        packages: packages,
+        availableInventoryCredit: availableInventory,
+      );
+      _validateSavableResult(result);
+      final customer = await _resolveCustomer(
+        txn,
+        customerId: customerId,
+        customerName: customerName,
+      );
+      await _insertTransaction(
+        txn,
+        result: result,
+        customer: customer,
+        transactionId: transactionId,
+        createdAt: createdAt,
+      );
+    });
+
+    _pendingUndo = undoSnapshot;
+    await _rescheduleAllNotifications();
+    return transactionId;
+  }
+
+  Future<void> _insertTransaction(
+    DatabaseExecutor db, {
+    required CalculationResult result,
+    required Customer customer,
+    required String transactionId,
+    required DateTime createdAt,
+  }) async {
+    final base = SalesTransaction(
+      id: transactionId,
+      createdAt: createdAt,
+      customerId: customer.id,
+      customerName: customer.name,
+      mode: result.request.mode,
+      productId: result.request.product?.id,
+      productNameSnapshot: result.request.product?.name,
+      inputValue: result.request.inputValue,
+      useInventory: result.request.useInventory,
+      units: result.units,
+      gems: result.gems,
+      customerPaid: result.customerPaid,
+      chargedAmount: result.chargedAmount,
+      customerChange: result.customerChange,
+      requiredCredit: result.requiredCredit,
+      inventoryCreditUsed: 0,
+      additionalCreditRequired: result.requiredCredit,
+      purchasedCredit: result.purchasedCredit,
+      newPackagesCost: result.newPackagesCost,
+      cashProfit: result.chargedAmount - result.newPackagesCost,
+    );
+    await db.insert('sales_transactions', base.toMap());
+
+    final requestedFromExisting = result.request.useInventory
+        ? result.inventoryCreditUsed
+        : 0;
+    final existingUsed = await _consumeCredit(
+      db,
+      amount: requestedFromExisting,
+      transactionId: transactionId,
+      now: createdAt,
+    );
+
+    final createdLots = <InventoryLot>[];
+    for (final selection in result.optimization?.selections ?? const []) {
+      await db.insert('transaction_items', {
+        'id': IdGenerator.next('item'),
+        'transaction_id': transactionId,
+        'package_id': selection.package.id,
+        'package_name_snapshot': selection.package.name,
+        'credit_snapshot': selection.package.credit,
+        'price_snapshot': selection.package.priceDzd,
+        'validity_hours_snapshot': selection.package.validityHours,
+        'quantity': selection.quantity,
+      });
+      for (var i = 0; i < selection.quantity; i++) {
+        final lot = InventoryLot(
+          id: IdGenerator.next('lot'),
+          packageId: selection.package.id,
+          packageNameSnapshot: selection.package.name,
+          purchasedCredit: selection.package.credit,
+          remainingCredit: selection.package.credit,
+          purchaseCost: selection.package.priceDzd,
+          purchasedAt: createdAt.add(Duration(microseconds: createdLots.length)),
+          expiresAt: createdAt.add(
+            Duration(hours: selection.package.validityHours),
+          ),
+          status: InventoryLotStatus.active,
+          sourceTransactionId: transactionId,
         );
-    if (normalizedCustomerName.isEmpty) {
-      throw StateError('اسم العميل مطلوب قبل حفظ العملية');
+        createdLots.add(lot);
+        await db.insert('inventory_lots', lot.toMap());
+        await db.insert('inventory_movements', {
+          'id': IdGenerator.next('move'),
+          'lot_id': lot.id,
+          'transaction_id': transactionId,
+          'direction': 'in',
+          'amount': lot.purchasedCredit,
+          'reason': 'شراء باقة ضمن العملية',
+          'created_at': createdAt.toIso8601String(),
+        });
+      }
     }
-    if (normalizedCustomerName.length > 80) {
-      throw StateError('اسم العميل يجب ألا يتجاوز 80 حرفًا');
+
+    final remainingNeed = result.requiredCredit - existingUsed;
+    final newUsed = await _consumeCredit(
+      db,
+      amount: remainingNeed,
+      transactionId: transactionId,
+      now: createdAt,
+      sourceTransactionId: transactionId,
+    );
+    if (existingUsed + newUsed != result.requiredCredit) {
+      throw StateError('الرصيد المتوفر والمقترح لا يغطي العملية كاملة');
     }
+    await db.update(
+      'sales_transactions',
+      {
+        'inventory_credit_used': existingUsed,
+        'additional_credit_required': newUsed,
+      },
+      where: 'id = ?',
+      whereArgs: [transactionId],
+    );
+  }
+
+  void _validateSavableResult(CalculationResult result) {
     if (result.requiredCredit <= 0) {
       throw StateError('لا يمكن حفظ عملية بلا رصيد مطلوب');
     }
@@ -139,115 +515,42 @@ class AppRepository {
         result.gems != result.request.inputValue) {
       throw StateError('عدّل عدد الجواهر إلى كمية متوافقة مع حزمة المنتج قبل الحفظ');
     }
-    final db = await _database.database;
-    final now = DateTime.now();
-    final transactionId = IdGenerator.next('txn');
-    final createdLots = <InventoryLot>[];
+  }
 
-    await db.transaction((txn) async {
-      final base = SalesTransaction(
-        id: transactionId,
-        createdAt: now,
-        customerName: normalizedCustomerName,
-        mode: result.request.mode,
-        productId: result.request.product?.id,
-        productNameSnapshot: result.request.product?.name,
-        inputValue: result.request.inputValue,
-        useInventory: result.request.useInventory,
-        units: result.units,
-        gems: result.gems,
-        customerPaid: result.customerPaid,
-        chargedAmount: result.chargedAmount,
-        customerChange: result.customerChange,
-        requiredCredit: result.requiredCredit,
-        inventoryCreditUsed: 0,
-        additionalCreditRequired: result.requiredCredit,
-        purchasedCredit: result.purchasedCredit,
-        newPackagesCost: result.newPackagesCost,
-        cashProfit: result.chargedAmount - result.newPackagesCost,
-      );
-      await txn.insert('sales_transactions', base.toMap());
-
-      final requestedFromExisting = result.request.useInventory
-          ? result.inventoryCreditUsed
-          : 0;
-      final existingUsed = await _consumeCredit(
-        txn,
-        amount: requestedFromExisting,
-        transactionId: transactionId,
-        now: now,
-      );
-
-      for (final selection in result.optimization?.selections ?? const []) {
-        await txn.insert('transaction_items', {
-          'id': IdGenerator.next('item'),
-          'transaction_id': transactionId,
-          'package_id': selection.package.id,
-          'package_name_snapshot': selection.package.name,
-          'credit_snapshot': selection.package.credit,
-          'price_snapshot': selection.package.priceDzd,
-          'validity_hours_snapshot': selection.package.validityHours,
-          'quantity': selection.quantity,
-        });
-        for (var i = 0; i < selection.quantity; i++) {
-          final lot = InventoryLot(
-            id: IdGenerator.next('lot'),
-            packageId: selection.package.id,
-            packageNameSnapshot: selection.package.name,
-            purchasedCredit: selection.package.credit,
-            remainingCredit: selection.package.credit,
-            purchaseCost: selection.package.priceDzd,
-            purchasedAt: now.add(Duration(microseconds: createdLots.length)),
-            expiresAt: now.add(Duration(hours: selection.package.validityHours)),
-            status: InventoryLotStatus.active,
-            sourceTransactionId: transactionId,
-          );
-          createdLots.add(lot);
-          await txn.insert('inventory_lots', lot.toMap());
-          await txn.insert('inventory_movements', {
-            'id': IdGenerator.next('move'),
-            'lot_id': lot.id,
-            'transaction_id': transactionId,
-            'direction': 'in',
-            'amount': lot.purchasedCredit,
-            'reason': 'شراء باقة ضمن العملية',
-            'created_at': now.toIso8601String(),
-          });
-        }
-      }
-
-      final remainingNeed = result.requiredCredit - existingUsed;
-      final newUsed = await _consumeCredit(
-        txn,
-        amount: remainingNeed,
-        transactionId: transactionId,
-        now: now,
-        sourceTransactionId: transactionId,
-      );
-      if (existingUsed + newUsed != result.requiredCredit) {
-        throw StateError('الرصيد المتوفر والمقترح لا يغطي العملية كاملة');
-      }
-      await txn.update(
-        'sales_transactions',
-        {
-          'inventory_credit_used': existingUsed,
-          'additional_credit_required': newUsed,
-        },
+  Future<Customer> _resolveCustomer(
+    DatabaseExecutor db, {
+    String? customerId,
+    required String customerName,
+  }) async {
+    final normalizedName = _normalizeCustomerName(customerName);
+    if (customerId != null) {
+      final selected = await db.query(
+        'customers',
         where: 'id = ?',
-        whereArgs: [transactionId],
+        whereArgs: [customerId],
+        limit: 1,
       );
-    });
-
-    final settings = await getSettings();
-    for (final lot in createdLots) {
-      await NotificationService.instance.scheduleExpiryWarning(
-        notificationId: _notificationId(lot.id),
-        lotName: lot.packageNameSnapshot,
-        expiresAt: lot.expiresAt,
-        warningBefore: Duration(hours: settings.expiryWarningHours),
-      );
+      if (selected.isNotEmpty) return Customer.fromMap(selected.first);
     }
-    return transactionId;
+
+    final existing = await db.query(
+      'customers',
+      where: 'LOWER(name) = LOWER(?)',
+      whereArgs: [normalizedName],
+      limit: 1,
+    );
+    if (existing.isNotEmpty) return Customer.fromMap(existing.first);
+
+    final now = DateTime.now();
+    final customer = Customer(
+      id: IdGenerator.next('customer'),
+      name: normalizedName,
+      isActive: true,
+      createdAt: now,
+      updatedAt: now,
+    );
+    await db.insert('customers', customer.toMap());
+    return customer;
   }
 
   Future<int> _consumeCredit(
@@ -311,18 +614,28 @@ class AppRepository {
     return allocation.allocatedCredit;
   }
 
-  Future<List<SalesTransaction>> getTransactions({String? query}) async {
+  Future<List<SalesTransaction>> getTransactions({
+    String? query,
+    String? customerId,
+  }) async {
     final db = await _database.database;
+    final conditions = <String>[];
+    final args = <Object?>[];
     final normalizedQuery = query?.trim();
-    final hasQuery = normalizedQuery != null && normalizedQuery.isNotEmpty;
+    if (normalizedQuery != null && normalizedQuery.isNotEmpty) {
+      conditions.add('(customer_name LIKE ? OR product_name_snapshot LIKE ?)');
+      args
+        ..add('%$normalizedQuery%')
+        ..add('%$normalizedQuery%');
+    }
+    if (customerId != null) {
+      conditions.add('customer_id = ?');
+      args.add(customerId);
+    }
     final rows = await db.query(
       'sales_transactions',
-      where: hasQuery
-          ? '(customer_name LIKE ? OR product_name_snapshot LIKE ?)'
-          : null,
-      whereArgs: hasQuery
-          ? ['%$normalizedQuery%', '%$normalizedQuery%']
-          : null,
+      where: conditions.isEmpty ? null : conditions.join(' AND '),
+      whereArgs: conditions.isEmpty ? null : args,
       orderBy: 'created_at DESC',
     );
     return rows.map(SalesTransaction.fromMap).toList(growable: false);
@@ -349,14 +662,79 @@ class AppRepository {
     );
   }
 
-  Future<void> deleteTransaction(String id) async {
+  Future<void> deleteTransaction(String id) => deleteTransactionWithUndo(id);
+
+  Future<void> deleteTransactionWithUndo(String id) async {
     final db = await _database.database;
+    _TransactionUndoSnapshot? undoSnapshot;
     await db.transaction((txn) async {
+      final transactionRows = await txn.query(
+        'sales_transactions',
+        where: 'id = ?',
+        whereArgs: [id],
+        limit: 1,
+      );
+      if (transactionRows.isEmpty) throw StateError('العملية غير موجودة');
+      final itemRows = await txn.query(
+        'transaction_items',
+        where: 'transaction_id = ?',
+        whereArgs: [id],
+      );
+      undoSnapshot = _TransactionUndoSnapshot(
+        kind: TransactionUndoKind.delete,
+        transactionId: id,
+        transaction: Map<String, Object?>.from(transactionRows.first),
+        items: itemRows
+            .map((row) => Map<String, Object?>.from(row))
+            .toList(growable: false),
+      );
       await txn.delete('sales_transactions', where: 'id = ?', whereArgs: [id]);
       await _rebuildInventory(txn);
     });
+    _pendingUndo = undoSnapshot;
     await _rescheduleAllNotifications();
   }
+
+  Future<TransactionUndoResult?> undoLastTransactionChange() async {
+    final snapshot = _pendingUndo;
+    if (snapshot == null) return null;
+    final db = await _database.database;
+    await db.transaction((txn) async {
+      switch (snapshot.kind) {
+        case TransactionUndoKind.create:
+          await txn.delete(
+            'sales_transactions',
+            where: 'id = ?',
+            whereArgs: [snapshot.transactionId],
+          );
+        case TransactionUndoKind.edit:
+          await txn.delete(
+            'sales_transactions',
+            where: 'id = ?',
+            whereArgs: [snapshot.transactionId],
+          );
+          await txn.insert('sales_transactions', snapshot.transaction!);
+          for (final item in snapshot.items) {
+            await txn.insert('transaction_items', item);
+          }
+        case TransactionUndoKind.delete:
+          await txn.insert('sales_transactions', snapshot.transaction!);
+          for (final item in snapshot.items) {
+            await txn.insert('transaction_items', item);
+          }
+      }
+      await _rebuildInventory(txn);
+    });
+    _pendingUndo = null;
+    await _rescheduleAllNotifications();
+    return TransactionUndoResult(
+      kind: snapshot.kind,
+      transactionId: snapshot.transactionId,
+      transactionExistsAfterUndo: snapshot.kind != TransactionUndoKind.create,
+    );
+  }
+
+  void clearPendingTransactionUndo() => _pendingUndo = null;
 
   Future<void> _rebuildInventory(DatabaseExecutor db) async {
     await db.delete('inventory_movements');
@@ -547,16 +925,33 @@ class AppRepository {
     return hash;
   }
 
+  String _normalizeCustomerName(String value) {
+    final normalized = value.trim().replaceAll(RegExp(r'\s+'), ' ');
+    if (normalized.isEmpty) throw StateError('اسم العميل مطلوب');
+    if (normalized.length < 2) throw StateError('اسم العميل قصير جدًا');
+    if (normalized.length > 80) {
+      throw StateError('اسم العميل يجب ألا يتجاوز 80 حرفًا');
+    }
+    return normalized;
+  }
+
+  String? _nullableText(String? value) {
+    final normalized = value?.trim();
+    return normalized == null || normalized.isEmpty ? null : normalized;
+  }
+
   Future<Map<String, Object?>> exportBackup() => _database.exportData();
 
   Future<void> importBackup(Map<String, Object?> payload) async {
     await _database.importData(payload);
+    _pendingUndo = null;
     await refreshExpiredLots();
     await _rescheduleAllNotifications();
   }
 
   Future<void> resetToDefaults() async {
     await _database.resetToDefaults();
+    _pendingUndo = null;
     await _rescheduleAllNotifications();
   }
 }
