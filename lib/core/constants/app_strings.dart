@@ -3,6 +3,7 @@ abstract final class AppStrings {
   static const dashboard = 'لوحة المتابعة';
   static const newCalculation = 'عملية جديدة';
   static const customers = 'العملاء';
+  static const reports = 'التقارير';
   static const products = 'المنتجات';
   static const packages = 'باقات الرصيد';
   static const inventory = 'مخزون الرصيد';
