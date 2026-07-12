@@ -41,6 +41,9 @@ class _TransactionEditScreenState
   Product? _product;
   bool _useInventory = true;
 
+  bool get _requiresProduct => _mode != CalculationMode.credit;
+  bool get _requiresInput => _mode != CalculationMode.directProduct;
+
   @override
   void initState() {
     super.initState();
@@ -77,13 +80,11 @@ class _TransactionEditScreenState
     _selectedCustomerName = transaction.customerName;
     _customerController.text = transaction.customerName;
     _valueController.text = '${transaction.inputValue}';
-    _mode = transaction.mode == CalculationMode.credit
-        ? CalculationMode.customerAmount
-        : transaction.mode;
+    _mode = transaction.mode;
     _useInventory = transaction.useInventory;
     _product = data.products.cast<Product?>().firstWhere(
           (product) => product?.id == transaction.productId,
-          orElse: () => data.products.isEmpty ? null : data.products.first,
+          orElse: () => null,
         );
   }
 
@@ -91,6 +92,7 @@ class _TransactionEditScreenState
         CalculationMode.customerAmount => 'المبلغ المدفوع بالدينار',
         CalculationMode.gems => 'عدد الجواهر المطلوبة',
         CalculationMode.credit => 'الرصيد المطلوب',
+        CalculationMode.directProduct => 'وحدة واحدة من المنتج',
       };
 
   @override
@@ -121,6 +123,18 @@ class _TransactionEditScreenState
 
           final data = snapshot.data!;
           _initialize(data);
+          final relevantProducts = data.products.where((product) {
+            if (_mode == CalculationMode.directProduct) {
+              return product.isDirectProduct;
+            }
+            if (_mode == CalculationMode.credit) return false;
+            return product.isGemProduct;
+          }).toList(growable: false);
+          if (_requiresProduct &&
+              (_product == null || !relevantProducts.contains(_product))) {
+            _product = relevantProducts.isEmpty ? null : relevantProducts.first;
+          }
+
           return Form(
             key: _formKey,
             child: ListView(
@@ -149,66 +163,94 @@ class _TransactionEditScreenState
                   title: 'إعادة حساب العملية',
                   icon: Icons.calculate_outlined,
                   child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      SegmentedButton<CalculationMode>(
-                        segments: const [
-                          ButtonSegment(
-                            value: CalculationMode.customerAmount,
-                            label: Text('المبلغ'),
-                            icon: Icon(Icons.payments_outlined),
-                          ),
-                          ButtonSegment(
-                            value: CalculationMode.gems,
-                            label: Text('الجواهر'),
-                            icon: Icon(Icons.diamond_outlined),
-                          ),
-                        ],
-                        selected: {_mode},
-                        showSelectedIcon: false,
-                        onSelectionChanged: _saving
-                            ? null
-                            : (selection) => setState(() {
-                                  _mode = selection.first;
-                                  _valueController.clear();
-                                }),
-                      ),
-                      const SizedBox(height: 12),
-                      DropdownButtonFormField<Product>(
-                        initialValue: _product,
-                        decoration: const InputDecoration(labelText: 'المنتج'),
-                        items: [
-                          for (final product in data.products)
-                            DropdownMenuItem(
-                              value: product,
-                              child: Text(product.name),
+                      SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        child: SegmentedButton<CalculationMode>(
+                          segments: const [
+                            ButtonSegment(
+                              value: CalculationMode.customerAmount,
+                              label: Text('المبلغ'),
+                              icon: Icon(Icons.payments_outlined),
                             ),
-                        ],
-                        onChanged: _saving
-                            ? null
-                            : (value) => setState(() => _product = value),
-                        validator: (value) =>
-                            value == null ? 'اختر المنتج' : null,
+                            ButtonSegment(
+                              value: CalculationMode.gems,
+                              label: Text('الجواهر'),
+                              icon: Icon(Icons.diamond_outlined),
+                            ),
+                            ButtonSegment(
+                              value: CalculationMode.credit,
+                              label: Text('الرصيد'),
+                              icon: Icon(Icons.toll_outlined),
+                            ),
+                            ButtonSegment(
+                              value: CalculationMode.directProduct,
+                              label: Text('منتج مباشر'),
+                              icon: Icon(Icons.inventory_2_outlined),
+                            ),
+                          ],
+                          selected: {_mode},
+                          showSelectedIcon: false,
+                          onSelectionChanged: _saving
+                              ? null
+                              : (selection) => setState(() {
+                                    _mode = selection.first;
+                                    _valueController.clear();
+                                    _product = null;
+                                  }),
+                        ),
                       ),
                       const SizedBox(height: 12),
-                      TextFormField(
-                        controller: _valueController,
-                        enabled: !_saving,
-                        keyboardType: TextInputType.number,
-                        inputFormatters: [
-                          FilteringTextInputFormatter.digitsOnly,
-                        ],
-                        decoration: InputDecoration(
-                          labelText: _inputLabel,
-                          prefixIcon: const Icon(Icons.pin_outlined),
+                      if (_requiresProduct)
+                        DropdownButtonFormField<Product>(
+                          key: ValueKey('${_mode.name}-${_product?.id}'),
+                          initialValue: _product,
+                          decoration: InputDecoration(
+                            labelText: _mode == CalculationMode.directProduct
+                                ? 'المنتج المباشر'
+                                : 'منتج الجواهر',
+                          ),
+                          items: [
+                            for (final product in relevantProducts)
+                              DropdownMenuItem(
+                                value: product,
+                                child: Text(product.name),
+                              ),
+                          ],
+                          onChanged: _saving
+                              ? null
+                              : (value) => setState(() => _product = value),
+                          validator: (value) =>
+                              value == null ? 'اختر المنتج' : null,
                         ),
-                        validator: (value) {
-                          final parsed = int.tryParse(value ?? '');
-                          if (parsed == null || parsed <= 0) {
-                            return 'أدخل قيمة صحيحة أكبر من صفر';
-                          }
-                          return null;
-                        },
-                      ),
+                      if (_requiresProduct) const SizedBox(height: 12),
+                      if (_mode == CalculationMode.directProduct &&
+                          _product?.description?.trim().isNotEmpty == true)
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 12),
+                          child: Text(_product!.description!),
+                        ),
+                      if (_requiresInput)
+                        TextFormField(
+                          controller: _valueController,
+                          enabled: !_saving,
+                          keyboardType: TextInputType.number,
+                          inputFormatters: [
+                            FilteringTextInputFormatter.digitsOnly,
+                          ],
+                          decoration: InputDecoration(
+                            labelText: _inputLabel,
+                            prefixIcon: const Icon(Icons.pin_outlined),
+                          ),
+                          validator: (value) {
+                            final parsed = int.tryParse(value ?? '');
+                            if (parsed == null || parsed <= 0) {
+                              return 'أدخل قيمة صحيحة أكبر من صفر';
+                            }
+                            return null;
+                          },
+                        ),
                       const SizedBox(height: 12),
                       SwitchListTile(
                         contentPadding: EdgeInsets.zero,
@@ -225,17 +267,30 @@ class _TransactionEditScreenState
                     ],
                   ),
                 ),
+                if (_requiresProduct && relevantProducts.isEmpty) ...[
+                  const SizedBox(height: 12),
+                  SectionCard(
+                    title: 'لا توجد منتجات من هذا النوع',
+                    icon: Icons.info_outline,
+                    child: const Text(
+                      'أضف المنتج وفعّله من شاشة المنتجات قبل تعديل العملية إلى هذا النوع.',
+                    ),
+                  ),
+                ],
                 const SizedBox(height: 12),
                 SectionCard(
                   title: 'تعديل آمن',
                   icon: Icons.shield_outlined,
                   child: const Text(
-                    'يُنفذ التعديل داخل معاملة واحدة. إذا فشل الحساب فلن تتغير العملية أو بيانات المخزون. بعد النجاح يمكنك التراجع فورًا.',
+                    'يُنفذ التعديل داخل معاملة واحدة، ثم يُعاد تشغيل جميع العمليات زمنيًا لحساب المخزون والتكلفة وفق FEFO. بعد النجاح يمكنك التراجع فورًا.',
                   ),
                 ),
                 const SizedBox(height: 18),
                 FilledButton.icon(
-                  onPressed: _saving ? null : _save,
+                  onPressed: _saving ||
+                          (_requiresProduct && relevantProducts.isEmpty)
+                      ? null
+                      : _save,
                   icon: _saving
                       ? const SizedBox.square(
                           dimension: 20,
@@ -287,7 +342,7 @@ class _TransactionEditScreenState
           builder: (context) => AlertDialog(
             title: const Text('حفظ تعديل العملية؟'),
             content: const Text(
-              'سيُعاد حساب الباقات والمخزون وترتيب الاستهلاك وفق FEFO. يمكنك التراجع بعد نجاح التعديل.',
+              'سيُعاد حساب الباقات والمخزون والتكلفة وترتيب الاستهلاك وفق FEFO. يمكنك التراجع بعد نجاح التعديل.',
             ),
             actions: [
               TextButton(
@@ -311,8 +366,10 @@ class _TransactionEditScreenState
             transactionId: widget.transactionId,
             request: CalculationRequest(
               mode: _mode,
-              product: _product,
-              inputValue: int.parse(_valueController.text),
+              product: _requiresProduct ? _product : null,
+              inputValue: _mode == CalculationMode.directProduct
+                  ? 1
+                  : int.parse(_valueController.text),
               useInventory: _useInventory,
             ),
             customerName: _customerController.text,
