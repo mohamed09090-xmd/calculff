@@ -6,7 +6,7 @@ import 'package:sqflite/sqflite.dart';
 class AppDatabase {
   AppDatabase._();
   static final AppDatabase instance = AppDatabase._();
-  static const int schemaVersion = 1;
+  static const int schemaVersion = 2;
 
   Database? _database;
 
@@ -59,6 +59,7 @@ class AppDatabase {
       CREATE TABLE sales_transactions (
         id TEXT PRIMARY KEY,
         created_at TEXT NOT NULL,
+        customer_name TEXT NOT NULL,
         mode TEXT NOT NULL,
         product_id TEXT,
         product_name_snapshot TEXT,
@@ -128,6 +129,9 @@ class AppDatabase {
     );
     await db.execute(
       'CREATE INDEX idx_transactions_created ON sales_transactions(created_at DESC)',
+    );
+    await db.execute(
+      'CREATE INDEX idx_transactions_customer ON sales_transactions(customer_name COLLATE NOCASE)',
     );
   }
 
@@ -204,6 +208,15 @@ class AppDatabase {
     switch (version) {
       case 1:
         return;
+      case 2:
+        await db.execute(
+          "ALTER TABLE sales_transactions ADD COLUMN customer_name TEXT NOT NULL DEFAULT 'عميل سابق'",
+        );
+        await db.execute(
+          'CREATE INDEX IF NOT EXISTS idx_transactions_customer '
+          'ON sales_transactions(customer_name COLLATE NOCASE)',
+        );
+        return;
       default:
         throw StateError('لا توجد migration معروفة للإصدار $version');
     }
@@ -232,7 +245,8 @@ class AppDatabase {
   }
 
   Future<void> importData(Map<String, Object?> payload) async {
-    if (payload['version'] != schemaVersion) {
+    final backupVersion = payload['version'];
+    if (backupVersion is! int || backupVersion < 1 || backupVersion > schemaVersion) {
       throw const FormatException('إصدار النسخة الاحتياطية غير مدعوم');
     }
     for (final table in backupTables) {
@@ -240,6 +254,7 @@ class AppDatabase {
         throw FormatException('الجدول $table مفقود أو تالف');
       }
     }
+
     final db = await database;
     await db.transaction((txn) async {
       await txn.execute('PRAGMA defer_foreign_keys = ON');
@@ -249,7 +264,14 @@ class AppDatabase {
       for (final table in backupTables) {
         final rows = (payload[table]! as List).cast<Map>();
         for (final raw in rows) {
-          await txn.insert(table, raw.cast<String, Object?>());
+          final row = raw.cast<String, Object?>();
+          if (table == 'sales_transactions') {
+            final customerName = row['customer_name'] as String?;
+            if (customerName == null || customerName.trim().isEmpty) {
+              row['customer_name'] = 'عميل سابق';
+            }
+          }
+          await txn.insert(table, row);
         }
       }
     });
