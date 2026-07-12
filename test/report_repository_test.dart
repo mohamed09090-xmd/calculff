@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:game_credit_profit_manager/core/database/app_database.dart';
 import 'package:game_credit_profit_manager/features/reports/data/report_repository.dart';
 import 'package:game_credit_profit_manager/shared/models/report.dart';
 
