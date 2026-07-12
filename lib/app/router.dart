@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../features/backup/presentation/backup_restore_screen.dart';
@@ -13,35 +14,107 @@ import '../features/settings/presentation/settings_screen.dart';
 import '../features/transactions/presentation/transaction_details_screen.dart';
 import '../features/transactions/presentation/transactions_screen.dart';
 
+CustomTransitionPage<void> _animatedPage(
+  GoRouterState state,
+  Widget child,
+) {
+  return CustomTransitionPage<void>(
+    key: state.pageKey,
+    transitionDuration: const Duration(milliseconds: 260),
+    reverseTransitionDuration: const Duration(milliseconds: 220),
+    child: RepaintBoundary(child: child),
+    transitionsBuilder: (context, animation, secondaryAnimation, child) {
+      if (MediaQuery.disableAnimationsOf(context)) return child;
+
+      final curved = CurvedAnimation(
+        parent: animation,
+        curve: Curves.easeOutCubic,
+        reverseCurve: Curves.easeInCubic,
+      );
+      final opacity = Tween<double>(begin: 0.84, end: 1).animate(curved);
+      final position = Tween<Offset>(
+        begin: const Offset(-0.05, 0),
+        end: Offset.zero,
+      ).animate(curved);
+      final scale = Tween<double>(begin: 0.992, end: 1).animate(curved);
+
+      return FadeTransition(
+        opacity: opacity,
+        child: SlideTransition(
+          position: position,
+          child: ScaleTransition(scale: scale, child: child),
+        ),
+      );
+    },
+  );
+}
+
 final GoRouter appRouter = GoRouter(
   initialLocation: '/',
   routes: [
     GoRoute(path: '/', builder: (context, state) => const SplashScreen()),
-    GoRoute(path: '/dashboard', builder: (context, state) => const DashboardScreen()),
+    GoRoute(
+      path: '/dashboard',
+      pageBuilder: (context, state) =>
+          _animatedPage(state, const DashboardScreen()),
+    ),
     GoRoute(
       path: '/calculate',
-      builder: (context, state) => const CalculatorScreen(),
+      pageBuilder: (context, state) =>
+          _animatedPage(state, const CalculatorScreen()),
       routes: [
-        GoRoute(path: 'result', builder: (context, state) => const CalculationResultScreen()),
-        GoRoute(path: 'confirm', builder: (context, state) => const ConfirmTransactionScreen()),
+        GoRoute(
+          path: 'result',
+          pageBuilder: (context, state) =>
+              _animatedPage(state, const CalculationResultScreen()),
+        ),
+        GoRoute(
+          path: 'confirm',
+          pageBuilder: (context, state) =>
+              _animatedPage(state, const ConfirmTransactionScreen()),
+        ),
       ],
     ),
-    GoRoute(path: '/products', builder: (context, state) => const ProductsScreen()),
-    GoRoute(path: '/packages', builder: (context, state) => const PackagesScreen()),
-    GoRoute(path: '/inventory', builder: (context, state) => const InventoryScreen()),
+    GoRoute(
+      path: '/products',
+      pageBuilder: (context, state) =>
+          _animatedPage(state, const ProductsScreen()),
+    ),
+    GoRoute(
+      path: '/packages',
+      pageBuilder: (context, state) =>
+          _animatedPage(state, const PackagesScreen()),
+    ),
+    GoRoute(
+      path: '/inventory',
+      pageBuilder: (context, state) =>
+          _animatedPage(state, const InventoryScreen()),
+    ),
     GoRoute(
       path: '/transactions',
-      builder: (context, state) => const TransactionsScreen(),
+      pageBuilder: (context, state) =>
+          _animatedPage(state, const TransactionsScreen()),
       routes: [
         GoRoute(
           path: ':id',
-          builder: (context, state) => TransactionDetailsScreen(
-            transactionId: state.pathParameters['id']!,
+          pageBuilder: (context, state) => _animatedPage(
+            state,
+            TransactionDetailsScreen(
+              transactionId: state.pathParameters['id']!,
+            ),
           ),
         ),
       ],
     ),
-    GoRoute(path: '/settings', builder: (context, state) => const SettingsScreen()),
-    GoRoute(path: '/backup', builder: (context, state) => const BackupRestoreScreen()),
+    GoRoute(
+      path: '/settings',
+      pageBuilder: (context, state) =>
+          _animatedPage(state, const SettingsScreen()),
+    ),
+    GoRoute(
+      path: '/backup',
+      pageBuilder: (context, state) =>
+          _animatedPage(state, const BackupRestoreScreen()),
+    ),
   ],
 );
