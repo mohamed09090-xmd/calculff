@@ -21,6 +21,9 @@ class InventoryAdjustmentRepository {
         _allocator = allocator ?? const FefoAllocator(),
         _notificationService = notificationService ?? NotificationService.instance;
 
+  static const additionProductId = '__inventory_adjustment_add__';
+  static const removalProductId = '__inventory_adjustment_remove__';
+
   final AppDatabase _database;
   final FefoAllocator _allocator;
   final NotificationService? _notificationService;
@@ -61,7 +64,8 @@ class InventoryAdjustmentRepository {
         createdAt: now,
         customerId: null,
         customerName: 'تعديل مخزون',
-        mode: CalculationMode.inventoryAddition,
+        mode: CalculationMode.credit,
+        productId: additionProductId,
         productNameSnapshot: normalizedName,
         productDescriptionSnapshot: normalizedNote,
         inputValue: amount,
@@ -184,7 +188,8 @@ class InventoryAdjustmentRepository {
         createdAt: now,
         customerId: null,
         customerName: 'تعديل مخزون',
-        mode: CalculationMode.inventoryRemoval,
+        mode: CalculationMode.credit,
+        productId: removalProductId,
         productNameSnapshot: 'خصم يدوي من المخزون',
         productDescriptionSnapshot: normalizedReason,
         inputValue: amount,
