@@ -1,72 +1,10 @@
-name: Verify and build Android Release APK
+name: Android release setup
 
 on:
   workflow_dispatch:
-  push:
-    branches: [main]
-  pull_request:
 
 jobs:
-  android:
+  paused:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: '17'
-
-      - uses: subosito/flutter-action@v2
-        with:
-          flutter-version: '3.44.0'
-          channel: stable
-          cache: true
-
-      - name: Flutter version
-        run: flutter --version
-
-      - name: Install dependencies
-        run: flutter pub get
-
-      - name: Analyze
-        shell: bash
-        run: |
-          set -o pipefail
-          flutter analyze 2>&1 | tee flutter-analyze.log
-
-      - name: Upload analyze log
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: flutter-analyze-log
-          path: flutter-analyze.log
-
-      - name: Test
-        run: flutter test
-
-      - name: Make Gradle executable
-        run: chmod +x android/gradlew
-
-      - name: Build release APK
-        continue-on-error: true
-        shell: bash
-        run: |
-          set -o pipefail
-          flutter build apk --release 2>&1 | tee flutter-release-build.log
-
-      - name: Upload release build log
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: flutter-release-build-log
-          path: flutter-release-build.log
-
-      - name: Verify release APK exists
-        run: test -f build/app/outputs/flutter-apk/app-release.apk
-
-      - name: Upload release APK
-        uses: actions/upload-artifact@v4
-        with:
-          name: game-credit-profit-manager-release-apk
-          path: build/app/outputs/flutter-apk/app-release.apk
+      - run: echo "Release workflow configuration is being updated."
