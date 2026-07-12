@@ -6,29 +6,27 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 LIB = ROOT / "lib"
-TARGET = LIB / "core" / "localization" / "localized_text.dart"
+TEXT_TARGET = LIB / "core" / "localization" / "localized_text.dart"
+TRANSLATOR_TARGET = LIB / "core" / "localization" / "app_translator.dart"
 MATERIAL_IMPORT = "import 'package:flutter/material.dart';"
 MATERIAL_HIDDEN_IMPORT = "import 'package:flutter/material.dart' hide Text;"
 
+STRING_PROPERTY_PATTERN = re.compile(
+    r"(?m)^(?P<indent>\s*)"
+    r"(?P<name>labelText|hintText|helperText|errorText|counterText|"
+    r"semanticCounterText|tooltip|message|dialogTitle|subject|semanticsLabel)"
+    r":\s*(?P<literal>'(?:\\.|[^'\n])*'|\"(?:\\.|[^\"\n])*\"),\s*$"
+)
 
-def _normalize_text_import(path: Path, source: str) -> str:
-    if path == TARGET:
-        return source
-    if "Text(" not in source and "Text.rich(" not in source:
-        return source
-    if MATERIAL_IMPORT not in source and MATERIAL_HIDDEN_IMPORT not in source:
-        return source
 
-    relative = os.path.relpath(TARGET, path.parent).replace(os.sep, "/")
-    localized_import = f"import '{relative}';"
+def _relative_import(path: Path, target: Path) -> str:
+    relative = os.path.relpath(target, path.parent).replace(os.sep, "/")
+    return f"import '{relative}';"
 
-    source = source.replace(MATERIAL_IMPORT, MATERIAL_HIDDEN_IMPORT, 1)
-    source = re.sub(
-        r"\n?import '[^']*localized_text\.dart';\n?",
-        "\n",
-        source,
-        count=1,
-    )
+
+def _insert_relative_import(source: str, import_line: str) -> str:
+    if import_line in source:
+        return source
 
     lines = source.splitlines()
     relative_import_indexes = [
@@ -49,21 +47,79 @@ def _normalize_text_import(path: Path, source: str) -> str:
     else:
         return source
 
-    while insert_at > 0 and lines[insert_at - 1] == "" and (
-        insert_at < len(lines) and lines[insert_at] == ""
-    ):
-        lines.pop(insert_at - 1)
-        insert_at -= 1
-
     if insert_at > 0 and lines[insert_at - 1] != "":
         lines.insert(insert_at, "")
         insert_at += 1
-    lines.insert(insert_at, localized_import)
+    lines.insert(insert_at, import_line)
     insert_at += 1
     if insert_at < len(lines) and lines[insert_at] != "":
         lines.insert(insert_at, "")
 
     return "\n".join(lines).rstrip() + "\n"
+
+
+def _normalize_text_import(path: Path, source: str) -> str:
+    if path == TEXT_TARGET:
+        return source
+    if "Text(" not in source and "Text.rich(" not in source:
+        return source
+    if MATERIAL_IMPORT not in source and MATERIAL_HIDDEN_IMPORT not in source:
+        return source
+
+    localized_import = _relative_import(path, TEXT_TARGET)
+    source = source.replace(MATERIAL_IMPORT, MATERIAL_HIDDEN_IMPORT, 1)
+    source = re.sub(
+        r"\n?import '[^']*localized_text\.dart';\n?",
+        "\n",
+        source,
+        count=1,
+    )
+    return _insert_relative_import(source, localized_import)
+
+
+def _localize_string_properties(path: Path, source: str) -> str:
+    if path in {TEXT_TARGET, TRANSLATOR_TARGET}:
+        return source
+    if "BuildContext context" not in source:
+        return source
+
+    def replace(match: re.Match[str]) -> str:
+        return (
+            f"{match.group('indent')}{match.group('name')}: "
+            f"AppTranslator.translate(context, {match.group('literal')}),"
+        )
+
+    updated = STRING_PROPERTY_PATTERN.sub(replace, source)
+
+    calculator_path = (
+        LIB / "features" / "calculator" / "presentation" / "calculator_screen.dart"
+    )
+    if path == calculator_path:
+        updated = updated.replace(
+            "labelText: _inputLabel,",
+            "labelText: AppTranslator.translate(context, _inputLabel),",
+        )
+        old_dropdown = """labelText: _mode == CalculationMode.directProduct
+                                ? 'المنتج المباشر'
+                                : 'منتج الجواهر',"""
+        new_dropdown = """labelText: AppTranslator.translate(
+                              context,
+                              _mode == CalculationMode.directProduct
+                                  ? 'المنتج المباشر'
+                                  : 'منتج الجواهر',
+                            ),"""
+        updated = updated.replace(old_dropdown, new_dropdown)
+
+    if updated == source:
+        return source
+
+    updated = updated.replace("const InputDecoration(", "InputDecoration(")
+    updated = updated.replace("const Tooltip(", "Tooltip(")
+    updated = updated.replace("const IconButton(", "IconButton(")
+    return _insert_relative_import(
+        updated,
+        _relative_import(path, TRANSLATOR_TARGET),
+    )
 
 
 def _add_language_settings(source: str) -> str:
@@ -140,6 +196,7 @@ def main() -> None:
     for path in sorted(LIB.rglob("*.dart")):
         source = path.read_text(encoding="utf-8")
         updated = _normalize_text_import(path, source)
+        updated = _localize_string_properties(path, updated)
         if path == LIB / "features" / "settings" / "presentation" / "settings_screen.dart":
             updated = _add_language_settings(updated)
 
