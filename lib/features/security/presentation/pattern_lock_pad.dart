@@ -140,7 +140,7 @@ class _PatternLockPadState extends State<PatternLockPad> {
     return null;
   }
 
-  void _end(DragEndDetails details) {
+  void _end(DragEndDetails _) {
     final completed = List<int>.unmodifiable(_selected);
     setState(() => _pointer = null);
     if (completed.isNotEmpty) widget.onCompleted(completed);
@@ -183,7 +183,11 @@ class _PatternPainter extends CustomPainter {
       ..strokeJoin = StrokeJoin.round;
 
     if (selected.length > 1) {
-      final path = Path()..moveTo(centers[selected.first].dx, centers[selected.first].dy);
+      final path = Path()
+        ..moveTo(
+          centers[selected.first].dx,
+          centers[selected.first].dy,
+        );
       for (final node in selected.skip(1)) {
         path.lineTo(centers[node].dx, centers[node].dy);
       }
@@ -198,7 +202,9 @@ class _PatternPainter extends CustomPainter {
     for (var node = 0; node < 9; node++) {
       final isSelected = selected.contains(node);
       final outerPaint = Paint()
-        ..color = isSelected ? lineColor.withValues(alpha: 0.22) : surfaceColor
+        ..color = isSelected
+            ? lineColor.withValues(alpha: 0.22)
+            : surfaceColor
         ..style = PaintingStyle.fill;
       final borderPaint = Paint()
         ..color = isSelected ? lineColor : idleColor
