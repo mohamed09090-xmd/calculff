@@ -4,6 +4,7 @@ class SalesTransaction {
   const SalesTransaction({
     required this.id,
     required this.createdAt,
+    required this.customerId,
     required this.customerName,
     required this.mode,
     this.productId,
@@ -25,6 +26,7 @@ class SalesTransaction {
 
   final String id;
   final DateTime createdAt;
+  final String? customerId;
   final String customerName;
   final CalculationMode mode;
   final String? productId;
@@ -46,6 +48,7 @@ class SalesTransaction {
   Map<String, Object?> toMap() => {
         'id': id,
         'created_at': createdAt.toIso8601String(),
+        'customer_id': customerId,
         'customer_name': customerName,
         'mode': mode.name,
         'product_id': productId,
@@ -74,6 +77,7 @@ class SalesTransaction {
     return SalesTransaction(
       id: map['id']! as String,
       createdAt: DateTime.parse(map['created_at']! as String),
+      customerId: map['customer_id'] as String?,
       customerName: customerName,
       mode: CalculationMode.values.byName(map['mode']! as String),
       productId: map['product_id'] as String?,
