@@ -11,6 +11,7 @@ import '../../../shared/models/app_lock_state.dart';
 import '../../../shared/models/app_settings.dart';
 import '../../../shared/providers/app_lock_provider.dart';
 import '../../../shared/providers/app_providers.dart';
+import '../../../shared/providers/theme_mode_provider.dart';
 import '../../security/presentation/pattern_management_screen.dart';
 
 class SettingsScreen extends ConsumerWidget {
@@ -20,6 +21,10 @@ class SettingsScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final settings = ref.watch(settingsProvider);
     final appLock = ref.watch(appLockProvider);
+    final themePreference = ref.watch(themeModeProvider).valueOrNull ??
+        AppThemeModePreference.system;
+    final platformBrightness = MediaQuery.platformBrightnessOf(context);
+
     return AppShell(
       title: AppStrings.settings,
       body: AsyncStateView(
@@ -69,14 +74,32 @@ class SettingsScreen extends ConsumerWidget {
               icon: Icons.palette_outlined,
               child: Column(
                 children: [
-                  const ListTile(
+                  SwitchListTile(
                     contentPadding: EdgeInsets.zero,
-                    leading: Icon(Icons.brightness_auto_outlined),
-                    title: Text('سمة التطبيق'),
-                    subtitle: Text(
-                      'تتبع سمة الهاتف تلقائيًا: داكنة مع الهاتف الداكن وفاتحة مع الهاتف الفاتح.',
+                    secondary: const Icon(Icons.brightness_auto_outlined),
+                    title: const Text('اتباع سمة الهاتف تلقائيًا'),
+                    subtitle: const Text(
+                      'عند تفعيله، يفتح التطبيق داكنًا أو فاتحًا حسب إعداد الهاتف.',
                     ),
-                    trailing: Icon(Icons.phone_android_outlined),
+                    value:
+                        themePreference == AppThemeModePreference.system,
+                    onChanged: (value) => ref
+                        .read(themeModeProvider.notifier)
+                        .followSystem(value, platformBrightness),
+                  ),
+                  const Divider(),
+                  SwitchListTile(
+                    contentPadding: EdgeInsets.zero,
+                    title: const Text('الوضع الداكن'),
+                    subtitle: Text(
+                      themePreference == AppThemeModePreference.system
+                          ? 'يتبع الهاتف حاليًا. تغييره يثبت اختيارك يدويًا.'
+                          : 'تغيير مظهر التطبيق فقط',
+                    ),
+                    value: themePreference.isDark(platformBrightness),
+                    onChanged: (value) => ref
+                        .read(themeModeProvider.notifier)
+                        .setDarkMode(value),
                   ),
                   const Divider(),
                   SwitchListTile(
