@@ -78,6 +78,7 @@ class ReportExportService {
           '\uFEFF${buildCsv(report)}',
           flush: true,
         );
+        break;
       case ReportExportFormat.png:
         if (context == null) {
           throw StateError('سياق الواجهة مطلوب لإنشاء صورة التقرير');
@@ -88,6 +89,7 @@ class ReportExportService {
           settings: settings,
         );
         await file.writeAsBytes(bytes, flush: true);
+        break;
       case ReportExportFormat.pdf:
         if (context == null) {
           throw StateError('سياق الواجهة مطلوب لإنشاء PDF');
@@ -99,6 +101,7 @@ class ReportExportService {
         );
         final pdfBytes = await _buildPdf(imageBytes);
         await file.writeAsBytes(pdfBytes, flush: true);
+        break;
     }
 
     return ReportExportResult(file: file, format: format);
@@ -195,7 +198,7 @@ class ReportExportService {
     return _screenshotController.captureFromLongWidget(
       widget,
       context: context,
-      delay: const Duration(milliseconds: 80),
+      delay: const Duration(milliseconds: 100),
       constraints: const BoxConstraints(maxWidth: 900),
     );
   }
@@ -203,26 +206,69 @@ class ReportExportService {
   Future<Uint8List> _buildPdf(Uint8List imageBytes) async {
     final codec = await ui.instantiateImageCodec(imageBytes);
     final frame = await codec.getNextFrame();
-    final imageWidth = frame.image.width.toDouble();
-    final imageHeight = frame.image.height.toDouble();
-    frame.image.dispose();
-    codec.dispose();
-
-    final pageWidth = PdfPageFormat.a4.width;
-    final pageHeight = pageWidth * (imageHeight / imageWidth);
+    final source = frame.image;
     final document = pw.Document(
       title: 'تقرير مدير رصيد الألعاب',
       author: 'مدير رصيد الألعاب',
     );
-    final image = pw.MemoryImage(imageBytes);
 
-    document.addPage(
-      pw.Page(
-        pageFormat: PdfPageFormat(pageWidth, pageHeight, marginAll: 0),
-        build: (_) => pw.Image(image, fit: pw.BoxFit.fill),
-      ),
+    const margin = 18.0;
+    final usablePdfWidth = PdfPageFormat.a4.width - (margin * 2);
+    final usablePdfHeight = PdfPageFormat.a4.height - (margin * 2);
+    final sourceHeightPerPage = math.max(
+      1,
+      (source.width * usablePdfHeight / usablePdfWidth).floor(),
     );
 
+    for (var offsetY = 0;
+        offsetY < source.height;
+        offsetY += sourceHeightPerPage) {
+      final sliceHeight = math.min(
+        sourceHeightPerPage,
+        source.height - offsetY,
+      );
+      final recorder = ui.PictureRecorder();
+      final canvas = ui.Canvas(recorder);
+      canvas.drawImageRect(
+        source,
+        ui.Rect.fromLTWH(
+          0,
+          offsetY.toDouble(),
+          source.width.toDouble(),
+          sliceHeight.toDouble(),
+        ),
+        ui.Rect.fromLTWH(
+          0,
+          0,
+          source.width.toDouble(),
+          sliceHeight.toDouble(),
+        ),
+        ui.Paint(),
+      );
+      final picture = recorder.endRecording();
+      final pageImage = await picture.toImage(source.width, sliceHeight);
+      final data = await pageImage.toByteData(format: ui.ImageByteFormat.png);
+      pageImage.dispose();
+      if (data == null) {
+        source.dispose();
+        codec.dispose();
+        throw StateError('تعذر تقسيم صورة التقرير إلى صفحات PDF');
+      }
+      final bytes = data.buffer.asUint8List();
+      final memoryImage = pw.MemoryImage(bytes);
+      document.addPage(
+        pw.Page(
+          pageFormat: PdfPageFormat.a4,
+          margin: const pw.EdgeInsets.all(margin),
+          build: (_) => pw.Center(
+            child: pw.Image(memoryImage, fit: pw.BoxFit.contain),
+          ),
+        ),
+      );
+    }
+
+    source.dispose();
+    codec.dispose();
     return document.save();
   }
 }
@@ -305,7 +351,8 @@ class _ReportExportDocument extends StatelessWidget {
                 width: 408,
                 label: 'الربح الصافي',
                 value: money(report.current.profit),
-                accent: report.current.profit < 0 ? scheme.error : scheme.secondary,
+                accent:
+                    report.current.profit < 0 ? scheme.error : scheme.secondary,
               ),
               _ExportMetricCard(
                 width: 408,
@@ -387,7 +434,7 @@ class _ReportExportDocument extends StatelessWidget {
           ),
           const SizedBox(height: 24),
           Text(
-            'تقرير محلي تم إنشاؤه من بيانات التطبيق — لا يتضمن أي بيانات دخول أو معلومات سرية.',
+            'تقرير محلي تم إنشاؤه من بيانات التطبيق - لا يتضمن بيانات دخول أو معلومات سرية.',
             textAlign: TextAlign.center,
             style: TextStyle(
               color: scheme.onSurfaceVariant,
