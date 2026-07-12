@@ -259,11 +259,20 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                             for (final item in items.take(5))
                               ListTile(
                                 contentPadding: EdgeInsets.zero,
+                                leading: CircleAvatar(
+                                  child: Text(
+                                    item.customerName.substring(0, 1),
+                                  ),
+                                ),
                                 title: Text(
-                                  item.productNameSnapshot ?? 'حساب رصيد',
+                                  item.customerName,
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.w900,
+                                  ),
                                 ),
                                 subtitle: Text(
-                                  AppDateUtils.format(item.createdAt),
+                                  '${item.productNameSnapshot ?? 'حساب رصيد'} • '
+                                  '${AppDateUtils.format(item.createdAt)}',
                                 ),
                                 trailing: Text(
                                   money(item.cashProfit),
