@@ -517,8 +517,9 @@ class EnhancedAppRepository extends AppRepository {
         items: itemsByTransaction[transactionId] ?? const [],
       );
     }
-    if (!replacementFound)
+    if (!replacementFound) {
       throw StateError('العملية المطلوب تعديلها غير موجودة');
+    }
   }
 
   Future<void> _replayStoredTransaction(

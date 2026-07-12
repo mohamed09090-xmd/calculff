@@ -43,9 +43,12 @@ class InventoryAdjustmentRepository {
     if (normalizedName.length < 2 || normalizedName.length > 80) {
       throw StateError('اسم الرصيد يجب أن يكون بين حرفين و80 حرفًا');
     }
-    if (amount <= 0) throw StateError('كمية الرصيد يجب أن تكون أكبر من صفر');
-    if (purchaseCost < 0)
+    if (amount <= 0) {
+      throw StateError('كمية الرصيد يجب أن تكون أكبر من صفر');
+    }
+    if (purchaseCost < 0) {
       throw StateError('تكلفة الشراء لا يمكن أن تكون سالبة');
+    }
     if (!expiresAt.isAfter(now)) {
       throw StateError('تاريخ الانتهاء يجب أن يكون بعد الوقت الحالي');
     }

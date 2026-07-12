@@ -40,8 +40,9 @@ class ProductsScreen extends ConsumerWidget {
         value: products,
         onRetry: () => ref.invalidate(productsProvider),
         data: (items) {
-          if (items.isEmpty)
+          if (items.isEmpty) {
             return const Center(child: Text('لا توجد منتجات.'));
+          }
           return ListView.separated(
             padding: const EdgeInsets.only(bottom: 88),
             itemCount: items.length,
