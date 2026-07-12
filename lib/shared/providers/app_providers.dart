@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../features/dashboard/data/dashboard_repository.dart';
+import '../../features/inventory/data/inventory_adjustment_repository.dart';
 import '../models/app_settings.dart';
 import '../models/calculation.dart';
 import '../models/credit_package.dart';
@@ -14,6 +15,11 @@ import '../repositories/enhanced_app_repository.dart';
 
 final appRepositoryProvider = Provider<AppRepository>(
   (ref) => EnhancedAppRepository(),
+);
+
+final inventoryAdjustmentRepositoryProvider =
+    Provider<InventoryAdjustmentRepository>(
+  (ref) => InventoryAdjustmentRepository(),
 );
 
 final dashboardRepositoryProvider = Provider<DashboardRepository>(
@@ -53,7 +59,14 @@ final inventoryProvider = FutureProvider<List<InventoryLot>>((ref) async {
 });
 
 final transactionsProvider = FutureProvider<List<SalesTransaction>>((ref) async {
-  return ref.read(appRepositoryProvider).getTransactions();
+  final transactions = await ref.read(appRepositoryProvider).getTransactions();
+  return transactions
+      .where(
+        (item) =>
+            item.mode != CalculationMode.inventoryAddition &&
+            item.mode != CalculationMode.inventoryRemoval,
+      )
+      .toList(growable: false);
 });
 
 final dashboardProvider = FutureProvider<DashboardSummary>((ref) async {
