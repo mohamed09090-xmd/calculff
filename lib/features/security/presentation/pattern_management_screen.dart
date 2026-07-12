@@ -2,8 +2,9 @@ import 'dart:async';
 
 import 'package:flutter/material.dart' hide Text;
 
-import '../../../core/localization/localized_text.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import '../../../core/localization/localized_text.dart';
 
 import '../../../core/security/pattern_lock_service.dart';
 import '../../../shared/providers/app_lock_provider.dart';

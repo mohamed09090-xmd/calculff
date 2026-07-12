@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart' hide Text;
 
+
 import '../../../core/localization/localized_text.dart';
 
 import '../../../core/utils/money_formatter.dart';

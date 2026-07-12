@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart' hide Text;
 
-import '../../../core/localization/localized_text.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+
+import '../../../core/localization/localized_text.dart';
 
 import '../../../core/constants/app_strings.dart';
 import '../../../core/utils/money_formatter.dart';
@@ -14,6 +15,7 @@ import '../../../shared/models/app_lock_state.dart';
 import '../../../shared/models/app_settings.dart';
 import '../../../shared/providers/app_lock_provider.dart';
 import '../../../shared/providers/app_providers.dart';
+import '../../../shared/providers/app_language_provider.dart';
 import '../../../shared/providers/theme_mode_provider.dart';
 import '../../security/presentation/pattern_management_screen.dart';
 
@@ -26,6 +28,9 @@ class SettingsScreen extends ConsumerWidget {
     final appLock = ref.watch(appLockProvider);
     final themePreference = ref.watch(themeModeProvider).valueOrNull ??
         AppThemeModePreference.system;
+    final languagePreference =
+        ref.watch(appLanguageProvider).valueOrNull ??
+            AppLanguagePreference.arabic;
     final platformBrightness = MediaQuery.platformBrightnessOf(context);
 
     return AppShell(
@@ -69,6 +74,31 @@ class SettingsScreen extends ConsumerWidget {
                     ref.read(appLockProvider.notifier).lock();
                   },
                 ),
+              ),
+            ),
+            const SizedBox(height: 12),
+            SectionCard(
+              title: 'اللغة',
+              icon: Icons.language_outlined,
+              accent: Theme.of(context).colorScheme.secondary,
+              child: SegmentedButton<AppLanguagePreference>(
+                segments: const [
+                  ButtonSegment(
+                    value: AppLanguagePreference.arabic,
+                    label: Text('العربية'),
+                    icon: Icon(Icons.format_textdirection_r_to_l),
+                  ),
+                  ButtonSegment(
+                    value: AppLanguagePreference.french,
+                    label: Text('الفرنسية'),
+                    icon: Icon(Icons.format_textdirection_l_to_r),
+                  ),
+                ],
+                selected: {languagePreference},
+                showSelectedIcon: false,
+                onSelectionChanged: (selection) => ref
+                    .read(appLanguageProvider.notifier)
+                    .setLanguage(selection.first),
               ),
             ),
             const SizedBox(height: 12),

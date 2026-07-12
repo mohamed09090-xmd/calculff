@@ -5,12 +5,13 @@ import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart' hide Text;
 
-import '../../../core/localization/localized_text.dart';
 import 'package:intl/intl.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:screenshot/screenshot.dart';
+
+import '../../../core/localization/localized_text.dart';
 
 import '../../../core/utils/money_formatter.dart';
 import '../../../shared/models/app_settings.dart';

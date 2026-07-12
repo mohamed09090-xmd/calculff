@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart' hide Text;
 
-import '../localization/localized_text.dart';
 import 'package:flutter/services.dart';
+
+import '../localization/localized_text.dart';
 
 import '../../shared/models/customer.dart';
 

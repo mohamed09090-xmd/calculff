@@ -3,10 +3,11 @@ import 'dart:math' as math;
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart' hide Text;
 
-import '../../../core/localization/localized_text.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:share_plus/share_plus.dart';
+
+import '../../../core/localization/localized_text.dart';
 
 import '../../../core/utils/money_formatter.dart';
 import '../../../core/widgets/app_shell.dart';

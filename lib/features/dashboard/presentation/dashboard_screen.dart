@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart' hide Text;
 
-import '../../../core/localization/localized_text.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+
+import '../../../core/localization/localized_text.dart';
 
 import '../../../core/constants/app_strings.dart';
 import '../../../core/utils/date_utils.dart';
