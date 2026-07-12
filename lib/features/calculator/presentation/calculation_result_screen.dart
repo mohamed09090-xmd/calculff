@@ -14,7 +14,8 @@ class CalculationResultScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final result = ref.watch(calculationProvider);
-    final settings = ref.watch(settingsProvider).valueOrNull ?? AppSettings.defaults;
+    final settings =
+        ref.watch(settingsProvider).valueOrNull ?? AppSettings.defaults;
     if (result == null) {
       return AppShell(
         title: 'نتيجة الحساب',
@@ -28,15 +29,16 @@ class CalculationResultScreen extends ConsumerWidget {
     }
     final exactGems = result.request.mode != CalculationMode.gems ||
         result.gems == result.request.inputValue;
+    final savable = result.requiredCredit > 0 &&
+        result.units > 0 &&
+        exactGems;
     return AppShell(
       title: 'نتيجة الحساب',
       body: ListView(
         children: [
           CalculationSummary(result: result, settings: settings),
           const SizedBox(height: 18),
-          if (result.request.mode != CalculationMode.credit &&
-              result.units > 0 &&
-              exactGems)
+          if (savable)
             FilledButton.icon(
               onPressed: () => context.push('/calculate/confirm'),
               icon: const Icon(Icons.check_circle_outline),
