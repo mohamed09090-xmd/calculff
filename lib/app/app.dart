@@ -1,20 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../core/constants/app_strings.dart';
 import '../features/security/presentation/app_lock_gate.dart';
-import '../shared/models/app_settings.dart';
-import '../shared/providers/app_providers.dart';
 import 'router.dart';
 import 'theme.dart';
 
-class GameCreditApp extends ConsumerWidget {
+class GameCreditApp extends StatelessWidget {
   const GameCreditApp({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    ref.watch(settingsProvider).valueOrNull ?? AppSettings.defaults;
+  Widget build(BuildContext context) {
     return MaterialApp.router(
       title: AppStrings.appName,
       debugShowCheckedModeBanner: false,
