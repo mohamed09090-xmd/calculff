@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -10,33 +12,90 @@ import '../../../shared/models/app_settings.dart';
 import '../../../shared/models/transaction_details.dart';
 import '../../../shared/providers/app_providers.dart';
 
-class TransactionDetailsScreen extends ConsumerWidget {
-  const TransactionDetailsScreen({super.key, required this.transactionId});
+class TransactionDetailsScreen extends ConsumerStatefulWidget {
+  const TransactionDetailsScreen({
+    super.key,
+    required this.transactionId,
+    this.showUndo = false,
+  });
+
   final String transactionId;
+  final bool showUndo;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<TransactionDetailsScreen> createState() =>
+      _TransactionDetailsScreenState();
+}
+
+class _TransactionDetailsScreenState
+    extends ConsumerState<TransactionDetailsScreen> {
+  late Future<TransactionDetails> _detailsFuture;
+  bool _undoScheduled = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _detailsFuture = _loadDetails();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (!widget.showUndo || _undoScheduled) return;
+    _undoScheduled = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) unawaited(_showUndoSnackBar());
+    });
+  }
+
+  Future<TransactionDetails> _loadDetails() => ref
+      .read(appRepositoryProvider)
+      .getTransactionDetails(widget.transactionId);
+
+  void _reload() {
+    setState(() => _detailsFuture = _loadDetails());
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final settings =
         ref.watch(settingsProvider).valueOrNull ?? AppSettings.defaults;
     return AppShell(
       title: 'تفاصيل العملية',
       actions: [
         IconButton(
+          tooltip: 'تعديل العملية',
+          onPressed: () =>
+              context.push('/transactions/${widget.transactionId}/edit'),
+          icon: const Icon(Icons.edit_outlined),
+        ),
+        IconButton(
           tooltip: 'حذف العملية',
-          onPressed: () => _delete(context, ref),
+          onPressed: _delete,
           icon: const Icon(Icons.delete_outline),
         ),
       ],
       body: FutureBuilder<TransactionDetails>(
-        future: ref
-            .read(appRepositoryProvider)
-            .getTransactionDetails(transactionId),
+        future: _detailsFuture,
         builder: (context, snapshot) {
           if (snapshot.connectionState != ConnectionState.done) {
             return const Center(child: CircularProgressIndicator());
           }
           if (snapshot.hasError) {
-            return Center(child: Text(snapshot.error.toString()));
+            return Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(snapshot.error.toString(), textAlign: TextAlign.center),
+                  const SizedBox(height: 12),
+                  FilledButton.icon(
+                    onPressed: _reload,
+                    icon: const Icon(Icons.refresh),
+                    label: const Text('إعادة المحاولة'),
+                  ),
+                ],
+              ),
+            );
           }
           final details = snapshot.data!;
           final item = details.transaction;
@@ -130,6 +189,7 @@ class TransactionDetailsScreen extends ConsumerWidget {
                   ],
                 ),
               ),
+              const SizedBox(height: 90),
             ],
           );
         },
@@ -150,13 +210,44 @@ class TransactionDetailsScreen extends ConsumerWidget {
         ),
       );
 
-  Future<void> _delete(BuildContext context, WidgetRef ref) async {
+  Future<void> _showUndoSnackBar() async {
+    final repository = ref.read(appRepositoryProvider);
+    final message = repository.pendingTransactionUndoMessage;
+    if (message == null) return;
+
+    final controller = ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        duration: const Duration(seconds: 8),
+        action: SnackBarAction(
+          label: 'تراجع',
+          onPressed: () async {
+            final result = await repository.undoLastTransactionChange();
+            invalidateAppData(ref);
+            if (!mounted || result == null) return;
+            if (result.transactionExistsAfterUndo) {
+              context.go('/transactions/${result.transactionId}');
+              _reload();
+            } else {
+              context.go('/transactions');
+            }
+          },
+        ),
+      ),
+    );
+    final reason = await controller.closed;
+    if (reason != SnackBarClosedReason.action) {
+      repository.clearPendingTransactionUndo();
+    }
+  }
+
+  Future<void> _delete() async {
     final confirmed = await showDialog<bool>(
           context: context,
           builder: (context) => AlertDialog(
             title: const Text('حذف العملية؟'),
             content: const Text(
-              'سيُعاد بناء المخزون من جميع العمليات المتبقية لضمان صحة الرصيد والحركات.',
+              'سيُعاد بناء المخزون من جميع العمليات المتبقية. سيظهر زر تراجع بعد الحذف.',
             ),
             actions: [
               TextButton(
@@ -173,11 +264,13 @@ class TransactionDetailsScreen extends ConsumerWidget {
         false;
     if (!confirmed) return;
     try {
-      await ref.read(appRepositoryProvider).deleteTransaction(transactionId);
+      await ref
+          .read(appRepositoryProvider)
+          .deleteTransactionWithUndo(widget.transactionId);
       invalidateAppData(ref);
-      if (context.mounted) context.go('/transactions');
+      if (mounted) context.go('/transactions?undo=1');
     } catch (error) {
-      if (context.mounted) {
+      if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(error.toString())),
         );
