@@ -1,4 +1,6 @@
 const Map<String, String> additionalFrenchTranslations = {
+  '7 أيام': '7 derniers jours',
+  '30 يومًا': '30 derniers jours',
   'تقرير مدير رصيد الألعاب': 'Rapport du gestionnaire de crédit de jeux',
   'الفترة': 'Période',
   'تم الإنشاء': 'Créé le',
