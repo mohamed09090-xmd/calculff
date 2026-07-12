@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../features/dashboard/data/dashboard_repository.dart';
 import '../models/app_settings.dart';
 import '../models/calculation.dart';
 import '../models/credit_package.dart';
@@ -13,6 +14,10 @@ import '../repositories/enhanced_app_repository.dart';
 
 final appRepositoryProvider = Provider<AppRepository>(
   (ref) => EnhancedAppRepository(),
+);
+
+final dashboardRepositoryProvider = Provider<DashboardRepository>(
+  (ref) => DashboardRepository(),
 );
 
 final initializationProvider = FutureProvider<void>((ref) async {
@@ -52,7 +57,7 @@ final transactionsProvider = FutureProvider<List<SalesTransaction>>((ref) async 
 });
 
 final dashboardProvider = FutureProvider<DashboardSummary>((ref) async {
-  return ref.read(appRepositoryProvider).getDashboardSummary();
+  return ref.read(dashboardRepositoryProvider).getSummary();
 });
 
 class SettingsController extends AsyncNotifier<AppSettings> {
