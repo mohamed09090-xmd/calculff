@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'dart:math' as math;
 
 import 'package:file_picker/file_picker.dart';
@@ -153,14 +154,21 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
         return;
       }
 
+      final bytes = await result.file.readAsBytes();
       final savedPath = await FilePicker.platform.saveFile(
         dialogTitle: saveDialogTitle,
         fileName: result.fileName,
         type: FileType.custom,
         allowedExtensions: [result.format.extension],
+        bytes: bytes,
       );
       if (savedPath == null) return;
-      await result.file.copy(savedPath);
+
+      // Android and iOS save the provided bytes through their document picker.
+      // Desktop pickers only return a destination path, so write it ourselves.
+      if (!Platform.isAndroid && !Platform.isIOS) {
+        await File(savedPath).writeAsBytes(bytes, flush: true);
+      }
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('تم حفظ التقرير بصيغة ${result.format.label}.')),
