@@ -1,21 +1,22 @@
 import 'package:flutter/material.dart' hide Text;
 
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/localization/localized_text.dart';
-
-import '../../../core/localization/app_translator.dart';
-
 import '../../../core/widgets/app_shell.dart';
 import '../../../core/widgets/customer_autocomplete.dart';
 import '../../../core/widgets/section_card.dart';
+import '../../../shared/models/app_settings.dart';
 import '../../../shared/models/calculation.dart';
+import '../../../shared/models/credit_package.dart';
 import '../../../shared/models/customer.dart';
+import '../../../shared/models/optimization_result.dart';
 import '../../../shared/models/product.dart';
 import '../../../shared/models/transaction_details.dart';
 import '../../../shared/providers/app_providers.dart';
+import '../../calculator/application/calculation_draft_engine.dart';
+import '../../calculator/presentation/calculation_customization_editor.dart';
 
 class TransactionEditScreen extends ConsumerStatefulWidget {
   const TransactionEditScreen({super.key, required this.transactionId});
@@ -28,22 +29,17 @@ class TransactionEditScreen extends ConsumerStatefulWidget {
 }
 
 class _TransactionEditScreenState extends ConsumerState<TransactionEditScreen> {
+  static const _engine = CalculationDraftEngine();
   final _formKey = GlobalKey<FormState>();
   final _customerController = TextEditingController();
   final _customerFocusNode = FocusNode();
-  final _valueController = TextEditingController();
   late final Future<_EditData> _dataFuture;
 
+  CalculationDraft? _draft;
   bool _initialized = false;
   bool _saving = false;
   String? _selectedCustomerId;
   String? _selectedCustomerName;
-  CalculationMode _mode = CalculationMode.customerAmount;
-  Product? _product;
-  bool _useInventory = true;
-
-  bool get _requiresProduct => _mode != CalculationMode.credit;
-  bool get _requiresInput => _mode != CalculationMode.directProduct;
 
   @override
   void initState() {
@@ -55,7 +51,6 @@ class _TransactionEditScreenState extends ConsumerState<TransactionEditScreen> {
   void dispose() {
     _customerController.dispose();
     _customerFocusNode.dispose();
-    _valueController.dispose();
     super.dispose();
   }
 
@@ -64,12 +59,16 @@ class _TransactionEditScreenState extends ConsumerState<TransactionEditScreen> {
     final values = await Future.wait<Object>([
       repository.getTransactionDetails(widget.transactionId),
       repository.getProducts(),
+      repository.getPackages(),
       repository.getCustomers(),
+      repository.getEditableInventoryCredit(widget.transactionId),
     ]);
     return _EditData(
       details: values[0] as TransactionDetails,
       products: values[1] as List<Product>,
-      customers: values[2] as List<Customer>,
+      packages: values[2] as List<CreditPackage>,
+      customers: values[3] as List<Customer>,
+      availableInventoryCredit: values[4] as int,
     );
   }
 
@@ -80,26 +79,80 @@ class _TransactionEditScreenState extends ConsumerState<TransactionEditScreen> {
     _selectedCustomerId = transaction.customerId;
     _selectedCustomerName = transaction.customerName;
     _customerController.text = transaction.customerName;
-    _valueController.text = '${transaction.inputValue}';
-    _mode = transaction.mode;
-    _useInventory = transaction.useInventory;
-    _product = data.products.cast<Product?>().firstWhere(
-      (product) => product?.id == transaction.productId,
+
+    final product = data.products.cast<Product?>().firstWhere(
+      (item) => item?.id == transaction.productId,
       orElse: () => null,
+    );
+    final needsProduct =
+        transaction.mode == CalculationMode.customerAmount ||
+        transaction.mode == CalculationMode.gems ||
+        transaction.mode == CalculationMode.directProduct;
+    if (needsProduct && product == null) {
+      throw StateError(
+        'تعذر تعديل العملية لأن المنتج الأصلي لم يعد مسجلًا. '
+        'Impossible de modifier l’opération car le produit d’origine n’est plus enregistré.',
+      );
+    }
+
+    final selections = <PackageSelection>[
+      for (final item in data.details.items)
+        PackageSelection(
+          package:
+              data.packages.cast<CreditPackage?>().firstWhere(
+                (package) => package?.id == item.packageId,
+                orElse: () => null,
+              ) ??
+              item.asPackage(),
+          quantity: item.quantity,
+        ),
+    ];
+    final optimization = selections.isEmpty
+        ? null
+        : OptimizationResult(
+            requiredCredit: transaction.additionalCreditRequired,
+            selections: selections,
+            totalCost: selections.fold(0, (sum, item) => sum + item.totalCost),
+            totalCredit: selections.fold(
+              0,
+              (sum, item) => sum + item.totalCredit,
+            ),
+            minimumValidityHours: selections
+                .map((item) => item.package.validityHours)
+                .reduce((a, b) => a < b ? a : b),
+          );
+    final result = CalculationResult(
+      request: CalculationRequest(
+        mode: transaction.mode,
+        product: product,
+        inputValue: transaction.inputValue,
+        useInventory: transaction.useInventory,
+      ),
+      units: transaction.units,
+      gems: transaction.gems,
+      customerPaid: transaction.customerPaid,
+      chargedAmount: transaction.chargedAmount,
+      customerChange: transaction.customerChange,
+      requiredCredit: transaction.requiredCredit,
+      inventoryCreditUsed: transaction.inventoryCreditUsed,
+      additionalCreditRequired: transaction.additionalCreditRequired,
+      optimization: optimization,
+      creditCostUsed: transaction.chargedAmount - transaction.cashProfit,
+      cashProfit: transaction.cashProfit,
+    );
+    _draft = _engine.fromResult(
+      result,
+      packages: data.packages,
+      availableInventoryCredit: data.availableInventoryCredit,
     );
   }
 
-  String get _inputLabel => switch (_mode) {
-    CalculationMode.customerAmount => 'المبلغ المدفوع بالدينار',
-    CalculationMode.gems => 'عدد الجواهر المطلوبة',
-    CalculationMode.credit => 'الرصيد المطلوب',
-    CalculationMode.directProduct => 'وحدة واحدة من المنتج',
-  };
-
   @override
   Widget build(BuildContext context) {
+    final settings =
+        ref.watch(settingsProvider).valueOrNull ?? AppSettings.defaults;
     return AppShell(
-      title: 'تعديل العملية',
+      title: 'تعديل آخر عملية',
       body: FutureBuilder<_EditData>(
         future: _dataFuture,
         builder: (context, snapshot) {
@@ -123,20 +176,15 @@ class _TransactionEditScreenState extends ConsumerState<TransactionEditScreen> {
           }
 
           final data = snapshot.data!;
-          _initialize(data);
-          final relevantProducts = data.products
-              .where((product) {
-                if (_mode == CalculationMode.directProduct) {
-                  return product.isDirectProduct;
-                }
-                if (_mode == CalculationMode.credit) return false;
-                return product.isGemProduct;
-              })
-              .toList(growable: false);
-          if (_requiresProduct &&
-              (_product == null || !relevantProducts.contains(_product))) {
-            _product = relevantProducts.isEmpty ? null : relevantProducts.first;
+          try {
+            _initialize(data);
+          } catch (error) {
+            return Center(
+              child: Text(error.toString(), textAlign: TextAlign.center),
+            );
           }
+          final draft = _draft!;
+          final issues = _engine.validate(draft);
 
           return Form(
             key: _formKey,
@@ -162,145 +210,30 @@ class _TransactionEditScreenState extends ConsumerState<TransactionEditScreen> {
                   ),
                 ),
                 const SizedBox(height: 12),
-                SectionCard(
-                  title: 'إعادة حساب العملية',
-                  icon: Icons.calculate_outlined,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      SingleChildScrollView(
-                        scrollDirection: Axis.horizontal,
-                        child: SegmentedButton<CalculationMode>(
-                          segments: const [
-                            ButtonSegment(
-                              value: CalculationMode.customerAmount,
-                              label: Text('المبلغ'),
-                              icon: Icon(Icons.payments_outlined),
-                            ),
-                            ButtonSegment(
-                              value: CalculationMode.gems,
-                              label: Text('الجواهر'),
-                              icon: Icon(Icons.diamond_outlined),
-                            ),
-                            ButtonSegment(
-                              value: CalculationMode.credit,
-                              label: Text('الرصيد'),
-                              icon: Icon(Icons.toll_outlined),
-                            ),
-                            ButtonSegment(
-                              value: CalculationMode.directProduct,
-                              label: Text('منتج مباشر'),
-                              icon: Icon(Icons.inventory_2_outlined),
-                            ),
-                          ],
-                          selected: {_mode},
-                          showSelectedIcon: false,
-                          onSelectionChanged: _saving
-                              ? null
-                              : (selection) => setState(() {
-                                  _mode = selection.first;
-                                  _valueController.clear();
-                                  _product = null;
-                                }),
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      if (_requiresProduct)
-                        DropdownButtonFormField<Product>(
-                          key: ValueKey('${_mode.name}-${_product?.id}'),
-                          initialValue: _product,
-                          decoration: InputDecoration(
-                            labelText: _mode == CalculationMode.directProduct
-                                ? 'المنتج المباشر'
-                                : 'منتج الجواهر',
-                          ),
-                          items: [
-                            for (final product in relevantProducts)
-                              DropdownMenuItem(
-                                value: product,
-                                child: Text(product.name),
-                              ),
-                          ],
-                          onChanged: _saving
-                              ? null
-                              : (value) => setState(() => _product = value),
-                          validator: (value) => value == null
-                              ? AppTranslator.translate(context, 'اختر المنتج')
-                              : null,
-                        ),
-                      if (_requiresProduct) const SizedBox(height: 12),
-                      if (_mode == CalculationMode.directProduct &&
-                          _product?.description?.trim().isNotEmpty == true)
-                        Padding(
-                          padding: const EdgeInsets.only(bottom: 12),
-                          child: Text(_product!.description!),
-                        ),
-                      if (_requiresInput)
-                        TextFormField(
-                          controller: _valueController,
-                          enabled: !_saving,
-                          keyboardType: TextInputType.number,
-                          inputFormatters: [
-                            FilteringTextInputFormatter.digitsOnly,
-                          ],
-                          decoration: InputDecoration(
-                            labelText: _inputLabel,
-                            prefixIcon: const Icon(Icons.pin_outlined),
-                          ),
-                          validator: (value) {
-                            final parsed = int.tryParse(value ?? '');
-                            if (parsed == null || parsed <= 0) {
-                              return 'أدخل قيمة صحيحة أكبر من صفر';
-                            }
-                            return null;
-                          },
-                        ),
-                      const SizedBox(height: 12),
-                      SwitchListTile(
-                        contentPadding: EdgeInsets.zero,
-                        title: const Text('استخدام الرصيد الموجود'),
-                        subtitle: const Text(
-                          'سيُعاد بناء المخزون وتطبيق FEFO على جميع العمليات',
-                        ),
-                        value: _useInventory,
-                        onChanged: _saving
-                            ? null
-                            : (value) => setState(() => _useInventory = value),
-                      ),
-                    ],
-                  ),
+                CalculationCustomizationEditor(
+                  draft: draft,
+                  settings: settings,
+                  enabled: !_saving,
+                  onChanged: (next) => setState(() => _draft = next),
                 ),
-                if (_requiresProduct && relevantProducts.isEmpty) ...[
-                  const SizedBox(height: 12),
-                  SectionCard(
-                    title: 'لا توجد منتجات من هذا النوع',
-                    icon: Icons.info_outline,
-                    child: const Text(
-                      'أضف المنتج وفعّله من شاشة المنتجات قبل تعديل العملية إلى هذا النوع.',
-                    ),
-                  ),
-                ],
                 const SizedBox(height: 12),
                 SectionCard(
-                  title: 'تعديل آمن',
+                  title: 'تعديل ذري وآمن',
                   icon: Icons.shield_outlined,
                   child: const Text(
-                    'يُنفذ التعديل داخل معاملة واحدة، ثم يُعاد تشغيل جميع العمليات زمنيًا لحساب المخزون والتكلفة وفق FEFO. بعد النجاح يمكنك التراجع فورًا.',
+                    'سيُلغى أثر العملية القديم ثم يُطبق الأثر الجديد مرة واحدة داخل معاملة SQLite واحدة. عند حدوث خطأ تُستعاد العملية والمخزون تلقائيًا.',
                   ),
                 ),
                 const SizedBox(height: 18),
                 FilledButton.icon(
-                  onPressed:
-                      _saving || (_requiresProduct && relevantProducts.isEmpty)
-                      ? null
-                      : _save,
+                  onPressed: _saving || issues.isNotEmpty ? null : _save,
                   icon: _saving
                       ? const SizedBox.square(
                           dimension: 20,
                           child: CircularProgressIndicator(strokeWidth: 2),
                         )
                       : const Icon(Icons.save_as_outlined),
-                  label: const Text('إعادة الحساب وحفظ التعديل'),
+                  label: const Text('حفظ تعديل آخر عملية'),
                 ),
                 const SizedBox(height: 10),
                 OutlinedButton(
@@ -340,13 +273,16 @@ class _TransactionEditScreenState extends ConsumerState<TransactionEditScreen> {
 
   Future<void> _save() async {
     if (!(_formKey.currentState?.validate() ?? false)) return;
+    final draft = _draft;
+    if (draft == null) return;
+    final result = _engine.finalize(draft);
     final confirmed =
         await showDialog<bool>(
           context: context,
           builder: (context) => AlertDialog(
-            title: const Text('حفظ تعديل العملية؟'),
+            title: const Text('حفظ تعديل آخر عملية؟'),
             content: const Text(
-              'سيُعاد حساب الباقات والمخزون والتكلفة وترتيب الاستهلاك وفق FEFO. يمكنك التراجع بعد نجاح التعديل.',
+              'سيتم إلغاء أثر العملية القديم على المخزون وتطبيق القيم الجديدة مرة واحدة فقط.',
             ),
             actions: [
               TextButton(
@@ -368,23 +304,14 @@ class _TransactionEditScreenState extends ConsumerState<TransactionEditScreen> {
     try {
       await ref
           .read(appRepositoryProvider)
-          .editTransaction(
+          .editTransactionResult(
             transactionId: widget.transactionId,
-            request: CalculationRequest(
-              mode: _mode,
-              product: _requiresProduct ? _product : null,
-              inputValue: _mode == CalculationMode.directProduct
-                  ? 1
-                  : int.parse(_valueController.text),
-              useInventory: _useInventory,
-            ),
+            result: result,
             customerName: _customerController.text,
             customerId: _selectedCustomerId,
           );
       invalidateAppData(ref);
-      if (mounted) {
-        context.go('/transactions/${widget.transactionId}?undo=1');
-      }
+      if (mounted) context.go('/transactions/${widget.transactionId}?undo=1');
     } catch (error) {
       if (mounted) {
         ScaffoldMessenger.of(
@@ -401,10 +328,14 @@ class _EditData {
   const _EditData({
     required this.details,
     required this.products,
+    required this.packages,
     required this.customers,
+    required this.availableInventoryCredit,
   });
 
   final TransactionDetails details;
   final List<Product> products;
+  final List<CreditPackage> packages;
   final List<Customer> customers;
+  final int availableInventoryCredit;
 }

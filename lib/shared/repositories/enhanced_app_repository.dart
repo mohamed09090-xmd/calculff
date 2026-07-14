@@ -318,17 +318,13 @@ class EnhancedAppRepository extends AppRepository {
       if (result.inventoryCreditUsed > available) {
         throw StateError('الرصيد المستخدم من المخزون أكبر من الرصيد المتاح');
       }
-      final packageRows = await txn.query(
-        'packages',
-        columns: ['id'],
-        where: 'is_active = 1',
-      );
+      final packageRows = await txn.query('packages', columns: ['id']);
       final registeredIds = packageRows.map((row) => row['id']).toSet();
       final selections = result.optimization?.selections ?? const [];
       if (selections.any(
         (selection) => !registeredIds.contains(selection.package.id),
       )) {
-        throw StateError('يمكن استخدام الباقات المسجلة والفعالة فقط');
+        throw StateError('يمكن استخدام الباقات المسجلة في التطبيق فقط');
       }
 
       await _insertCalculatedTransaction(

@@ -358,11 +358,24 @@ class CalculationDraftEngine {
             .where((item) => item.package.id == packageId)
             .fold<int>(0, (sum, item) => sum + item.quantity) ??
         0;
-    return setPackageQuantity(draft, packageId, current <= 1 ? 0 : current - 1);
+    if (current <= 1) return removePackage(draft, packageId);
+    return setPackageQuantity(draft, packageId, current - 1);
   }
 
-  CalculationDraft removePackage(CalculationDraft draft, String packageId) =>
-      setPackageQuantity(draft, packageId, 0);
+  CalculationDraft removePackage(CalculationDraft draft, String packageId) {
+    final selections =
+        (draft.optimization?.selections ?? const <PackageSelection>[])
+            .where((item) => item.package.id != packageId)
+            .toList(growable: false);
+    final optimization = _buildOptimization(
+      requiredCredit: draft.additionalCreditRequired,
+      selections: selections,
+    );
+    return draft.copyWith(
+      optimization: optimization,
+      clearOptimization: selections.isEmpty,
+    );
+  }
 
   CalculationDraft replacePackagePlan(
     CalculationDraft draft,

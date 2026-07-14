@@ -36,12 +36,16 @@ class TransactionDetailsScreen extends ConsumerStatefulWidget {
 class _TransactionDetailsScreenState
     extends ConsumerState<TransactionDetailsScreen> {
   late Future<TransactionDetails> _detailsFuture;
+  late Future<bool> _editableFuture;
   bool _undoScheduled = false;
 
   @override
   void initState() {
     super.initState();
     _detailsFuture = _loadDetails();
+    _editableFuture = ref
+        .read(appRepositoryProvider)
+        .isLatestTransaction(widget.transactionId);
   }
 
   @override
@@ -59,7 +63,12 @@ class _TransactionDetailsScreenState
       .getTransactionDetails(widget.transactionId);
 
   void _reload() {
-    setState(() => _detailsFuture = _loadDetails());
+    setState(() {
+      _detailsFuture = _loadDetails();
+      _editableFuture = ref
+          .read(appRepositoryProvider)
+          .isLatestTransaction(widget.transactionId);
+    });
   }
 
   @override
@@ -69,11 +78,23 @@ class _TransactionDetailsScreenState
     return AppShell(
       title: 'تفاصيل العملية',
       actions: [
-        IconButton(
-          tooltip: AppTranslator.translate(context, 'تعديل العملية'),
-          onPressed: () =>
-              context.push('/transactions/${widget.transactionId}/edit'),
-          icon: const Icon(Icons.edit_outlined),
+        FutureBuilder<bool>(
+          future: _editableFuture,
+          builder: (context, snapshot) {
+            final editable = snapshot.data ?? false;
+            return IconButton(
+              tooltip: AppTranslator.translate(
+                context,
+                editable ? 'تعديل العملية' : 'يمكن تعديل آخر عملية فقط',
+              ),
+              onPressed: editable
+                  ? () => context.push(
+                      '/transactions/${widget.transactionId}/edit',
+                    )
+                  : null,
+              icon: const Icon(Icons.edit_outlined),
+            );
+          },
         ),
         IconButton(
           tooltip: AppTranslator.translate(context, 'حذف العملية'),

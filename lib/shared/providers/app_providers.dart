@@ -57,6 +57,10 @@ final inventoryProvider = FutureProvider<List<InventoryLot>>((ref) async {
   return ref.read(appRepositoryProvider).getInventoryLots();
 });
 
+final activeInventoryCreditProvider = FutureProvider<int>((ref) async {
+  return ref.read(appRepositoryProvider).getActiveInventoryCredit();
+});
+
 final transactionsProvider = FutureProvider<List<SalesTransaction>>((
   ref,
 ) async {
@@ -99,6 +103,8 @@ class CalculationController extends Notifier<CalculationResult?> {
     return result;
   }
 
+  void setResult(CalculationResult result) => state = result;
+
   void clear() => state = null;
 }
 
@@ -116,6 +122,7 @@ void invalidateAppData(WidgetRef ref) {
     ..invalidate(customersProvider)
     ..invalidate(activeCustomersProvider)
     ..invalidate(inventoryProvider)
+    ..invalidate(activeInventoryCreditProvider)
     ..invalidate(transactionsProvider)
     ..invalidate(dashboardProvider)
     ..invalidate(settingsProvider);
