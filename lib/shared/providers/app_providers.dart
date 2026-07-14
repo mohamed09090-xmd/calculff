@@ -10,10 +10,9 @@ import '../models/dashboard_summary.dart';
 import '../models/inventory_lot.dart';
 import '../models/product.dart';
 import '../models/sales_transaction.dart';
-import '../repositories/app_repository.dart';
 import '../repositories/enhanced_app_repository.dart';
 
-final appRepositoryProvider = Provider<AppRepository>(
+final appRepositoryProvider = Provider<EnhancedAppRepository>(
   (ref) => EnhancedAppRepository(),
 );
 

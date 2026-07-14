@@ -288,8 +288,15 @@ class CalculationDraftEngine {
     final nextInventoryCost = previousInventory <= 0
         ? 0
         : ((draft.inventoryCostUsed * value) / previousInventory).round();
+    final request = CalculationRequest(
+      mode: draft.request.mode,
+      product: draft.request.product,
+      inputValue: draft.request.inputValue,
+      useInventory: value > 0,
+    );
     return _withAutomaticPlan(
       draft.copyWith(
+        request: request,
         inventoryCreditUsed: value,
         inventoryCostUsed: nextInventoryCost < 0 ? 0 : nextInventoryCost,
       ),

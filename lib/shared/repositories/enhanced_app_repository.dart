@@ -23,9 +23,11 @@ class EnhancedAppRepository extends AppRepository {
     AppDatabase? database,
     CalculationEngine? calculationEngine,
     FefoAllocator? allocator,
+    bool notificationsEnabled = true,
   }) : _database = database ?? AppDatabase.instance,
        _engine = calculationEngine ?? const CalculationEngine(),
        _allocator = allocator ?? const FefoAllocator(),
+       _notificationsEnabled = notificationsEnabled,
        super(
          database: database ?? AppDatabase.instance,
          calculationEngine: calculationEngine,
@@ -35,6 +37,7 @@ class EnhancedAppRepository extends AppRepository {
   final AppDatabase _database;
   final CalculationEngine _engine;
   final FefoAllocator _allocator;
+  final bool _notificationsEnabled;
   _EnhancedUndoSnapshot? _pendingEnhancedUndo;
 
   @override
@@ -142,6 +145,42 @@ class EnhancedAppRepository extends AppRepository {
     );
   }
 
+  Future<bool> isLatestTransaction(String transactionId) async {
+    final db = await _database.database;
+    final latest = await db.query(
+      'sales_transactions',
+      columns: ['id'],
+      orderBy: 'created_at DESC, id DESC',
+      limit: 1,
+    );
+    return latest.isNotEmpty && latest.first['id'] == transactionId;
+  }
+
+  Future<int> getEditableInventoryCredit(String transactionId) async {
+    final db = await _database.database;
+    final rows = await db.query(
+      'sales_transactions',
+      where: 'id = ?',
+      whereArgs: [transactionId],
+      limit: 1,
+    );
+    if (rows.isEmpty) throw StateError('العملية غير موجودة');
+    await _assertLatestTransaction(db, transactionId);
+    final transaction = SalesTransaction.fromMap(rows.first);
+    final totals = await db.rawQuery(
+      '''
+      SELECT COALESCE(SUM(remaining_credit), 0) AS total
+      FROM inventory_lots
+      WHERE remaining_credit > 0
+        AND expires_at > ?
+        AND (source_transaction_id IS NULL OR source_transaction_id != ?)
+      ''',
+      [transaction.createdAt.toIso8601String(), transactionId],
+    );
+    return (totals.first['total'] as num).toInt() +
+        transaction.inventoryCreditUsed;
+  }
+
   @override
   Future<String> saveTransaction(
     CalculationResult result, {
@@ -194,6 +233,7 @@ class EnhancedAppRepository extends AppRepository {
         limit: 1,
       );
       if (transactionRows.isEmpty) throw StateError('العملية غير موجودة');
+      await _assertLatestTransaction(txn, transactionId);
       final itemRows = await txn.query(
         'transaction_items',
         where: 'transaction_id = ?',
@@ -219,6 +259,84 @@ class EnhancedAppRepository extends AppRepository {
           request: request,
           customer: customer,
         ),
+      );
+    });
+
+    _pendingEnhancedUndo = snapshot;
+    await _rescheduleAllNotifications();
+    return transactionId;
+  }
+
+  Future<String> editTransactionResult({
+    required String transactionId,
+    required CalculationResult result,
+    required String customerName,
+    String? customerId,
+  }) async {
+    _validateEnhancedResult(result);
+    final db = await _database.database;
+    _EnhancedUndoSnapshot? snapshot;
+
+    await db.transaction((txn) async {
+      final transactionRows = await txn.query(
+        'sales_transactions',
+        where: 'id = ?',
+        whereArgs: [transactionId],
+        limit: 1,
+      );
+      if (transactionRows.isEmpty) throw StateError('العملية غير موجودة');
+      await _assertLatestTransaction(txn, transactionId);
+      final itemRows = await txn.query(
+        'transaction_items',
+        where: 'transaction_id = ?',
+        whereArgs: [transactionId],
+      );
+      final oldTransaction = Map<String, Object?>.from(transactionRows.first);
+      snapshot = _EnhancedUndoSnapshot(
+        kind: TransactionUndoKind.edit,
+        transactionId: transactionId,
+        transaction: oldTransaction,
+        items: itemRows
+            .map((row) => Map<String, Object?>.from(row))
+            .toList(growable: false),
+      );
+      final customer = await _resolveCustomer(
+        txn,
+        customerId: customerId,
+        customerName: customerName,
+      );
+      final createdAt = DateTime.parse(oldTransaction['created_at']! as String);
+
+      await txn.delete(
+        'sales_transactions',
+        where: 'id = ?',
+        whereArgs: [transactionId],
+      );
+      await _replayAll(txn);
+
+      final available = await _availableCredit(txn, createdAt);
+      if (result.inventoryCreditUsed > available) {
+        throw StateError('الرصيد المستخدم من المخزون أكبر من الرصيد المتاح');
+      }
+      final packageRows = await txn.query(
+        'packages',
+        columns: ['id'],
+        where: 'is_active = 1',
+      );
+      final registeredIds = packageRows.map((row) => row['id']).toSet();
+      final selections = result.optimization?.selections ?? const [];
+      if (selections.any(
+        (selection) => !registeredIds.contains(selection.package.id),
+      )) {
+        throw StateError('يمكن استخدام الباقات المسجلة والفعالة فقط');
+      }
+
+      await _insertCalculatedTransaction(
+        txn,
+        result: result,
+        customer: customer,
+        transactionId: transactionId,
+        createdAt: createdAt,
       );
     });
 
@@ -760,6 +878,21 @@ class EnhancedAppRepository extends AppRepository {
     return lots;
   }
 
+  Future<void> _assertLatestTransaction(
+    DatabaseExecutor db,
+    String transactionId,
+  ) async {
+    final latest = await db.query(
+      'sales_transactions',
+      columns: ['id'],
+      orderBy: 'created_at DESC, id DESC',
+      limit: 1,
+    );
+    if (latest.isEmpty || latest.first['id'] != transactionId) {
+      throw StateError('يمكن تعديل آخر عملية محفوظة فقط');
+    }
+  }
+
   Future<int> _availableCredit(DatabaseExecutor db, DateTime at) async {
     final rows = await db.rawQuery(
       '''
@@ -814,6 +947,39 @@ class EnhancedAppRepository extends AppRepository {
     if (result.requiredCredit <= 0) {
       throw StateError('لا يمكن حفظ عملية بلا رصيد مطلوب');
     }
+    if (result.units < 0 ||
+        result.gems < 0 ||
+        result.customerPaid < 0 ||
+        result.chargedAmount < 0 ||
+        result.customerChange < 0 ||
+        result.inventoryCreditUsed < 0 ||
+        result.additionalCreditRequired < 0) {
+      throw StateError('لا يمكن حفظ أرقام سالبة أو غير صالحة');
+    }
+    if (result.customerChange > result.customerPaid) {
+      throw StateError('المبلغ المعاد أكبر من المبلغ المدفوع');
+    }
+    if (result.additionalCreditRequired !=
+        result.requiredCredit - result.inventoryCreditUsed) {
+      throw StateError('قيم المخزون والرصيد المطلوب غير متسقة');
+    }
+    if (result.inventoryCreditUsed > 0 && !result.request.useInventory) {
+      throw StateError('تخصيص استخدام المخزون غير متسق');
+    }
+    if (result.purchasedCredit < result.additionalCreditRequired) {
+      throw StateError('خطة الباقات لا تغطي الرصيد المطلوب');
+    }
+    final selections = result.optimization?.selections ?? const [];
+    final packageCount = selections.fold<int>(
+      0,
+      (total, selection) => total + selection.quantity,
+    );
+    if (selections.any(
+          (selection) => selection.quantity <= 0 || selection.quantity > 999,
+        ) ||
+        packageCount > 9999) {
+      throw StateError('عدد الحزم أو الباقات غير منطقي');
+    }
     if (result.request.mode == CalculationMode.gems &&
         result.gems != result.request.inputValue) {
       throw StateError(
@@ -850,6 +1016,7 @@ class EnhancedAppRepository extends AppRepository {
   }
 
   Future<void> _rescheduleAllNotifications() async {
+    if (!_notificationsEnabled) return;
     final settings = await getSettings();
     final lots = await getInventoryLots();
     await NotificationService.instance.cancelAll();
