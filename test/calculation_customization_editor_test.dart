@@ -22,6 +22,27 @@ void main() {
     availableInventoryCredit: 0,
   );
 
+  CalculationDraft gemsDraft() => engine.create(
+    request: const CalculationRequest(
+      mode: CalculationMode.gems,
+      product: defaultProduct,
+      inputValue: 1700,
+      useInventory: false,
+    ),
+    packages: defaultPackages,
+    availableInventoryCredit: 0,
+  );
+
+  CalculationDraft creditDraft() => engine.create(
+    request: const CalculationRequest(
+      mode: CalculationMode.credit,
+      inputValue: 4800,
+      useInventory: false,
+    ),
+    packages: defaultPackages,
+    availableInventoryCredit: 0,
+  );
+
   Widget app({
     required CalculationDraft draft,
     required ValueChanged<CalculationDraft> onChanged,
@@ -51,8 +72,67 @@ void main() {
     );
   }
 
-  testWidgets('keeps primary 6000 when gems are edited', (tester) async {
+  testWidgets('amount primary input is read only', (tester) async {
+    await tester.pumpWidget(app(draft: amountDraft(), onChanged: (_) {}));
+
+    expect(
+      find.byKey(const ValueKey('primary-input-readonly')),
+      findsOneWidget,
+    );
+    expect(find.byKey(const ValueKey('primary-input')), findsNothing);
+    expect(find.textContaining('لا يمكن تعديلها'), findsOneWidget);
+  });
+
+  testWidgets('gems and credit primary inputs are read only', (tester) async {
+    await tester.pumpWidget(app(draft: gemsDraft(), onChanged: (_) {}));
+    expect(
+      find.byKey(const ValueKey('primary-input-readonly')),
+      findsOneWidget,
+    );
+    expect(find.byKey(const ValueKey('primary-input')), findsNothing);
+
+    await tester.pumpWidget(app(draft: creditDraft(), onChanged: (_) {}));
+    await tester.pump();
+    expect(
+      find.byKey(const ValueKey('primary-input-readonly')),
+      findsOneWidget,
+    );
+    expect(find.byKey(const ValueKey('primary-input')), findsNothing);
+  });
+
+  testWidgets('calculated amount is the manual financial input', (
+    tester,
+  ) async {
     var latest = amountDraft();
+    final initial = latest;
+    await tester.pumpWidget(
+      app(draft: latest, onChanged: (value) => latest = value),
+    );
+
+    final field = find.descendant(
+      of: find.byKey(const ValueKey('calculated-amount-input')),
+      matching: find.byType(TextFormField),
+    );
+    await tester.enterText(field, '5250');
+    await tester.pump();
+
+    expect(latest.chargedAmount, 5250);
+    expect(latest.primaryInputValue, initial.primaryInputValue);
+    expect(latest.units, initial.units);
+    expect(latest.gems, initial.gems);
+    expect(latest.requiredCredit, initial.requiredCredit);
+    expect(latest.customerPaid, initial.customerPaid);
+    expect(latest.customerChange, initial.customerChange);
+    expect(latest.salePrice, initial.salePrice);
+    expect(latest.cashProfit, isNot(initial.cashProfit));
+    expect(latest.marginPercent, isNot(initial.marginPercent));
+  });
+
+  testWidgets('editing gems does not change calculated amount automatically', (
+    tester,
+  ) async {
+    var latest = amountDraft();
+    final initialCharged = latest.chargedAmount;
     await tester.pumpWidget(
       app(draft: latest, onChanged: (value) => latest = value),
     );
@@ -67,6 +147,7 @@ void main() {
     expect(latest.primaryInputValue, 6000);
     expect(latest.gems, 1600);
     expect(latest.units, 16);
+    expect(latest.chargedAmount, initialCharged);
   });
 
   testWidgets('gem package sale price is read only and comes from settings', (
@@ -96,16 +177,14 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('shows French labels and validation messages', (tester) async {
-    final invalid = engine.updateCustomerChange(amountDraft(), 6001);
+  testWidgets('shows French fixed-input and calculated-amount guidance', (
+    tester,
+  ) async {
     await tester.pumpWidget(
-      app(draft: invalid, locale: const Locale('fr'), onChanged: (_) {}),
+      app(draft: amountDraft(), locale: const Locale('fr'), onChanged: (_) {}),
     );
 
-    expect(find.text('Personnaliser l’opération'), findsOneWidget);
-    expect(
-      find.textContaining('Le montant rendu ne peut pas dépasser'),
-      findsOneWidget,
-    );
+    expect(find.textContaining('Valeur fixe'), findsOneWidget);
+    expect(find.textContaining('uniquement le bénéfice'), findsOneWidget);
   });
 }
