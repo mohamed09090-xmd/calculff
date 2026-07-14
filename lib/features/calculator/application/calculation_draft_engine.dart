@@ -42,6 +42,7 @@ class CalculationDraft {
     required this.customerChange,
     required this.requiredCredit,
     required this.inventoryCreditUsed,
+    required this.inventoryCostUsed,
     required this.optimization,
     this.warning,
   });
@@ -57,6 +58,7 @@ class CalculationDraft {
   final int customerChange;
   final int requiredCredit;
   final int inventoryCreditUsed;
+  final int inventoryCostUsed;
   final OptimizationResult? optimization;
   final String? warning;
 
@@ -73,7 +75,37 @@ class CalculationDraft {
   int get newPackagesCost => optimization?.totalCost ?? 0;
   int get remainingPurchasedCredit =>
       purchasedCredit - additionalCreditRequired;
-  int get cashProfit => chargedAmount - newPackagesCost;
+  int get packageCreditCostUsed {
+    var remaining = additionalCreditRequired;
+    if (remaining <= 0 || optimization == null) return 0;
+    final selections = [...optimization!.selections]
+      ..sort((a, b) {
+        final validity = a.package.validityHours.compareTo(
+          b.package.validityHours,
+        );
+        if (validity != 0) return validity;
+        return a.package.credit.compareTo(b.package.credit);
+      });
+    var cost = 0;
+    for (final selection in selections) {
+      for (
+        var index = 0;
+        index < selection.quantity && remaining > 0;
+        index++
+      ) {
+        final used = remaining < selection.package.credit
+            ? remaining
+            : selection.package.credit;
+        cost += ((selection.package.priceDzd * used) / selection.package.credit)
+            .round();
+        remaining -= used;
+      }
+    }
+    return cost;
+  }
+
+  int get creditCostUsed => inventoryCostUsed + packageCreditCostUsed;
+  int get cashProfit => chargedAmount - creditCostUsed;
   double get marginPercent =>
       chargedAmount == 0 ? 0 : (cashProfit / chargedAmount) * 100;
 
@@ -89,6 +121,7 @@ class CalculationDraft {
     int? customerChange,
     int? requiredCredit,
     int? inventoryCreditUsed,
+    int? inventoryCostUsed,
     OptimizationResult? optimization,
     bool clearOptimization = false,
     String? warning,
@@ -106,6 +139,7 @@ class CalculationDraft {
     customerChange: customerChange ?? this.customerChange,
     requiredCredit: requiredCredit ?? this.requiredCredit,
     inventoryCreditUsed: inventoryCreditUsed ?? this.inventoryCreditUsed,
+    inventoryCostUsed: inventoryCostUsed ?? this.inventoryCostUsed,
     optimization: clearOptimization ? null : optimization ?? this.optimization,
     warning: clearWarning ? null : warning ?? this.warning,
   );
@@ -167,6 +201,7 @@ class CalculationDraftEngine {
       customerChange: result.customerChange,
       requiredCredit: result.requiredCredit,
       inventoryCreditUsed: result.inventoryCreditUsed,
+      inventoryCostUsed: _initialInventoryCost(result, packages: packages),
       optimization: result.optimization,
       warning: result.warning,
     );
@@ -245,6 +280,127 @@ class CalculationDraftEngine {
     );
   }
 
+  CalculationDraft updateInventoryCreditUsed(
+    CalculationDraft draft,
+    int value,
+  ) {
+    final previousInventory = draft.inventoryCreditUsed;
+    final nextInventoryCost = previousInventory <= 0
+        ? 0
+        : ((draft.inventoryCostUsed * value) / previousInventory).round();
+    return _withAutomaticPlan(
+      draft.copyWith(
+        inventoryCreditUsed: value,
+        inventoryCostUsed: nextInventoryCost < 0 ? 0 : nextInventoryCost,
+      ),
+    );
+  }
+
+  CalculationDraft setPackageQuantity(
+    CalculationDraft draft,
+    String packageId,
+    int quantity,
+  ) {
+    final package = draft.packages.cast<CreditPackage?>().firstWhere(
+      (item) => item?.id == packageId,
+      orElse: () => null,
+    );
+    if (package == null) {
+      throw const CalculationDraftValidationException([
+        CalculationValidationIssue(
+          code: 'package_not_registered',
+          messageAr: 'يمكن استخدام الباقات المسجلة في التطبيق فقط.',
+          messageFr:
+              'Seuls les forfaits enregistrés dans l’application sont autorisés.',
+        ),
+      ]);
+    }
+    if (quantity < 0) {
+      throw const CalculationDraftValidationException([
+        CalculationValidationIssue(
+          code: 'package_quantity_negative',
+          messageAr: 'عدد الباقات لا يمكن أن يكون سالبًا.',
+          messageFr: 'La quantité de forfaits ne peut pas être négative.',
+        ),
+      ]);
+    }
+    final quantities = <String, int>{
+      for (final selection in draft.optimization?.selections ?? const [])
+        selection.package.id: selection.quantity,
+    };
+    if (quantity == 0) {
+      quantities.remove(packageId);
+    } else {
+      quantities[packageId] = quantity;
+    }
+    return replacePackagePlan(draft, quantities);
+  }
+
+  CalculationDraft incrementPackage(CalculationDraft draft, String packageId) {
+    final current =
+        draft.optimization?.selections
+            .where((item) => item.package.id == packageId)
+            .fold<int>(0, (sum, item) => sum + item.quantity) ??
+        0;
+    return setPackageQuantity(draft, packageId, current + 1);
+  }
+
+  CalculationDraft decrementPackage(CalculationDraft draft, String packageId) {
+    final current =
+        draft.optimization?.selections
+            .where((item) => item.package.id == packageId)
+            .fold<int>(0, (sum, item) => sum + item.quantity) ??
+        0;
+    return setPackageQuantity(draft, packageId, current <= 1 ? 0 : current - 1);
+  }
+
+  CalculationDraft removePackage(CalculationDraft draft, String packageId) =>
+      setPackageQuantity(draft, packageId, 0);
+
+  CalculationDraft replacePackagePlan(
+    CalculationDraft draft,
+    Map<String, int> quantities,
+  ) {
+    final registered = {for (final item in draft.packages) item.id: item};
+    final selections = <PackageSelection>[];
+    for (final entry in quantities.entries) {
+      final package = registered[entry.key];
+      if (package == null) {
+        throw const CalculationDraftValidationException([
+          CalculationValidationIssue(
+            code: 'package_not_registered',
+            messageAr: 'يمكن استخدام الباقات المسجلة في التطبيق فقط.',
+            messageFr:
+                'Seuls les forfaits enregistrés dans l’application sont autorisés.',
+          ),
+        ]);
+      }
+      if (entry.value < 0) {
+        throw const CalculationDraftValidationException([
+          CalculationValidationIssue(
+            code: 'package_quantity_negative',
+            messageAr: 'عدد الباقات لا يمكن أن يكون سالبًا.',
+            messageFr: 'La quantité de forfaits ne peut pas être négative.',
+          ),
+        ]);
+      }
+      if (entry.value > 0) {
+        selections.add(
+          PackageSelection(package: package, quantity: entry.value),
+        );
+      }
+    }
+    selections.sort((a, b) => b.package.credit.compareTo(a.package.credit));
+    final optimization = _buildOptimization(
+      requiredCredit: draft.additionalCreditRequired,
+      selections: selections,
+    );
+    return draft.copyWith(
+      optimization: optimization,
+      clearOptimization: selections.isEmpty,
+    );
+  }
+
   List<CalculationValidationIssue> validate(CalculationDraft draft) {
     final issues = <CalculationValidationIssue>[];
     if (draft.primaryInput != CalculationPrimaryInput.directProduct &&
@@ -253,7 +409,7 @@ class CalculationDraftEngine {
         const CalculationValidationIssue(
           code: 'primary_input_invalid',
           messageAr: 'المدخل الأساسي يجب أن يكون أكبر من صفر.',
-          messageFr: 'La valeur principale doit être supérieure à zéro.',
+          messageFr: "La valeur principale doit être supérieure à zéro.",
         ),
       );
     }
@@ -268,7 +424,7 @@ class CalculationDraftEngine {
         const CalculationValidationIssue(
           code: 'negative_value',
           messageAr: 'لا يمكن استخدام أرقام سالبة في العملية.',
-          messageFr: 'Les valeurs négatives ne sont pas autorisées.',
+          messageFr: "Les valeurs négatives ne sont pas autorisées.",
         ),
       );
     }
@@ -277,7 +433,7 @@ class CalculationDraftEngine {
         const CalculationValidationIssue(
           code: 'change_exceeds_paid',
           messageAr: 'المبلغ المعاد لا يمكن أن يكون أكبر من المبلغ المدفوع.',
-          messageFr: 'Le montant rendu ne peut pas dépasser le montant payé.',
+          messageFr: "Le montant rendu ne peut pas dépasser le montant payé.",
         ),
       );
     }
@@ -288,7 +444,7 @@ class CalculationDraftEngine {
         const CalculationValidationIssue(
           code: 'inventory_out_of_range',
           messageAr: 'الرصيد المستخدم من المخزون خارج المجال المتاح.',
-          messageFr: 'Le crédit utilisé dépasse le stock disponible.',
+          messageFr: "Le crédit utilisé dépasse le stock disponible.",
         ),
       );
     }
@@ -308,12 +464,49 @@ class CalculationDraftEngine {
         ),
       );
     }
+    final selections =
+        draft.optimization?.selections ?? const <PackageSelection>[];
+    final packageCount = selections.fold<int>(
+      0,
+      (total, item) => total + item.quantity,
+    );
+    if (selections.any((item) => item.quantity <= 0 || item.quantity > 999) ||
+        packageCount > 9999) {
+      issues.add(
+        const CalculationValidationIssue(
+          code: 'package_quantity_invalid',
+          messageAr: 'عدد الحزم أو الباقات غير منطقي.',
+          messageFr: 'Le nombre de lots ou de forfaits est incohérent.',
+        ),
+      );
+    }
+    final registeredIds = draft.packages.map((item) => item.id).toSet();
+    if (selections.any((item) => !registeredIds.contains(item.package.id))) {
+      issues.add(
+        const CalculationValidationIssue(
+          code: 'package_not_registered',
+          messageAr: 'تحتوي الخطة على باقة غير مسجلة في التطبيق.',
+          messageFr:
+              'Le plan contient un forfait non enregistré dans l’application.',
+        ),
+      );
+    }
+    if (draft.additionalCreditRequired > 0 &&
+        draft.purchasedCredit < draft.additionalCreditRequired) {
+      issues.add(
+        const CalculationValidationIssue(
+          code: 'package_plan_insufficient',
+          messageAr: 'خطة الباقات لا تغطي الرصيد المطلوب شراؤه.',
+          messageFr: 'Le plan de forfaits ne couvre pas le crédit à acheter.',
+        ),
+      );
+    }
     if (draft.requiredCredit <= 0) {
       issues.add(
         const CalculationValidationIssue(
           code: 'required_credit_invalid',
           messageAr: 'لا يمكن حفظ عملية بلا رصيد مطلوب.',
-          messageFr: 'L’opération doit nécessiter un crédit positif.',
+          messageFr: "L’opération doit nécessiter un crédit positif.",
         ),
       );
     }
@@ -322,7 +515,7 @@ class CalculationDraftEngine {
         const CalculationValidationIssue(
           code: 'financial_result_invalid',
           messageAr: 'تعذر حساب النتيجة المالية للعملية.',
-          messageFr: 'Le résultat financier ne peut pas être calculé.',
+          messageFr: "Le résultat financier ne peut pas être calculé.",
         ),
       );
     }
@@ -343,7 +536,7 @@ class CalculationDraftEngine {
       inventoryCreditUsed: draft.inventoryCreditUsed,
       additionalCreditRequired: draft.additionalCreditRequired,
       optimization: draft.optimization,
-      creditCostUsed: draft.newPackagesCost,
+      creditCostUsed: draft.creditCostUsed,
       cashProfit: draft.cashProfit,
       warning: draft.warning,
     );
@@ -373,27 +566,87 @@ class CalculationDraftEngine {
       draft.availableInventoryCredit,
       required,
     );
-    final additional = required - inventory;
-    final optimization = additional == 0
-        ? null
-        : optimizer.optimize(
-            requiredCredit: additional,
-            packages: draft.packages,
-          );
-    return draft.copyWith(
-      units: nextUnits,
-      gems: nextGems,
-      salePrice: nextSalePrice,
-      customerPaid: paid,
-      chargedAmount: charged,
-      customerChange: change,
-      requiredCredit: required,
-      inventoryCreditUsed: inventory,
-      optimization: optimization,
-      clearOptimization: optimization == null,
-      warning: warning,
-      clearWarning: warning == null,
+    final nextInventoryCost = draft.inventoryCreditUsed <= 0
+        ? 0
+        : ((draft.inventoryCostUsed * inventory) / draft.inventoryCreditUsed)
+              .round();
+    return _withAutomaticPlan(
+      draft.copyWith(
+        units: nextUnits,
+        gems: nextGems,
+        salePrice: nextSalePrice,
+        customerPaid: paid,
+        chargedAmount: charged,
+        customerChange: change,
+        requiredCredit: required,
+        inventoryCreditUsed: inventory,
+        inventoryCostUsed: nextInventoryCost,
+        warning: warning,
+        clearWarning: warning == null,
+      ),
     );
+  }
+
+  CalculationDraft _withAutomaticPlan(CalculationDraft draft) {
+    final additional = draft.additionalCreditRequired;
+    if (additional <= 0) {
+      return draft.copyWith(clearOptimization: true);
+    }
+    final optimization = optimizer.optimize(
+      requiredCredit: additional,
+      packages: draft.packages,
+    );
+    return draft.copyWith(optimization: optimization);
+  }
+
+  OptimizationResult _buildOptimization({
+    required int requiredCredit,
+    required List<PackageSelection> selections,
+  }) {
+    final totalCredit = selections.fold<int>(
+      0,
+      (sum, item) => sum + item.totalCredit,
+    );
+    final totalCost = selections.fold<int>(
+      0,
+      (sum, item) => sum + item.totalCost,
+    );
+    final minimumValidity = selections.isEmpty
+        ? 0
+        : selections
+              .map((item) => item.package.validityHours)
+              .reduce((a, b) => a < b ? a : b);
+    return OptimizationResult(
+      requiredCredit: requiredCredit,
+      selections: List<PackageSelection>.unmodifiable(selections),
+      totalCost: totalCost,
+      totalCredit: totalCredit,
+      minimumValidityHours: minimumValidity,
+    );
+  }
+
+  int _initialInventoryCost(
+    CalculationResult result, {
+    required List<CreditPackage> packages,
+  }) {
+    if (result.inventoryCreditUsed <= 0) return 0;
+    final draft = CalculationDraft(
+      request: result.request,
+      availableInventoryCredit: result.inventoryCreditUsed,
+      packages: packages,
+      units: result.units,
+      gems: result.gems,
+      salePrice: 0,
+      customerPaid: result.customerPaid,
+      chargedAmount: result.chargedAmount,
+      customerChange: result.customerChange,
+      requiredCredit: result.requiredCredit,
+      inventoryCreditUsed: result.inventoryCreditUsed,
+      inventoryCostUsed: 0,
+      optimization: result.optimization,
+    );
+    final cost = result.creditCostUsed - draft.packageCreditCostUsed;
+    return cost < 0 ? 0 : cost;
   }
 
   Product _requireGemProduct(Product? product) {
