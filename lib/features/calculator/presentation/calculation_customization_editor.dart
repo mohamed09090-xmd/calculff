@@ -110,19 +110,27 @@ class CalculationCustomizationEditor extends StatelessWidget {
                 ),
               ],
               const SizedBox(height: 12),
-              _NumberEditor(
-                key: const ValueKey('sale-price-input'),
-                label: gemSale
-                    ? tr('سعر بيع الحزمة', 'Prix de vente du lot')
-                    : tr('سعر البيع', 'Prix de vente'),
-                value: draft.salePrice,
-                enabled: enabled,
-                suffix: tr('دج', 'DA'),
-                onChanged: (value) => _apply(
-                  context,
-                  () => _engine.updateSalePrice(draft, value),
+              if (gemSale)
+                _ReadOnlyValue(
+                  label: tr('سعر بيع الحزمة', 'Prix de vente du lot'),
+                  value: money(draft.salePrice),
+                  helper: tr(
+                    'ثابت في هذه الشاشة ويُغيّر من إعدادات المنتج فقط.',
+                    'Fixe sur cet écran et modifiable uniquement dans les paramètres du produit.',
+                  ),
+                )
+              else
+                _NumberEditor(
+                  key: const ValueKey('sale-price-input'),
+                  label: tr('سعر البيع', 'Prix de vente'),
+                  value: draft.salePrice,
+                  enabled: enabled,
+                  suffix: tr('دج', 'DA'),
+                  onChanged: (value) => _apply(
+                    context,
+                    () => _engine.updateSalePrice(draft, value),
+                  ),
                 ),
-              ),
               const SizedBox(height: 12),
               _ReadOnlyValue(
                 label: tr('المبلغ المحتسب', 'Montant calculé'),
