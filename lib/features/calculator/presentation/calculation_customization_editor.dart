@@ -43,24 +43,18 @@ class CalculationCustomizationEditor extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              if (draft.request.mode != CalculationMode.directProduct)
-                _NumberEditor(
-                  key: const ValueKey('primary-input'),
-                  label: _primaryLabel(draft.request.mode, french),
-                  value: draft.primaryInputValue,
-                  enabled: enabled,
-                  emphasized: true,
-                  onChanged: (value) => _apply(
-                    context,
-                    () => _engine.updatePrimaryInput(draft, value),
-                  ),
-                )
-              else
-                _ReadOnlyValue(
-                  label: tr('المدخل الأساسي', 'Valeur principale'),
-                  value: tr('وحدة واحدة', 'Une unité'),
-                  emphasized: true,
+              _ReadOnlyValue(
+                key: const ValueKey('primary-input-readonly'),
+                label: _primaryLabel(draft.request.mode, french),
+                value: draft.request.mode == CalculationMode.directProduct
+                    ? tr('وحدة واحدة', 'Une unité')
+                    : '${draft.primaryInputValue}',
+                helper: tr(
+                  'قيمة ثابتة حسب العملية ولا يمكن تعديلها من شاشة النتيجة.',
+                  'Valeur fixe de l’opération, non modifiable depuis l’écran de résultat.',
                 ),
+                emphasized: true,
+              ),
               if (gemSale) ...[
                 const SizedBox(height: 12),
                 if (draft.request.mode == CalculationMode.customerAmount)
@@ -109,8 +103,8 @@ class CalculationCustomizationEditor extends StatelessWidget {
                   ),
                 ),
               ],
-              const SizedBox(height: 12),
-              if (gemSale)
+              if (gemSale) ...[
+                const SizedBox(height: 12),
                 _ReadOnlyValue(
                   label: tr('سعر بيع الحزمة', 'Prix de vente du lot'),
                   value: money(draft.salePrice),
@@ -118,26 +112,23 @@ class CalculationCustomizationEditor extends StatelessWidget {
                     'ثابت في هذه الشاشة ويُغيّر من إعدادات المنتج فقط.',
                     'Fixe sur cet écran et modifiable uniquement dans les paramètres du produit.',
                   ),
-                )
-              else
-                _NumberEditor(
-                  key: const ValueKey('sale-price-input'),
-                  label: tr('سعر البيع', 'Prix de vente'),
-                  value: draft.salePrice,
-                  enabled: enabled,
-                  suffix: tr('دج', 'DA'),
-                  onChanged: (value) => _apply(
-                    context,
-                    () => _engine.updateSalePrice(draft, value),
-                  ),
                 ),
+              ],
               const SizedBox(height: 12),
-              _ReadOnlyValue(
+              _NumberEditor(
+                key: const ValueKey('calculated-amount-input'),
                 label: tr('المبلغ المحتسب', 'Montant calculé'),
-                value: money(draft.chargedAmount),
+                value: draft.chargedAmount,
+                enabled: enabled,
+                emphasized: true,
+                suffix: tr('دج', 'DA'),
                 helper: tr(
-                  'يُحسب تلقائيًا ولا يمكن تعديله مباشرة.',
-                  'Calculé automatiquement et non modifiable directement.',
+                  'تعديله يغيّر الربح وهامش الربح فقط ولا يغيّر أي قيمة أخرى.',
+                  'Sa modification change uniquement le bénéfice et la marge.',
+                ),
+                onChanged: (value) => _apply(
+                  context,
+                  () => _engine.updateCalculatedAmount(draft, value),
                 ),
               ),
             ],
@@ -555,6 +546,7 @@ class _NumberEditorState extends State<_NumberEditor> {
 
 class _ReadOnlyValue extends StatelessWidget {
   const _ReadOnlyValue({
+    super.key,
     required this.label,
     required this.value,
     this.helper,

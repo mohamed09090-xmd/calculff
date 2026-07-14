@@ -214,20 +214,10 @@ class CalculationDraftEngine {
       referenceCredit: 240,
       referencePriceDzd: 350,
     ),
-  }) {
-    final request = CalculationRequest(
-      mode: draft.request.mode,
-      product: draft.request.product,
-      inputValue: value,
-      useInventory: draft.request.useInventory,
-    );
-    return create(
-      request: request,
-      packages: draft.packages,
-      availableInventoryCredit: draft.availableInventoryCredit,
-      pricing: pricing,
-    );
-  }
+  }) => draft;
+
+  CalculationDraft updateCalculatedAmount(CalculationDraft draft, int value) =>
+      draft.copyWith(chargedAmount: value < 0 ? 0 : value);
 
   CalculationDraft updateGems(CalculationDraft draft, int value) {
     final product = _requireGemProduct(draft.request.product);
@@ -246,6 +236,7 @@ class CalculationDraftEngine {
   }
 
   CalculationDraft updateUnits(CalculationDraft draft, int value) {
+    if (draft.request.mode == CalculationMode.gems) return draft;
     final product = _requireGemProduct(draft.request.product);
     final units = value < 0 ? 0 : value;
     return _recalculateGemSale(
@@ -255,19 +246,7 @@ class CalculationDraftEngine {
     );
   }
 
-  CalculationDraft updateSalePrice(CalculationDraft draft, int value) {
-    if (draft.request.mode == CalculationMode.customerAmount ||
-        draft.request.mode == CalculationMode.gems) {
-      return draft;
-    }
-    final charged = value < 0 ? 0 : value;
-    return draft.copyWith(
-      salePrice: value,
-      chargedAmount: charged,
-      customerPaid: charged,
-      customerChange: 0,
-    );
-  }
+  CalculationDraft updateSalePrice(CalculationDraft draft, int value) => draft;
 
   CalculationDraft updateCustomerChange(CalculationDraft draft, int value) {
     if (draft.request.mode != CalculationMode.customerAmount) return draft;
@@ -566,7 +545,7 @@ class CalculationDraftEngine {
     final nextUnits = units ?? draft.units;
     final nextGems = gems ?? nextUnits * product.gemsPerUnit;
     final nextSalePrice = draft.salePrice;
-    final charged = nextUnits * nextSalePrice;
+    final charged = draft.chargedAmount;
     final paid = draft.request.mode == CalculationMode.customerAmount
         ? draft.request.inputValue
         : charged;
