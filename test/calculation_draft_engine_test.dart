@@ -29,7 +29,84 @@ void main() {
       expect(updated.gems, 1600);
       expect(updated.requiredCredit, 3840);
       expect(updated.chargedAmount, 5600);
-      expect(updated.customerChange, 400);
+      expect(updated.customerChange, 50);
+      expect(updated.salePrice, 350);
+    });
+
+    test(
+      'changing gems keeps paid amount, returned amount, and package price fixed',
+      () {
+        final draft = engine.create(
+          request: const CalculationRequest(
+            mode: CalculationMode.customerAmount,
+            product: defaultProduct,
+            inputValue: 5000,
+            useInventory: false,
+          ),
+          packages: defaultPackages,
+          availableInventoryCredit: 0,
+        );
+
+        expect(draft.customerPaid, 5000);
+        expect(draft.customerChange, 100);
+        expect(draft.chargedAmount, 4900);
+        expect(draft.salePrice, 350);
+
+        final updated = engine.updateGems(draft, 1500);
+
+        expect(updated.primaryInputValue, 5000);
+        expect(updated.customerPaid, 5000);
+        expect(updated.customerChange, 100);
+        expect(updated.salePrice, 350);
+        expect(updated.gems, 1500);
+        expect(updated.units, 15);
+        expect(updated.chargedAmount, 5250);
+        expect(updated.cashProfit, isNot(draft.cashProfit));
+        expect(updated.marginPercent, isNot(draft.marginPercent));
+      },
+    );
+
+    test(
+      'editing returned amount does not rewrite calculated amount or price',
+      () {
+        final draft = engine.create(
+          request: const CalculationRequest(
+            mode: CalculationMode.customerAmount,
+            product: defaultProduct,
+            inputValue: 5000,
+            useInventory: false,
+          ),
+          packages: defaultPackages,
+          availableInventoryCredit: 0,
+        );
+
+        final updated = engine.updateCustomerChange(draft, 200);
+
+        expect(updated.customerPaid, 5000);
+        expect(updated.customerChange, 200);
+        expect(updated.chargedAmount, 4900);
+        expect(updated.salePrice, 350);
+      },
+    );
+
+    test('package sale price cannot be changed from the result draft', () {
+      final draft = engine.create(
+        request: const CalculationRequest(
+          mode: CalculationMode.customerAmount,
+          product: defaultProduct,
+          inputValue: 5000,
+          useInventory: false,
+        ),
+        packages: defaultPackages,
+        availableInventoryCredit: 0,
+      );
+
+      final updated = engine.updateSalePrice(draft, 999);
+
+      expect(updated.salePrice, 350);
+      expect(updated.chargedAmount, 4900);
+      expect(updated.customerPaid, 5000);
+      expect(updated.customerChange, 100);
     });
 
     test('editing the amount primary input recalculates all dependents', () {

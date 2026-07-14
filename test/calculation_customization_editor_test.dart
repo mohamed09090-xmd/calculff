@@ -69,6 +69,16 @@ void main() {
     expect(latest.units, 16);
   });
 
+  testWidgets('gem package sale price is read only and comes from settings', (
+    tester,
+  ) async {
+    await tester.pumpWidget(app(draft: amountDraft(), onChanged: (_) {}));
+
+    expect(find.byKey(const ValueKey('sale-price-input')), findsNothing);
+    expect(find.text('سعر بيع الحزمة'), findsOneWidget);
+    expect(find.textContaining('إعدادات المنتج فقط'), findsOneWidget);
+  });
+
   testWidgets('supports small screens and large text without overflow', (
     tester,
   ) async {

@@ -256,28 +256,22 @@ class CalculationDraftEngine {
   }
 
   CalculationDraft updateSalePrice(CalculationDraft draft, int value) {
-    if (draft.request.mode == CalculationMode.credit ||
-        draft.request.mode == CalculationMode.directProduct) {
-      final charged = value < 0 ? 0 : value;
-      return draft.copyWith(
-        salePrice: value,
-        chargedAmount: charged,
-        customerPaid: charged,
-        customerChange: 0,
-      );
+    if (draft.request.mode == CalculationMode.customerAmount ||
+        draft.request.mode == CalculationMode.gems) {
+      return draft;
     }
-    return _recalculateGemSale(draft, salePrice: value);
+    final charged = value < 0 ? 0 : value;
+    return draft.copyWith(
+      salePrice: value,
+      chargedAmount: charged,
+      customerPaid: charged,
+      customerChange: 0,
+    );
   }
 
   CalculationDraft updateCustomerChange(CalculationDraft draft, int value) {
     if (draft.request.mode != CalculationMode.customerAmount) return draft;
-    final charged = draft.customerPaid - value;
-    final salePrice = draft.units == 0 ? 0 : charged ~/ draft.units;
-    return draft.copyWith(
-      customerChange: value,
-      chargedAmount: charged,
-      salePrice: salePrice,
-    );
+    return draft.copyWith(customerChange: value);
   }
 
   CalculationDraft updateInventoryCreditUsed(
@@ -566,19 +560,18 @@ class CalculationDraftEngine {
     CalculationDraft draft, {
     int? units,
     int? gems,
-    int? salePrice,
     String? warning,
   }) {
     final product = _requireGemProduct(draft.request.product);
     final nextUnits = units ?? draft.units;
     final nextGems = gems ?? nextUnits * product.gemsPerUnit;
-    final nextSalePrice = salePrice ?? draft.salePrice;
+    final nextSalePrice = draft.salePrice;
     final charged = nextUnits * nextSalePrice;
     final paid = draft.request.mode == CalculationMode.customerAmount
         ? draft.request.inputValue
         : charged;
     final change = draft.request.mode == CalculationMode.customerAmount
-        ? paid - charged
+        ? draft.customerChange
         : 0;
     final required = nextUnits * product.creditPerUnit;
     final inventory = _min3(
