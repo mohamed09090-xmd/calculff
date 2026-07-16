@@ -123,6 +123,7 @@ select id, created_at
 from public.orders
 where user_id = '11111111-1111-4111-8111-111111111111'
   and client_request_id = '70000000-0000-4000-8000-000000000100';
+grant select on table pg_temp.created_order_snapshot to authenticated;
 
 select set_config('request.jwt.claim.sub', '11111111-1111-4111-8111-111111111111', true);
 select set_config('request.jwt.claims', '{"sub":"11111111-1111-4111-8111-111111111111","role":"authenticated","app_metadata":{},"user_metadata":{}}', true);
@@ -147,8 +148,8 @@ select throws_ok($$select public.create_order('70000000-0000-4000-8000-000000000
 select throws_ok($$select public.create_order('70000000-0000-4000-8000-000000000100','bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbb1','DIFFERENT',null,'cash')$$, '23505', 'client_request_id conflict: payload differs from the existing order', 'same key with a different player_id is rejected');
 select throws_ok($$select public.create_order('70000000-0000-4000-8000-000000000100','bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbb1','PLAYER-42',null,'transfer')$$, '23505', 'client_request_id conflict: payload differs from the existing order', 'same key with a different payment method is rejected');
 select results_eq(
-  $$select key::text from jsonb_object_keys(to_jsonb((select t from public.get_my_order_timeline((select id from public.orders where client_request_id = '70000000-0000-4000-8000-000000000100')) t limit 1))) key order by key$$,
-  $$values ('created_at'::text), ('event_type'), ('order_status'), ('payment_status'), ('public_message')$$,
+  $$select key::text collate "C" from jsonb_object_keys(to_jsonb((select t from public.get_my_order_timeline((select id from public.orders where client_request_id = '70000000-0000-4000-8000-000000000100')) t limit 1))) key order by key$$,
+  $$values ('created_at'::text collate "C"), ('event_type'::text collate "C"), ('order_status'::text collate "C"), ('payment_status'::text collate "C"), ('public_message'::text collate "C")$$,
   'timeline exposes only the five public fields'
 );
 reset role;
