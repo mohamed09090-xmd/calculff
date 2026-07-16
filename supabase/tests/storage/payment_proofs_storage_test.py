@@ -135,10 +135,11 @@ class LocalSupabase:
             raise TestFailure(f"Local Supabase HTTP request failed: {exc.reason}") from exc
 
     def service_request(self, method: str, path: str, **kwargs: Any) -> Response:
+        legacy_service_jwt = self.service_key if self.service_key.startswith("eyJ") else None
         return self.request(
             method,
             path,
-            token=self.service_key,
+            token=legacy_service_jwt,
             api_key=self.service_key,
             **kwargs,
         )
