@@ -140,7 +140,7 @@ select is(
   'idempotent retry preserves the original created_at'
 );
 select is(
-  (select count(*)::integer from public.order_status_history h join public.orders o on o.id = h.order_id where o.user_id = '11111111-1111-4111-8111-111111111111' and o.client_request_id = '70000000-0000-4000-8000-000000000100'),
+  (select count(*)::integer from public.get_my_order_timeline((select id from public.orders where client_request_id = '70000000-0000-4000-8000-000000000100'))),
   1,
   'idempotent retry creates no second history row'
 );
