@@ -110,8 +110,19 @@ jobs:
       - name: Run pgTAP database tests
         shell: bash
         run: |
-          set -euo pipefail
-          supabase test db --local
+          set -uo pipefail
+          log_path="${RUNNER_TEMP}/pgtap.log"
+          supabase test db --local 2>&1 | tee "${log_path}"
+          exit "${PIPESTATUS[0]}"
+
+      - name: Upload pgTAP failure diagnostics
+        if: failure()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: pgtap-failure-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/pgtap.log
+          if-no-files-found: error
+          retention-days: 1
 
       - name: Run Storage REST API integration tests
         shell: bash
