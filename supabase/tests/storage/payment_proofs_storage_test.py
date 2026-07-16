@@ -394,7 +394,19 @@ class StorageSuite:
         self.expect_status(attached, {200}, "valid attach_payment_proof succeeds")
         missing_path = self.object_path(self.user_a["id"], other_a_order, "jpg", "missing")
         missing = self.rpc(self.user_a["token"], "attach_payment_proof", {"p_order_id": other_a_order, "p_object_path": missing_path})
-        self.expect_status(missing, {400, 404}, "attach of a nonexistent Storage path is rejected")
+        missing_payload = missing.json()
+        self.expect(
+            missing.status == 500
+            and missing_payload
+            == {
+                "code": "P0002",
+                "details": None,
+                "hint": None,
+                "message": "payment proof object not found",
+            },
+            "attach of a nonexistent Storage path returns the documented safe error",
+            f"HTTP {missing.status}: {missing.body.decode('utf-8', 'replace')}",
+        )
 
         cash_path = self.object_path(self.user_a["id"], cash_order, "jpg", "cash")
         self.object_paths.append(cash_path)
