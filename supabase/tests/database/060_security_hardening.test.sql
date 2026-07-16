@@ -107,8 +107,8 @@ select is(
    where schemaname = 'public'
      and tablename in ('profiles','orders')
      and position('select auth.uid()' in lower(coalesce(qual, ''))) > 0),
-  2,
-  'ownership policies retain UID initialization subqueries'
+  3,
+  'ownership and profile-update policies retain UID initialization subqueries'
 );
 select ok(
   (select qual from pg_policies where schemaname = 'public' and tablename = 'profiles' and policyname = 'profiles_select_own_or_admin')
@@ -118,7 +118,7 @@ select ok(
 select ok(
   (select qual from pg_policies where schemaname = 'public' and tablename = 'orders' and policyname = 'orders_select_own_or_admin')
     ~ 'user_id = .*auth.uid',
-  'orders policy retains owner predicate'
+ 'orders policy retains owner predicate'
 );
 select ok(
   (select qual from pg_policies where schemaname = 'public' and tablename = 'games' and policyname = 'games_select_active_or_admin')
