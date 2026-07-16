@@ -127,8 +127,19 @@ jobs:
       - name: Run Storage REST API integration tests
         shell: bash
         run: |
-          set -euo pipefail
-          python3 supabase/tests/storage/payment_proofs_storage_test.py
+          set -uo pipefail
+          log_path="${RUNNER_TEMP}/storage-api.log"
+          python3 supabase/tests/storage/payment_proofs_storage_test.py 2>&1 | tee "${log_path}"
+          exit "${PIPESTATUS[0]}"
+
+      - name: Upload Storage API failure diagnostics
+        if: failure()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: storage-api-failure-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/storage-api.log
+          if-no-files-found: error
+          retention-days: 1
 
       - name: Stop local Supabase
         if: always()
