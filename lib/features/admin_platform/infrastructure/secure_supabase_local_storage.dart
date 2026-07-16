@@ -78,10 +78,7 @@ class SecureSupabaseLocalStorage extends LocalStorage {
         'Supabase session storage must not contain a password field.',
       );
     }
-    return _storage.write(
-      key: persistSessionKey,
-      value: persistSessionString,
-    );
+    return _storage.write(key: persistSessionKey, value: persistSessionString);
   }
 
   void _ensureInitialized() {
@@ -94,10 +91,7 @@ class SecureSupabaseLocalStorage extends LocalStorage {
     try {
       return _containsPassword(jsonDecode(value));
     } on FormatException {
-      return RegExp(
-        r'"password"\s(:',
-        caseSensitive: false,
-      ).hasMatch(value);
+      return RegExp(r'"password"\s*:', caseSensitive: false).hasMatch(value);
     }
   }
 

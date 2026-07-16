@@ -11,25 +11,19 @@ enum SupabaseBootstrapStatus {
 }
 
 class SupabaseBootstrapResult {
-  const SupabaseBootstrapResult._({
-    required this.status,
-    this.client,
-  });
+  const SupabaseBootstrapResult._({required this.status, this.client});
 
   const SupabaseBootstrapResult.available(SupabaseClient client)
-      : this._(
-          status: SupabaseBootstrapStatus.available,
-          client: client,
-        );
+    : this._(status: SupabaseBootstrapStatus.available, client: client);
 
   const SupabaseBootstrapResult.unavailable()
-      : this._(status: SupabaseBootstrapStatus.unavailable);
+    : this._(status: SupabaseBootstrapStatus.unavailable);
 
   const SupabaseBootstrapResult.invalidConfiguration()
-      : this._(status: SupabaseBootstrapStatus.invalidConfiguration);
+    : this._(status: SupabaseBootstrapStatus.invalidConfiguration);
 
   const SupabaseBootstrapResult.initializationFailed()
-      : this._(status: SupabaseBootstrapStatus.initializationFailed);
+    : this._(status: SupabaseBootstrapStatus.initializationFailed);
 
   final SupabaseBootstrapStatus status;
   final SupabaseClient? client;

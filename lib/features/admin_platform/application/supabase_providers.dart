@@ -17,17 +17,17 @@ final supabaseClientInitializerProvider = Provider<SupabaseClientInitializer>(
   (ref) => const FlutterSupabaseClientInitializer(),
 );
 
-final supabaseBootstrapProvider = FutureProvider<SupabaseBootstrapResult>(
-  (ref) {
-    final bootstrap = SupabaseBootstrap(
-      initializer: ref.watch(supabaseClientInitializerProvider),
-    );
-    return bootstrap.initialize(
-      configurationResult: ref.watch(supabaseConfigurationProvider),
-      localStorage: ref.watch(supabaseLocalStorageProvider),
-    );
-  },
-);
+final supabaseBootstrapProvider = FutureProvider<SupabaseBootstrapResult>((
+  ref,
+) {
+  final bootstrap = SupabaseBootstrap(
+    initializer: ref.watch(supabaseClientInitializerProvider),
+  );
+  return bootstrap.initialize(
+    configurationResult: ref.watch(supabaseConfigurationProvider),
+    localStorage: ref.watch(supabaseLocalStorageProvider),
+  );
+});
 
 final supabaseClientProvider = Provider<SupabaseClient?>((ref) {
   return ref.watch(supabaseBootstrapProvider).asData?.value.client;

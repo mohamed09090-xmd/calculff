@@ -31,26 +31,17 @@ class SupabaseConfigurationResult {
     this.issue,
   });
 
-  const SupabaseConfigurationResult.valid(
-    SupabaseConfiguration configuration,
-  ) : this._(
-          status: SupabaseConfigurationStatus.valid,
-          configuration: configuration,
-        );
+  const SupabaseConfigurationResult.valid(SupabaseConfiguration configuration)
+    : this._(
+        status: SupabaseConfigurationStatus.valid,
+        configuration: configuration,
+      );
 
-  const SupabaseConfigurationResult.missing(
-    SupabaseConfigurationIssue issue,
-  ) : this._(
-          status: SupabaseConfigurationStatus.missing,
-          issue: issue,
-        );
+  const SupabaseConfigurationResult.missing(SupabaseConfigurationIssue issue)
+    : this._(status: SupabaseConfigurationStatus.missing, issue: issue);
 
-  const SupabaseConfigurationResult.invalid(
-    SupabaseConfigurationIssue issue,
-  ) : this._(
-          status: SupabaseConfigurationStatus.invalid,
-          issue: issue,
-        );
+  const SupabaseConfigurationResult.invalid(SupabaseConfigurationIssue issue)
+    : this._(status: SupabaseConfigurationStatus.invalid, issue: issue);
 
   final SupabaseConfigurationStatus status;
   final SupabaseConfiguration? configuration;
@@ -63,10 +54,8 @@ abstract final class SupabaseBuildConfiguration {
     'SUPABASE_PUBLISHABLE_KEY',
   );
 
-  static SupabaseConfigurationResult get current => validate(
-        url: _url,
-        publishableKey: _publishableKey,
-      );
+  static SupabaseConfigurationResult get current =>
+      validate(url: _url, publishableKey: _publishableKey);
 
   static SupabaseConfigurationResult validate({
     required String url,

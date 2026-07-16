@@ -114,9 +114,7 @@ void main() {
         overrides: [
           supabaseClientInitializerProvider.overrideWithValue(initializer),
           supabaseLocalStorageProvider.overrideWithValue(
-            SecureSupabaseLocalStorage(
-              storage: FakeSecureStorageBackend(),
-            ),
+            SecureSupabaseLocalStorage(storage: FakeSecureStorageBackend()),
           ),
         ],
       );
@@ -153,9 +151,7 @@ void main() {
       await storage.initialize();
 
       expect(
-        () => storage.persistSession(
-          '{"password":"not-a-real-password"}',
-        ),
+        () => storage.persistSession('{"password":"not-a-real-password"}'),
         throwsFormatException,
       );
       expect(backend.values, isEmpty);
