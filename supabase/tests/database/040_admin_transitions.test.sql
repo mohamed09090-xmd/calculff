@@ -102,7 +102,7 @@ set local role authenticated;
 select lives_ok($$select public.admin_set_order_status('80000000-0000-4000-8000-000000000001','accepted','تم قبول الطلب','accepted internally')$$, 'new to accepted succeeds');
 select is((select order_status from public.orders where id = '80000000-0000-4000-8000-000000000001'), 'accepted'::public.order_status_type, 'order status becomes accepted');
 select is((select public_status_message from public.orders where id = '80000000-0000-4000-8000-000000000001'), 'تم قبول الطلب', 'public message is stored separately');
-select is((select note from private.order_internal_notes where order_id = '80000000-0000-4000-8000-000000000001'), 'accepted internally', 'internal note is stored only in private table');
+select is((select note from public.admin_list_order_internal_notes('80000000-0000-4000-8000-000000000001')), 'accepted internally', 'internal note is stored only in private table');
 select lives_ok($$select public.admin_set_order_status('80000000-0000-4000-8000-000000000001','processing')$$, 'accepted to processing succeeds');
 select throws_ok($$select public.admin_set_order_status('80000000-0000-4000-8000-000000000001','completed')$$, '22023', 'an order can be completed only after payment is paid', 'processing cannot complete before payment');
 select lives_ok($$select public.admin_set_payment_status('80000000-0000-4000-8000-000000000001','paid')$$, 'cash awaiting_payment to paid succeeds');
@@ -139,7 +139,7 @@ select lives_ok($$select public.admin_set_payment_status('80000000-0000-4000-800
 select throws_ok($$select public.admin_set_payment_status('80000000-0000-4000-8000-000000000009','paid')$$, '22023', 'invalid payment status transition', 'proof_rejected cannot become paid directly');
 
 select lives_ok($$select public.admin_add_order_internal_note('80000000-0000-4000-8000-000000000010','  private note  ')$$, 'admin can add internal note');
-select is((select note from private.order_internal_notes where order_id = '80000000-0000-4000-8000-000000000010'), 'private note', 'internal note is trimmed');
+select is((select note from public.admin_list_order_internal_notes('80000000-0000-4000-8000-000000000010')), 'private note', 'internal note is trimmed');
 select is((select count(*)::integer from public.admin_list_order_internal_notes('80000000-0000-4000-8000-000000000010')), 1, 'admin can list internal notes');
 select throws_ok($$select public.admin_add_order_internal_note('80000000-0000-4000-8000-000000000010','   ')$$, '22023', 'internal note must contain 1 to 2000 characters', 'blank internal note is rejected');
 select throws_ok($$select public.admin_add_order_internal_note('80000000-0000-4000-8000-000000000010',repeat('x',2001))$$, '22023', 'internal note must contain 1 to 2000 characters', 'oversized internal note is rejected');
