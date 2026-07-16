@@ -155,7 +155,7 @@ select is((select payment_status from public.orders where id = '90000000-0000-40
 select is((select count(*)::integer from public.order_status_history where order_id = '90000000-0000-4000-8000-000000000001' and event_type = 'proof_attached'), 0, 'owner still cannot read history directly');
 select throws_ok($$select public.attach_payment_proof('90000000-0000-4000-8000-000000000002','11111111-1111-4111-8111-111111111111/90000000-0000-4000-8000-000000000002/missing_000000000000.pdf')$$, 'P0002', 'payment proof object not found', 'attach rejects missing Storage object');
 select throws_ok($$select public.attach_payment_proof('90000000-0000-4000-8000-000000000003','11111111-1111-4111-8111-111111111111/90000000-0000-4000-8000-000000000003/proof_aaaaaaaaaaaaaaaa.jpg')$$, '22023', 'payment proofs are accepted only for transfer orders', 'attach rejects cash order');
-select throws_ok($$select public.attach_payment_proof('90000000-0000-4000-8000-000000000004','22222222-2222-4222-8222-222222222222/90000000-0000-4000-8000-000000000004/proof_cccccccccccccccc.jpg')$$, '42501', 'order is not owned by the authenticated user', 'attach rejects another user order');
+select throws_ok($$select public.attach_payment_proof('90000000-0000-4000-8000-000000000004','22222222-2222-4222-8222-222222222222/90000000-0000-4000-8000-000000000004/proof_cccccccccccccccc.jpg')$$, '22023', 'payment proof path must match user/order/random-file', 'attach rejects another user path before order lookup');
 select throws_ok($$select public.attach_payment_proof('90000000-0000-4000-8000-000000000002','11111111-1111-4111-8111-111111111111/90000000-0000-4000-8000-000000000002/proof_invalidmime000.pdf')$$, '22023', 'payment proof MIME type is not allowed', 'attach rejects invalid MIME metadata');
 select throws_ok($$select public.attach_payment_proof('90000000-0000-4000-8000-000000000002','11111111-1111-4111-8111-111111111111/90000000-0000-4000-8000-000000000002/proof_oversized00000.pdf')$$, '22023', 'payment proof exceeds the 5 MiB limit', 'attach rejects oversized metadata');
 select throws_ok($$select public.attach_payment_proof('90000000-0000-4000-8000-000000000002','11111111-1111-4111-8111-111111111111/90000000-0000-4000-8000-000000000002/proof_wrongowner000.pdf')$$, '42501', 'payment proof owner does not match', 'attach rejects mismatched Storage owner');
@@ -167,7 +167,7 @@ select set_config('request.jwt.claim.sub', '33333333-3333-4333-8333-333333333333
 select set_config('request.jwt.claims', '{"sub":"33333333-3333-4333-8333-333333333333","role":"authenticated","app_metadata":{"role":"admin"},"user_metadata":{}}', true);
 set local role authenticated;
 select is((select count(*)::integer from storage.objects where bucket_id = 'payment-proofs'), 7, 'admin can read all payment proof objects');
-select throws_ok($$select public.attach_payment_proof('90000000-0000-4000-8000-000000000002','11111111-1111-4111-8111-111111111111/90000000-0000-4000-8000-000000000002/proof_invalidmime000.pdf')$$, '42501', 'order is not owned by the authenticated user', 'admin cannot bypass owner-only proof attachment');
+select throws_ok($$select public.attach_payment_proof('90000000-0000-4000-8000-000000000002','11111111-1111-4111-8111-111111111111/90000000-0000-4000-8000-000000000002/proof_invalidmime000.pdf')$$, '22023', 'payment proof path must match user/order/random-file', 'admin cannot bypass owner-bound proof path');
 select lives_ok($$select public.admin_set_payment_status('90000000-0000-4000-8000-000000000001','proof_rejected')$$, 'admin can reject an attached proof');
 reset role;
 
@@ -184,7 +184,7 @@ select set_config('request.jwt.claim.sub', '22222222-2222-4222-8222-222222222222
 select set_config('request.jwt.claims', '{"sub":"22222222-2222-4222-8222-222222222222","role":"authenticated","app_metadata":{},"user_metadata":{}}', true);
 set local role authenticated;
 select is((select count(*)::integer from storage.objects), 0, 'user B cannot read an unlinked proof');
-select throws_ok($$select public.attach_payment_proof('90000000-0000-4000-8000-000000000001','11111111-1111-4111-8111-111111111111/90000000-0000-4000-8000-000000000001/proof_bbbbbbbbbbbbbbbb.png')$$, '42501', 'order is not owned by the authenticated user', 'user B cannot attach user A proof');
+select throws_ok($$select public.attach_payment_proof('90000000-0000-4000-8000-000000000001','11111111-1111-4111-8111-111111111111/90000000-0000-4000-8000-000000000001/proof_bbbbbbbbbbbbbbbb.png')$$, '22023', 'payment proof path must match user/order/random-file', 'user B cannot attach a path owned by user A');
 reset role;
 
 select * from finish();
