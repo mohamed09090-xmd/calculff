@@ -47,7 +47,7 @@ Customers provide a UUID `client_request_id`. The database enforces `UNIQUE (use
 
 ## RLS matrix
 
-All five platform tables in the exposed `public` schema have RLS enabled.
+All five platform tables in the exposed `public` schema have RLS enabled. `private.order_internal_notes` also has RLS enabled as defense in depth even though client roles have neither schema usage nor table grants.
 
 | Object | Anonymous | Authenticated customer | Authenticated admin |
 | --- | --- | --- | --- |
@@ -108,11 +108,11 @@ The migration defines no Storage `UPDATE` or `DELETE` policy. Therefore client u
 
 `order_status_history.changed_by` exists for administrative audit but is not exposed by the customer timeline RPC. `get_my_order_timeline` returns only event type, order status, payment status, public message, and timestamp after an ownership check.
 
-Internal notes are stored only in `private.order_internal_notes`. They never share the public message column, never appear in customer timeline results, and have no direct `anon` or `authenticated` table grant. Administrator note RPCs require the signed `app_metadata.role = admin` claim.
+Internal notes are stored only in `private.order_internal_notes`. They never share the public message column, never appear in customer timeline results, and have no direct `anon` or `authenticated` table grant. Administrator note RPCs require the signed `app_metadata.role = admin` claim. The private table has defensive RLS enabled without customer policies; the administrator RPCs continue to operate under their audited definer rights.
 
 ## SECURITY DEFINER inventory
 
-The migration creates the following ten `SECURITY DEFINER` functions. This list must stay synchronized with `pg_proc`; `020_grants_rls.test.sql` protects the inventory and execution grants.
+The platform schema creates the following ten application `SECURITY DEFINER` functions. This list must stay synchronized with `pg_proc`; the pgTAP suites protect the inventory and execution grants.
 
 | Function | Why definer rights are required | Primary regression protection |
 | --- | --- | --- |
@@ -120,14 +120,16 @@ The migration creates the following ten `SECURITY DEFINER` functions. This list 
 | `private.handle_auth_user_email_changed` | Trusted Auth trigger synchronizes the authoritative email while customer updates cannot change `profiles.email`. It verifies trigger context. | `010_schema.test.sql`, `020_grants_rls.test.sql`, and profile/Auth behavior in `030_orders.test.sql` |
 | `public.create_order` | Reads trusted Auth data and atomically inserts an order plus initial history without direct customer `INSERT` grants. | `030_orders.test.sql` covers authentication, confirmation, completeness, snapshots, idempotency, ownership, and input rejection |
 | `public.get_my_order_timeline` | Reads history through an owner-checked, public-safe projection without granting customers direct history access. | `030_orders.test.sql` and `040_admin_transitions.test.sql` cover anonymous/foreign rejection and safe projection |
-| `public.admin_add_order_internal_note` | Performs a controlled write to the private notes table after admin authorization. | `040_admin_transitions.test.sql` covers non-admin rejection and admin-only note creation |
-| `public.admin_list_order_internal_notes` | Performs a controlled read from the private schema after admin authorization. | `040_admin_transitions.test.sql` covers visibility separation and admin-only reads |
+| `public.admin_add_order_internal_note` | Performs a controlled write to the private notes table after admin authorization. | `040_admin_transitions.test.sql` and `060_security_hardening.test.sql` cover non-admin rejection, defensive RLS, and admin-only note creation |
+| `public.admin_list_order_internal_notes` | Performs a controlled read from the private schema after admin authorization. | `040_admin_transitions.test.sql` and `060_security_hardening.test.sql` cover visibility separation and admin-only reads |
 | `public.admin_set_order_status` | Enforces finite order transitions, history writes, optional note creation, and atomic refund-pending conversion without direct order update grants. | `040_admin_transitions.test.sql` covers valid/invalid transitions, final states, history, notes, and refund initiation |
 | `public.admin_set_payment_status` | Enforces finite payment transitions and proof requirements while writing order state and history atomically. | `040_admin_transitions.test.sql` covers cash/transfer rules, proof checks, valid/invalid transitions, and final-state protection |
 | `public.admin_mark_refunded` | Finalizes only `refund_pending` orders and writes public/internal audit records atomically. | `040_admin_transitions.test.sql` covers unauthorized calls, invalid source states, refund completion, timestamps, and history |
 | `public.attach_payment_proof` | Binds an existing private Storage object to an owned eligible transfer order after validating metadata and state, without direct order update rights. | `050_storage_policies.test.sql` and the 25-case Storage REST API suite cover path, owner, bucket, MIME, size, duplicate, state, and HTTP policy behavior |
 
-Every definer function uses `set search_path = ''`, explicitly schema-qualifies objects, validates `auth.uid()` or trusted trigger context, and has public/anonymous execution revoked. The private trigger functions also have authenticated execution revoked.
+Every application definer function uses `set search_path = ''`, explicitly schema-qualifies objects, validates `auth.uid()` or trusted trigger context, and has public/anonymous execution revoked. The private trigger functions also have authenticated execution revoked.
+
+The hosted database also contains the platform-managed `public.rls_auto_enable()` event-trigger helper. It remains `SECURITY DEFINER` because the platform event trigger uses it to enable RLS automatically, but direct `EXECUTE` is revoked from `PUBLIC`, `anon`, and `authenticated`. The event trigger itself is not removed or altered.
 
 ## Important SECURITY INVOKER functions
 
@@ -136,8 +138,25 @@ Every definer function uses `set search_path = ''`, explicitly schema-qualifies 
 
 Invoker mode remains the default preference. Definer mode is limited to the audited cases above where direct grants would expose broader data or mutation capabilities.
 
+## Hosted advisor hardening follow-up
+
+The applied migration `20260715192117_secure_platform_schema.sql` is immutable. Advisor remediation is implemented only by the forward migration `20260716163910_harden_platform_security_and_rls.sql`.
+
+That forward migration:
+
+- revokes direct client execution of `public.rls_auto_enable()` while preserving the platform event trigger;
+- enables defensive RLS on `private.order_internal_notes` without adding policies or direct grants;
+- recreates the eleven advisor-identified public policies under their existing names and identical ownership/admin predicates;
+- wraps `auth.jwt()` and `auth.uid()` calls as scalar initialization subqueries so PostgreSQL can evaluate them once per statement rather than once per candidate row;
+- adds `private.order_internal_notes(author_user_id)` and `public.order_status_history(changed_by)` indexes with `CREATE INDEX IF NOT EXISTS`;
+- leaves existing indexes in place even when a new, empty database reports them as unused.
+
+The Security Advisor warnings for authenticated execution of application `SECURITY DEFINER` RPCs are intentional. Customers must call `create_order`, `get_my_order_timeline`, and `attach_payment_proof`; administrator clients must call the admin workflow RPCs. Anonymous execution remains revoked, every function has an empty `search_path`, customer functions verify `auth.uid()` and ownership, and administrator functions verify signed `app_metadata.role = admin`. Regression tests verify both the grants and rejection paths instead of disabling required functionality to silence the Advisor.
+
+`Leaked Password Protection Disabled` is an Auth configuration warning, not a SQL migration concern. Enabling it is deferred to the dedicated Auth setup step in the Supabase Dashboard or supported Auth configuration workflow. No Auth setting is changed by this migration.
+
 ## Migration immutability and operational controls
 
-Before hosted application, the migration may be corrected on its feature branch and must pass reset, lint, pgTAP, and real Storage API tests from an empty local database. After hosted application, the file becomes immutable. Every later correction uses a new forward migration; rollback is another reviewed forward migration and must preserve real customer data unless a separately approved destructive recovery plan exists.
+The original migration is already applied to the hosted project and must never be edited, renamed, or deleted. Every correction uses a new forward migration; rollback is another reviewed forward migration and must preserve real customer data unless a separately approved destructive recovery plan exists. The repository validator pins the original migration's Git blob SHA so accidental edits fail CI.
 
 The repository and Flutter application must never contain a service-role key, Supabase secret key, database password, JWT secret, SMTP credential, Firebase credential, private key, or keystore. Flutter may later receive only the project URL and publishable key. No hosted project, including the forbidden legacy reference, is used by CI.

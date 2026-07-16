@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import ast
+import hashlib
 import re
 import sys
 from pathlib import Path
@@ -11,7 +12,13 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 DATABASE_DIR = ROOT / "supabase" / "tests" / "database"
 STORAGE_TEST = ROOT / "supabase" / "tests" / "storage" / "payment_proofs_storage_test.py"
-MIGRATION = ROOT / "supabase" / "migrations" / "20260715192117_secure_platform_schema.sql"
+MIGRATION_DIR = ROOT / "supabase" / "migrations"
+IMMUTABLE_MIGRATION = MIGRATION_DIR / "20260715192117_secure_platform_schema.sql"
+IMMUTABLE_MIGRATION_GIT_BLOB_SHA = "047da22289a3bc0a77d4df0fe8d6e13bb856fcb5"
+EXPECTED_MIGRATIONS = [
+    "20260715192117_secure_platform_schema.sql",
+    "20260716163910_harden_platform_security_and_rls.sql",
+]
 CLOUD_REFS = {
     "zegjqwsv" + "saprnguvxuwk",
     "txxokpov" + "dbvsvnkpbrrp",
@@ -33,6 +40,25 @@ PLAN = re.compile(r"(?im)^\s*select\s+plan\((\d+)\)\s*;")
 def fail(message: str) -> None:
     print(f"ERROR: {message}", file=sys.stderr)
     raise SystemExit(1)
+
+
+def git_blob_sha(path: Path) -> str:
+    data = path.read_bytes()
+    header = f"blob {len(data)}\0".encode()
+    return hashlib.sha1(header + data).hexdigest()
+
+
+def validate_migrations() -> list[Path]:
+    migrations = sorted(MIGRATION_DIR.glob("*.sql"))
+    if [path.name for path in migrations] != EXPECTED_MIGRATIONS:
+        fail("migration file set is incomplete or unexpectedly changed")
+    actual_sha = git_blob_sha(IMMUTABLE_MIGRATION)
+    if actual_sha != IMMUTABLE_MIGRATION_GIT_BLOB_SHA:
+        fail(
+            f"{IMMUTABLE_MIGRATION}: applied migration is immutable; "
+            f"expected git blob {IMMUTABLE_MIGRATION_GIT_BLOB_SHA}, found {actual_sha}"
+        )
+    return migrations
 
 
 def validate_sql(path: Path) -> int:
@@ -79,8 +105,8 @@ def validate_storage_case_count() -> int:
     return count
 
 
-def validate_repository_content() -> None:
-    checked = list(DATABASE_DIR.glob("*.sql")) + [STORAGE_TEST, MIGRATION, Path(__file__)]
+def validate_repository_content(migrations: list[Path]) -> None:
+    checked = list(DATABASE_DIR.glob("*.sql")) + [STORAGE_TEST, *migrations, Path(__file__)]
     for path in checked:
         text = path.read_text(encoding="utf-8")
         for ref in CLOUD_REFS:
@@ -95,6 +121,7 @@ def validate_repository_content() -> None:
 
 
 def main() -> int:
+    migrations = validate_migrations()
     sql_files = sorted(DATABASE_DIR.glob("*.test.sql"))
     expected_names = [
         "010_schema.test.sql",
@@ -102,15 +129,17 @@ def main() -> int:
         "030_orders.test.sql",
         "040_admin_transitions.test.sql",
         "050_storage_policies.test.sql",
+        "060_security_hardening.test.sql",
     ]
     if [path.name for path in sql_files] != expected_names:
         fail("database test file set is incomplete or unexpectedly changed")
     counts = {path.name: validate_sql(path) for path in sql_files}
     storage_count = validate_storage_case_count()
-    validate_repository_content()
+    validate_repository_content(migrations)
     for name, count in counts.items():
         print(f"OK {name}: {count} pgTAP assertions")
     print(f"OK payment_proofs_storage_test.py: {storage_count} HTTP cases")
+    print(f"OK immutable migration git blob: {IMMUTABLE_MIGRATION_GIT_BLOB_SHA}")
     print(f"OK total pgTAP assertions: {sum(counts.values())}")
     return 0
 
