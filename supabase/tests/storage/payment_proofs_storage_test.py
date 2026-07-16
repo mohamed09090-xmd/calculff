@@ -153,8 +153,8 @@ class StorageSuite:
         self.user_a: dict[str, str] = {}
         self.user_b: dict[str, str] = {}
         self.admin: dict[str, str] = {}
-        self.game_id = str(uuid.uuid4())
-        self.offer_id = str(uuid.uuid4())
+        self.game_id = ""
+        self.offer_id = ""
         self.order_ids: list[str] = []
         self.object_paths: list[str] = []
         self.passed = 0
@@ -202,14 +202,15 @@ class StorageSuite:
 
     def patch_profile(self, user: dict[str, str], name: str, phone: str) -> None:
         query = urllib.parse.urlencode({"id": f"eq.{user['id']}"})
-        response = self.sb.service_request(
+        response = self.sb.request(
             "PATCH",
             f"/rest/v1/profiles?{query}",
+            token=user["token"],
             json_body={"full_name": name, "phone": phone, "locale": "ar"},
             headers={"Prefer": "return=minimal"},
         )
         if response.status not in {200, 204}:
-            raise TestFailure(f"Could not complete local profile: HTTP {response.status}")
+            raise TestFailure(self.sb.redact(f"Could not complete local profile: {response.status} {response.body!r}"))
 
     def rpc(self, token: str, name: str, payload: dict[str, Any]) -> Response:
         return self.sb.request(
@@ -276,11 +277,11 @@ class StorageSuite:
         self.patch_profile(self.user_b, "Storage User B", "+213 555 44 55 66")
         self.patch_profile(self.admin, "Storage Admin", "+213 555 00 00 01")
 
-        game = self.sb.service_request(
+        game = self.sb.request(
             "POST",
             "/rest/v1/games",
+            token=self.admin["token"],
             json_body={
-                "id": self.game_id,
                 "slug": f"storage-{self.run_id}",
                 "name_ar": "لعبة اختبار التخزين",
                 "name_fr": "Jeu test stockage",
@@ -290,15 +291,20 @@ class StorageSuite:
                 "is_active": True,
                 "sort_order": 9999,
             },
-            headers={"Prefer": "return=minimal"},
+            headers={"Prefer": "return=representation"},
         )
         if game.status not in {200, 201}:
-            raise TestFailure(f"Could not create local game fixture: HTTP {game.status}")
-        offer = self.sb.service_request(
+            raise TestFailure(self.sb.redact(f"Could not create local game fixture: {game.status} {game.body!r}"))
+        game_data = game.json()
+        if isinstance(game_data, list):
+            game_data = game_data[0]
+        self.game_id = game_data["id"]
+
+        offer = self.sb.request(
             "POST",
             "/rest/v1/public_offers",
+            token=self.admin["token"],
             json_body={
-                "id": self.offer_id,
                 "game_id": self.game_id,
                 "name_ar": "عرض اختبار التخزين",
                 "name_fr": "Offre test stockage",
@@ -307,10 +313,14 @@ class StorageSuite:
                 "is_published": True,
                 "sort_order": 9999,
             },
-            headers={"Prefer": "return=minimal"},
+            headers={"Prefer": "return=representation"},
         )
         if offer.status not in {200, 201}:
-            raise TestFailure(f"Could not create local offer fixture: HTTP {offer.status}")
+            raise TestFailure(self.sb.redact(f"Could not create local offer fixture: {offer.status} {offer.body!r}"))
+        offer_data = offer.json()
+        if isinstance(offer_data, list):
+            offer_data = offer_data[0]
+        self.offer_id = offer_data["id"]
 
     def run(self) -> None:
         self.setup()
@@ -396,7 +406,7 @@ class StorageSuite:
             headers={"x-upsert": "false"},
         )
         if cash_fixture.status not in {200, 201}:
-            raise TestFailure(f"Could not create local cash proof fixture: HTTP {cash_fixture.status}")
+            raise TestFailure(self.sb.redact(f"Could not create local cash proof fixture: {cash_fixture.status} {cash_fixture.body!r}"))
         cash_attach = self.rpc(self.user_a["token"], "attach_payment_proof", {"p_order_id": cash_order, "p_object_path": cash_path})
         self.expect_status(cash_attach, {400}, "attach to a cash order is rejected")
         other_attach = self.rpc(self.user_a["token"], "attach_payment_proof", {"p_order_id": user_b_order, "p_object_path": b_path})
