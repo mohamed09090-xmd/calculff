@@ -83,6 +83,7 @@ create table public.profiles (
       phone = btrim(phone)
       and length(phone) between 6 and 25
       and phone ~ '^[0-9+(). -]+$'
+      and length(regexp_replace(phone, '[^0-9]', '', 'g')) between 6 and 15
     )
   ),
   constraint profiles_locale_valid check (locale in ('ar', 'fr'))
