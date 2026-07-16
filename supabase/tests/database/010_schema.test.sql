@@ -40,18 +40,18 @@ select ok(to_regclass('private.order_internal_notes') is not null, 'private orde
 select ok(to_regclass('public.device_tokens') is null and to_regclass('private.device_tokens') is null, 'device_tokens does not exist');
 
 select results_eq(
-  $$select column_name::text from information_schema.columns where table_schema = 'public' and table_name = 'orders' and column_name in ('client_request_id','game_name_ar_snapshot','game_name_fr_snapshot','reward_unit_code_snapshot','reward_unit_name_ar_snapshot','reward_unit_name_fr_snapshot','offer_name_ar_snapshot','offer_name_fr_snapshot','reward_quantity_snapshot','sale_price_dzd_snapshot','customer_name_snapshot','customer_email_snapshot','customer_phone_snapshot','refund_started_at','refunded_at') order by column_name$$,
-  $$values ('client_request_id'::text), ('customer_email_snapshot'), ('customer_name_snapshot'), ('customer_phone_snapshot'), ('game_name_ar_snapshot'), ('game_name_fr_snapshot'), ('offer_name_ar_snapshot'), ('offer_name_fr_snapshot'), ('refund_started_at'), ('refunded_at'), ('reward_quantity_snapshot'), ('reward_unit_code_snapshot'), ('reward_unit_name_ar_snapshot'), ('reward_unit_name_fr_snapshot'), ('sale_price_dzd_snapshot')$$,
+  $$select column_name::text collate "C" from information_schema.columns where table_schema = 'public' and table_name = 'orders' and column_name in ('client_request_id','game_name_ar_snapshot','game_name_fr_snapshot','reward_unit_code_snapshot','reward_unit_name_ar_snapshot','reward_unit_name_fr_snapshot','offer_name_ar_snapshot','offer_name_fr_snapshot','reward_quantity_snapshot','sale_price_dzd_snapshot','customer_name_snapshot','customer_email_snapshot','customer_phone_snapshot','refund_started_at','refunded_at') order by column_name$$,
+  $$values ('client_request_id'::text collate "C"), ('customer_email_snapshot'::text collate "C"), ('customer_name_snapshot'::text collate "C"), ('customer_phone_snapshot'::text collate "C"), ('game_name_ar_snapshot'::text collate "C"), ('game_name_fr_snapshot'::text collate "C"), ('offer_name_ar_snapshot'::text collate "C"), ('offer_name_fr_snapshot'::text collate "C"), ('refund_started_at'::text collate "C"), ('refunded_at'::text collate "C"), ('reward_quantity_snapshot'::text collate "C"), ('reward_unit_code_snapshot'::text collate "C"), ('reward_unit_name_ar_snapshot'::text collate "C"), ('reward_unit_name_fr_snapshot'::text collate "C"), ('sale_price_dzd_snapshot'::text collate "C")$$,
   'orders contains idempotency, snapshot, and refund columns'
 );
 select results_eq(
-  $$select column_name::text from information_schema.columns where table_schema = 'public' and table_name = 'profiles' order by ordinal_position$$,
-  $$values ('id'::text), ('email'), ('full_name'), ('phone'), ('locale'), ('is_complete'), ('created_at'), ('updated_at')$$,
+  $$select column_name::text collate "C" from information_schema.columns where table_schema = 'public' and table_name = 'profiles' order by ordinal_position$$,
+  $$values ('id'::text collate "C"), ('email'::text collate "C"), ('full_name'::text collate "C"), ('phone'::text collate "C"), ('locale'::text collate "C"), ('is_complete'::text collate "C"), ('created_at'::text collate "C"), ('updated_at'::text collate "C")$$,
   'profiles columns match the public contract'
 );
 select results_eq(
-  $$select column_name::text from information_schema.columns where table_schema = 'private' and table_name = 'order_internal_notes' order by ordinal_position$$,
-  $$values ('id'::text), ('order_id'), ('author_user_id'), ('note'), ('created_at')$$,
+  $$select column_name::text collate "C" from information_schema.columns where table_schema = 'private' and table_name = 'order_internal_notes' order by ordinal_position$$,
+  $$values ('id'::text collate "C"), ('order_id'::text collate "C"), ('author_user_id'::text collate "C"), ('note'::text collate "C"), ('created_at'::text collate "C")$$,
   'internal notes stay in the private schema'
 );
 select is(
@@ -75,8 +75,8 @@ select is(
   'orders.offer_id uses ON DELETE SET NULL'
 );
 select results_eq(
-  $$select indexname::text from pg_indexes where schemaname = 'public' and tablename = 'orders' and indexname in ('orders_payment_proof_path_unique_idx','orders_user_created_idx','orders_order_status_created_idx','orders_payment_status_created_idx','orders_offer_id_idx','orders_game_id_idx') order by indexname$$,
-  $$values ('orders_game_id_idx'::text), ('orders_offer_id_idx'), ('orders_order_status_created_idx'), ('orders_payment_proof_path_unique_idx'), ('orders_payment_status_created_idx'), ('orders_user_created_idx')$$,
+  $$select indexname::text collate "C" from pg_indexes where schemaname = 'public' and tablename = 'orders' and indexname in ('orders_payment_proof_path_unique_idx','orders_user_created_idx','orders_order_status_created_idx','orders_payment_status_created_idx','orders_offer_id_idx','orders_game_id_idx') order by indexname$$,
+  $$values ('orders_game_id_idx'::text collate "C"), ('orders_offer_id_idx'::text collate "C"), ('orders_order_status_created_idx'::text collate "C"), ('orders_payment_proof_path_unique_idx'::text collate "C"), ('orders_payment_status_created_idx'::text collate "C"), ('orders_user_created_idx'::text collate "C")$$,
   'required order indexes exist'
 );
 select ok(
@@ -85,8 +85,8 @@ select ok(
 );
 
 select results_eq(
-  $$select relname::text from pg_class c join pg_namespace n on n.oid = c.relnamespace where n.nspname = 'public' and c.relkind = 'r' and c.relname in ('profiles','games','public_offers','orders','order_status_history') and c.relrowsecurity order by relname$$,
-  $$values ('games'::text), ('order_status_history'), ('orders'), ('profiles'), ('public_offers')$$,
+  $$select relname::text collate "C" from pg_class c join pg_namespace n on n.oid = c.relnamespace where n.nspname = 'public' and c.relkind = 'r' and c.relname in ('profiles','games','public_offers','orders','order_status_history') and c.relrowsecurity order by relname$$,
+  $$values ('games'::text collate "C"), ('order_status_history'::text collate "C"), ('orders'::text collate "C"), ('profiles'::text collate "C"), ('public_offers'::text collate "C")$$,
   'RLS is enabled on all five public platform tables'
 );
 
