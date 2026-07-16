@@ -8,6 +8,7 @@ on:
 
 permissions:
   contents: read
+  issues: write
 
 jobs:
   verify:
@@ -78,6 +79,37 @@ jobs:
       - name: Stop on test failures
         if: steps.tests.outcome == 'failure'
         run: exit 1
+
+      - name: Publish temporary CI verification receipt
+        if: github.event_name == 'pull_request'
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          RUN_URL: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          set -euo pipefail
+          passed_tests="$(python3 - <<'PY'
+          import re
+          from pathlib import Path
+
+          log = Path('flutter-test.log').read_text(encoding='utf-8', errors='replace')
+          matches = re.findall(r'\+(\d+)(?:\s+-\d+)?:\s+All tests passed!', log)
+          print(matches[-1] if matches else 'unknown')
+          PY
+          )"
+          body="$(cat <<EOF
+          ✅ **02B-1A CI verification receipt**
+
+          - Commit: \`${GITHUB_SHA}\`
+          - Run: ${RUN_URL}
+          - \`flutter pub get\`: success
+          - \`dart format --output=none --set-exit-if-changed .\`: success
+          - \`flutter analyze\`: success
+          - \`flutter test\`: success (${passed_tests} passed, 0 failed)
+          EOF
+          )"
+          gh api             --method POST             "repos/${GITHUB_REPOSITORY}/issues/${PR_NUMBER}/comments"             -f "body=${body}"
 
   signed-release:
     needs: verify
