@@ -6,18 +6,18 @@ set local search_path = public, extensions, pg_catalog;
 select plan(39);
 
 select results_eq(
-  $$select n.nspname::text || '.' || p.proname::text from pg_proc p join pg_namespace n on n.oid = p.pronamespace where p.prosecdef and n.nspname in ('public','private') order by 1$$,
+  $$select (n.nspname::text || '.' || p.proname::text) collate "C" from pg_proc p join pg_namespace n on n.oid = p.pronamespace where p.prosecdef and n.nspname in ('public','private') order by 1$$,
   $$values
-    ('private.handle_auth_user_created'::text),
-    ('private.handle_auth_user_email_changed'),
-    ('public.admin_add_order_internal_note'),
-    ('public.admin_list_order_internal_notes'),
-    ('public.admin_mark_refunded'),
-    ('public.admin_set_order_status'),
-    ('public.admin_set_payment_status'),
-    ('public.attach_payment_proof'),
-    ('public.create_order'),
-    ('public.get_my_order_timeline')$$,
+    ('private.handle_auth_user_created'::text collate "C"),
+    ('private.handle_auth_user_email_changed'::text collate "C"),
+    ('public.admin_add_order_internal_note'::text collate "C"),
+    ('public.admin_list_order_internal_notes'::text collate "C"),
+    ('public.admin_mark_refunded'::text collate "C"),
+    ('public.admin_set_order_status'::text collate "C"),
+    ('public.admin_set_payment_status'::text collate "C"),
+    ('public.attach_payment_proof'::text collate "C"),
+    ('public.create_order'::text collate "C"),
+    ('public.get_my_order_timeline'::text collate "C")$$,
   'all SECURITY DEFINER functions are discovered from pg_proc'
 );
 select is(
@@ -64,8 +64,8 @@ select is(
 );
 
 select results_eq(
-  $$select policyname::text || ':' || cmd::text from pg_policies where schemaname = 'storage' and tablename = 'objects' and policyname like 'payment_proofs_%' order by 1$$,
-  $$values ('payment_proofs_insert_own_order:INSERT'::text), ('payment_proofs_select_owner_or_admin:SELECT')$$,
+  $$select (policyname::text || ':' || cmd::text) collate "C" from pg_policies where schemaname = 'storage' and tablename = 'objects' and policyname like 'payment_proofs_%' order by 1$$,
+  $$values ('payment_proofs_insert_own_order:INSERT'::text collate "C"), ('payment_proofs_select_owner_or_admin:SELECT'::text collate "C")$$,
   'payment-proofs has only INSERT and SELECT client policies'
 );
 select is((select count(*)::integer from pg_policies where schemaname = 'storage' and tablename = 'objects' and policyname like 'payment_proofs_%' and cmd = 'UPDATE'), 0, 'no payment proof UPDATE policy exists');
