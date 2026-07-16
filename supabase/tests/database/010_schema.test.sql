@@ -11,23 +11,23 @@ select ok(to_regtype('public.payment_method_type') is not null, 'payment_method_
 select ok(to_regtype('public.status_event_type') is not null, 'status_event_type exists');
 
 select results_eq(
-  $$select enumlabel::text from pg_enum where enumtypid = 'public.order_status_type'::regtype order by enumsortorder$$,
-  $$values ('new'::text), ('accepted'), ('processing'), ('completed'), ('rejected'), ('cancelled')$$,
+  $$select enumlabel::text collate "C" from pg_enum where enumtypid = 'public.order_status_type'::regtype order by enumsortorder$$,
+  $$values ('new'::text collate "C"), ('accepted'::text collate "C"), ('processing'::text collate "C"), ('completed'::text collate "C"), ('rejected'::text collate "C"), ('cancelled'::text collate "C")$$,
   'order status enum labels match the contract'
 );
 select results_eq(
-  $$select enumlabel::text from pg_enum where enumtypid = 'public.payment_status_type'::regtype order by enumsortorder$$,
-  $$values ('awaiting_payment'::text), ('under_review'), ('paid'), ('proof_rejected'), ('refund_pending'), ('refunded')$$,
+  $$select enumlabel::text collate "C" from pg_enum where enumtypid = 'public.payment_status_type'::regtype order by enumsortorder$$,
+  $$values ('awaiting_payment'::text collate "C"), ('under_review'::text collate "C"), ('paid'::text collate "C"), ('proof_rejected'::text collate "C"), ('refund_pending'::text collate "C"), ('refunded'::text collate "C")$$,
   'payment status enum labels include refund states'
 );
 select results_eq(
-  $$select enumlabel::text from pg_enum where enumtypid = 'public.payment_method_type'::regtype order by enumsortorder$$,
-  $$values ('cash'::text), ('transfer')$$,
+  $$select enumlabel::text collate "C" from pg_enum where enumtypid = 'public.payment_method_type'::regtype order by enumsortorder$$,
+  $$values ('cash'::text collate "C"), ('transfer'::text collate "C")$$,
   'payment method enum labels match the contract'
 );
 select results_eq(
-  $$select enumlabel::text from pg_enum where enumtypid = 'public.status_event_type'::regtype order by enumsortorder$$,
-  $$values ('created'::text), ('order_changed'), ('payment_changed'), ('proof_attached'), ('refund_started'), ('refunded')$$,
+  $$select enumlabel::text collate "C" from pg_enum where enumtypid = 'public.status_event_type'::regtype order by enumsortorder$$,
+  $$values ('created'::text collate "C"), ('order_changed'::text collate "C"), ('payment_changed'::text collate "C"), ('proof_attached'::text collate "C"), ('refund_started'::text collate "C"), ('refunded'::text collate "C")$$,
   'status event enum labels match the contract'
 );
 
