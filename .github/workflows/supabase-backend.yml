@@ -1,0 +1,126 @@
+name: Supabase Backend
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "supabase/**"
+      - "supabase/tests/storage/**"
+      - "scripts/validate_supabase_tests.py"
+      - "docs/supabase-*.md"
+      - ".github/workflows/supabase-backend.yml"
+  push:
+    branches:
+      - main
+    paths:
+      - "supabase/**"
+      - "supabase/tests/storage/**"
+      - "scripts/validate_supabase_tests.py"
+      - "docs/supabase-*.md"
+      - ".github/workflows/supabase-backend.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: supabase-backend-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: Local migrations, pgTAP, and Storage API
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    env:
+      SUPABASE_CLI_VERSION: "2.109.1"
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Run static test validation
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 scripts/validate_supabase_tests.py
+          python3 -m py_compile supabase/tests/storage/payment_proofs_storage_test.py
+          base_sha="${{ github.event.pull_request.base.sha || github.event.before || '' }}"
+          if [[ -n "${base_sha}" \
+                && "${base_sha}" != "0000000000000000000000000000000000000000" \
+                && "$(git cat-file -t "${base_sha}" 2>/dev/null || true)" == "commit" ]]; then
+            git diff --check "${base_sha}"...HEAD
+          else
+            git diff --check HEAD^ HEAD
+          fi
+
+      - name: Install pinned Supabase CLI
+        shell: bash
+        run: |
+          set -euo pipefail
+          cli_root="${RUNNER_TEMP}/supabase-cli"
+          mkdir -p "${cli_root}"
+          npm install \
+            --prefix "${cli_root}" \
+            --no-audit \
+            --no-fund \
+            "supabase@${SUPABASE_CLI_VERSION}"
+          echo "${cli_root}/node_modules/.bin" >> "${GITHUB_PATH}"
+
+      - name: Verify CLI version and command surface
+        shell: bash
+        run: |
+          set -euo pipefail
+          supabase --version
+          supabase start --help >/dev/null
+          supabase db reset --help >/dev/null
+          supabase migration list --help >/dev/null
+          supabase db lint --help >/dev/null
+          supabase test db --help >/dev/null
+          supabase stop --help >/dev/null
+
+      - name: Start local Supabase
+        shell: bash
+        run: |
+          set -euo pipefail
+          supabase start
+
+      - name: Reset database from empty state
+        shell: bash
+        run: |
+          set -euo pipefail
+          supabase db reset --local
+
+      - name: Verify local migration history
+        shell: bash
+        run: |
+          set -euo pipefail
+          supabase migration list --local
+
+      - name: Lint database schema
+        shell: bash
+        run: |
+          set -euo pipefail
+          supabase db lint --local --level error --fail-on error
+
+      - name: Run pgTAP database tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          supabase test db --local
+
+      - name: Run Storage REST API integration tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 supabase/tests/storage/payment_proofs_storage_test.py
+
+      - name: Stop local Supabase
+        if: always()
+        shell: bash
+        run: |
+          supabase stop --no-backup
