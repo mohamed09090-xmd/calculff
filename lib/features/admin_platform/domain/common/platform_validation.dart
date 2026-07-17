@@ -9,6 +9,8 @@ enum PlatformValidationField {
   rewardQuantity,
   salePriceDzd,
   selectedGameIsActive,
+  searchText,
+  dateRange,
 }
 
 enum PlatformValidationCode {
@@ -19,6 +21,8 @@ enum PlatformValidationCode {
   invalidFormat,
   mustBePositive,
   inactiveGame,
+  containsControlCharacters,
+  invalidRange,
 }
 
 class PlatformValidationIssue {
