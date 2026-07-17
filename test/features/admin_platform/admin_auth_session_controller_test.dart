@@ -79,9 +79,7 @@ void main() {
 
     test('prevents two concurrent sign-in attempts', () async {
       final completer = Completer<AdminAuthSession>();
-      final repository = FakeAdminAuthRepository(
-        signInCompleter: completer,
-      );
+      final repository = FakeAdminAuthRepository(signInCompleter: completer);
       final controller = await startController(repository);
       addTearDown(controller.dispose);
 
@@ -122,24 +120,18 @@ void main() {
     });
 
     test('signedOut event updates state', () async {
-      final repository = FakeAdminAuthRepository(
-        restoredSession: adminSession,
-      );
+      final repository = FakeAdminAuthRepository(restoredSession: adminSession);
       final controller = await startController(repository);
       addTearDown(controller.dispose);
 
-      repository.emit(
-        const AdminAuthEvent(type: AdminAuthEventType.signedOut),
-      );
+      repository.emit(const AdminAuthEvent(type: AdminAuthEventType.signedOut));
       await Future<void>.delayed(Duration.zero);
 
       expect(controller.state.status, AdminAuthStatus.signedOut);
     });
 
     test('tokenRefreshed rechecks the admin role', () async {
-      final repository = FakeAdminAuthRepository(
-        restoredSession: adminSession,
-      );
+      final repository = FakeAdminAuthRepository(restoredSession: adminSession);
       final controller = await startController(repository);
       addTearDown(controller.dispose);
 

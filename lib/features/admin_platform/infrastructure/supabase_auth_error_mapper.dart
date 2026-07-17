@@ -15,9 +15,7 @@ class SupabaseAuthErrorMapper {
     if (error is AuthRetryableFetchException ||
         error is SocketException ||
         error is TimeoutException) {
-      return const AdminAuthFailure(
-        AdminAuthFailureCode.networkUnavailable,
-      );
+      return const AdminAuthFailure(AdminAuthFailureCode.networkUnavailable);
     }
     if (error is AuthSessionMissingException) {
       return const AdminAuthFailure(AdminAuthFailureCode.sessionExpired);
@@ -26,9 +24,7 @@ class SupabaseAuthErrorMapper {
       final originalError = error.originalError;
       if (originalError is SocketException ||
           originalError is TimeoutException) {
-        return const AdminAuthFailure(
-          AdminAuthFailureCode.networkUnavailable,
-        );
+        return const AdminAuthFailure(AdminAuthFailureCode.networkUnavailable);
       }
     }
     if (error is AuthException) {
@@ -37,9 +33,7 @@ class SupabaseAuthErrorMapper {
 
       if (code == 'invalid_credentials' ||
           message.contains('invalid login credentials')) {
-        return const AdminAuthFailure(
-          AdminAuthFailureCode.invalidCredentials,
-        );
+        return const AdminAuthFailure(AdminAuthFailureCode.invalidCredentials);
       }
 
       const expiredSessionCodes = {
@@ -55,9 +49,7 @@ class SupabaseAuthErrorMapper {
           message.contains('invalid refresh token') ||
           message.contains('refresh token not found') ||
           message.contains('refresh token already used')) {
-        return const AdminAuthFailure(
-          AdminAuthFailureCode.sessionExpired,
-        );
+        return const AdminAuthFailure(AdminAuthFailureCode.sessionExpired);
       }
     }
 

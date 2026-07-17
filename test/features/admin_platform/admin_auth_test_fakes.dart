@@ -121,8 +121,7 @@ class FakeAdminAuthListener implements AdminAuthListener {
   Future<void> cancel() => _onCancel();
 }
 
-class FakeSupabaseAdminAuthDataSource
-    implements SupabaseAdminAuthDataSource {
+class FakeSupabaseAdminAuthDataSource implements SupabaseAdminAuthDataSource {
   FakeSupabaseAdminAuthDataSource({this.currentSession});
 
   @override
@@ -181,7 +180,8 @@ Session makeSupabaseSession({
       createdAt: '2026-01-01T00:00:00Z',
     ),
   );
-  session.expiresAt = DateTime.now()
+  session.expiresAt =
+      DateTime.now()
           .add(expired ? const Duration(minutes: -1) : const Duration(hours: 1))
           .millisecondsSinceEpoch ~/
       1000;

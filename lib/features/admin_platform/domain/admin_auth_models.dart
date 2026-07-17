@@ -16,43 +16,41 @@ class AdminAuthState {
   const AdminAuthState._({required this.status, this.failureCode});
 
   const AdminAuthState.unavailable()
-      : this._(
-          status: AdminAuthStatus.unavailable,
-          failureCode: AdminAuthFailureCode.configurationUnavailable,
-        );
+    : this._(
+        status: AdminAuthStatus.unavailable,
+        failureCode: AdminAuthFailureCode.configurationUnavailable,
+      );
 
-  const AdminAuthState.restoring()
-      : this._(status: AdminAuthStatus.restoring);
+  const AdminAuthState.restoring() : this._(status: AdminAuthStatus.restoring);
 
-  const AdminAuthState.signedOut()
-      : this._(status: AdminAuthStatus.signedOut);
+  const AdminAuthState.signedOut() : this._(status: AdminAuthStatus.signedOut);
 
   const AdminAuthState.authenticating()
-      : this._(status: AdminAuthStatus.authenticating);
+    : this._(status: AdminAuthStatus.authenticating);
 
   const AdminAuthState.authorized()
-      : this._(status: AdminAuthStatus.authorized);
+    : this._(status: AdminAuthStatus.authorized);
 
   const AdminAuthState.unauthorized()
-      : this._(
-          status: AdminAuthStatus.unauthorized,
-          failureCode: AdminAuthFailureCode.unauthorized,
-        );
+    : this._(
+        status: AdminAuthStatus.unauthorized,
+        failureCode: AdminAuthFailureCode.unauthorized,
+      );
 
   const AdminAuthState.sessionExpired()
-      : this._(
-          status: AdminAuthStatus.sessionExpired,
-          failureCode: AdminAuthFailureCode.sessionExpired,
-        );
+    : this._(
+        status: AdminAuthStatus.sessionExpired,
+        failureCode: AdminAuthFailureCode.sessionExpired,
+      );
 
   const AdminAuthState.offline()
-      : this._(
-          status: AdminAuthStatus.offline,
-          failureCode: AdminAuthFailureCode.networkUnavailable,
-        );
+    : this._(
+        status: AdminAuthStatus.offline,
+        failureCode: AdminAuthFailureCode.networkUnavailable,
+      );
 
   const AdminAuthState.failure(AdminAuthFailureCode failureCode)
-      : this._(status: AdminAuthStatus.failure, failureCode: failureCode);
+    : this._(status: AdminAuthStatus.failure, failureCode: failureCode);
 
   final AdminAuthStatus status;
   final AdminAuthFailureCode? failureCode;
@@ -69,10 +67,7 @@ class AdminAuthState {
 }
 
 class AdminAuthSession {
-  const AdminAuthSession({
-    required this.isAdmin,
-    required this.isExpired,
-  });
+  const AdminAuthSession({required this.isAdmin, required this.isExpired});
 
   final bool isAdmin;
   final bool isExpired;

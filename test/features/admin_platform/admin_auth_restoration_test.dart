@@ -45,9 +45,7 @@ void main() {
     });
 
     test('valid restored admin session produces authorized', () async {
-      final repository = FakeAdminAuthRepository(
-        restoredSession: adminSession,
-      );
+      final repository = FakeAdminAuthRepository(restoredSession: adminSession);
       final controller = await startController(repository);
       addTearDown(controller.dispose);
 
@@ -79,18 +77,21 @@ void main() {
       expect(controller.state.status, AdminAuthStatus.authorized);
     });
 
-    test('non-admin after refresh is rejected and signed out locally', () async {
-      final repository = FakeAdminAuthRepository(
-        restoredSession: nonAdminSession,
-        refreshedSession: nonAdminSession,
-      );
-      final controller = await startController(repository);
-      addTearDown(controller.dispose);
+    test(
+      'non-admin after refresh is rejected and signed out locally',
+      () async {
+        final repository = FakeAdminAuthRepository(
+          restoredSession: nonAdminSession,
+          refreshedSession: nonAdminSession,
+        );
+        final controller = await startController(repository);
+        addTearDown(controller.dispose);
 
-      expect(repository.refreshCalls, 1);
-      expect(repository.signOutCalls, 1);
-      expect(controller.state.status, AdminAuthStatus.unauthorized);
-    });
+        expect(repository.refreshCalls, 1);
+        expect(repository.signOutCalls, 1);
+        expect(controller.state.status, AdminAuthStatus.unauthorized);
+      },
+    );
 
     test('invalid refresh token produces sessionExpired and cleanup', () async {
       final repository = FakeAdminAuthRepository(
