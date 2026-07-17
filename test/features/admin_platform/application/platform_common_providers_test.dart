@@ -37,7 +37,10 @@ void main() {
       addTearDown(container.dispose);
 
       expect(
-        identical(container.read(supabasePlatformErrorMapperProvider), fakeMapper),
+        identical(
+          container.read(supabasePlatformErrorMapperProvider),
+          fakeMapper,
+        ),
         isTrue,
       );
       expect(
@@ -45,31 +48,39 @@ void main() {
         isTrue,
       );
       expect(
-        identical(container.read(platformReadCoordinatorProvider), fakeCoordinator),
+        identical(
+          container.read(platformReadCoordinatorProvider),
+          fakeCoordinator,
+        ),
         isTrue,
       );
     });
 
-    test('missing Supabase configuration does not execute a platform read', () async {
-      final container = ProviderContainer(
-        overrides: [
-          platformAdminAuthStateProvider.overrideWithValue(
-            const AdminAuthState.unavailable(),
+    test(
+      'missing Supabase configuration does not execute a platform read',
+      () async {
+        final container = ProviderContainer(
+          overrides: [
+            platformAdminAuthStateProvider.overrideWithValue(
+              const AdminAuthState.unavailable(),
+            ),
+          ],
+        );
+        addTearDown(container.dispose);
+        var readCalls = 0;
+
+        await expectLater(
+          container.read(platformReadCoordinatorProvider).runRead<void>(
+            () async {
+              readCalls += 1;
+            },
           ),
-        ],
-      );
-      addTearDown(container.dispose);
-      var readCalls = 0;
+          throwsA(_failureCode(PlatformFailureCode.temporarilyUnavailable)),
+        );
 
-      await expectLater(
-        container.read(platformReadCoordinatorProvider).runRead<void>(() async {
-          readCalls += 1;
-        }),
-        throwsA(_failureCode(PlatformFailureCode.temporarilyUnavailable)),
-      );
-
-      expect(readCalls, 0);
-    });
+        expect(readCalls, 0);
+      },
+    );
 
     test('authorized session allows a read', () async {
       final container = _authorizedContainer();
@@ -88,23 +99,24 @@ void main() {
       expect(container.read(platformDataScopeProvider).isAuthorized, isTrue);
     });
 
-    for (final testCase in <({String name, AdminAuthState state, PlatformFailureCode reason})>[
-      (
-        name: 'logout',
-        state: const AdminAuthState.signedOut(),
-        reason: PlatformFailureCode.sessionExpired,
-      ),
-      (
-        name: 'session expiry',
-        state: const AdminAuthState.sessionExpired(),
-        reason: PlatformFailureCode.sessionExpired,
-      ),
-      (
-        name: 'unauthorized state',
-        state: const AdminAuthState.unauthorized(),
-        reason: PlatformFailureCode.unauthorized,
-      ),
-    ]) {
+    for (final testCase
+        in <({String name, AdminAuthState state, PlatformFailureCode reason})>[
+          (
+            name: 'logout',
+            state: const AdminAuthState.signedOut(),
+            reason: PlatformFailureCode.sessionExpired,
+          ),
+          (
+            name: 'session expiry',
+            state: const AdminAuthState.sessionExpired(),
+            reason: PlatformFailureCode.sessionExpired,
+          ),
+          (
+            name: 'unauthorized state',
+            state: const AdminAuthState.unauthorized(),
+            reason: PlatformFailureCode.unauthorized,
+          ),
+        ]) {
       test('${testCase.name} invalidates the platform data scope', () async {
         final container = _authorizedContainer();
         addTearDown(container.dispose);
@@ -163,15 +175,10 @@ ProviderContainer _authorizedContainer() {
 }
 
 Matcher _failureCode(PlatformFailureCode code) {
-  return isA<PlatformFailure>().having(
-    (failure) => failure.code,
-    'code',
-    code,
-  );
+  return isA<PlatformFailure>().having((failure) => failure.code, 'code', code);
 }
 
-class FakeSupabasePlatformErrorMapper
-    implements SupabasePlatformErrorMapper {
+class FakeSupabasePlatformErrorMapper implements SupabasePlatformErrorMapper {
   @override
   PlatformFailure map(Object error) {
     return const PlatformFailure(PlatformFailureCode.unknown);

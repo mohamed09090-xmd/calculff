@@ -18,7 +18,8 @@ final supabasePlatformErrorMapperProvider =
 final platformSessionAccessProvider = Provider<PlatformSessionAccess>((ref) {
   return CallbackPlatformSessionAccess(
     readState: () => ref.read(platformAdminAuthStateProvider),
-    refresh: () => ref.read(adminAuthControllerProvider.notifier).refreshSession(),
+    refresh: () =>
+        ref.read(adminAuthControllerProvider.notifier).refreshSession(),
   );
 });
 
@@ -38,7 +39,9 @@ final platformDataScopeProvider =
       return controller;
     });
 
-final platformReadCoordinatorProvider = Provider<PlatformReadCoordinator>((ref) {
+final platformReadCoordinatorProvider = Provider<PlatformReadCoordinator>((
+  ref,
+) {
   final errorMapper = ref.watch(supabasePlatformErrorMapperProvider);
   return PlatformSessionCoordinator(
     sessionAccess: ref.watch(platformSessionAccessProvider),

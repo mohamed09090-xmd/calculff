@@ -154,9 +154,7 @@ void main() {
       await expectLater(
         coordinator.runRead<void>(() async {
           readCalls += 1;
-          throw const PlatformFailure(
-            PlatformFailureCode.networkUnavailable,
-          );
+          throw const PlatformFailure(PlatformFailureCode.networkUnavailable);
         }),
         throwsA(_failureCode(PlatformFailureCode.networkUnavailable)),
       );
@@ -187,33 +185,36 @@ void main() {
       expect(session.refreshCalls, 0);
     });
 
-    test('successful retry returns the operation result exactly once', () async {
-      final expectedResult = Object();
-      final session = FakePlatformSessionAccess(
-        state: const AdminAuthState.authorized(),
-        stateAfterRefresh: const AdminAuthState.authorized(),
-      );
-      final coordinator = _coordinator(
-        session: session,
-        scope: FakePlatformDataScopeSink(),
-      );
-      var readCalls = 0;
-      var resultCreations = 0;
+    test(
+      'successful retry returns the operation result exactly once',
+      () async {
+        final expectedResult = Object();
+        final session = FakePlatformSessionAccess(
+          state: const AdminAuthState.authorized(),
+          stateAfterRefresh: const AdminAuthState.authorized(),
+        );
+        final coordinator = _coordinator(
+          session: session,
+          scope: FakePlatformDataScopeSink(),
+        );
+        var readCalls = 0;
+        var resultCreations = 0;
 
-      final result = await coordinator.runRead(() async {
-        readCalls += 1;
-        if (readCalls == 1) {
-          throw const PlatformFailure(PlatformFailureCode.sessionExpired);
-        }
-        resultCreations += 1;
-        return expectedResult;
-      });
+        final result = await coordinator.runRead(() async {
+          readCalls += 1;
+          if (readCalls == 1) {
+            throw const PlatformFailure(PlatformFailureCode.sessionExpired);
+          }
+          resultCreations += 1;
+          return expectedResult;
+        });
 
-      expect(identical(result, expectedResult), isTrue);
-      expect(readCalls, 2);
-      expect(resultCreations, 1);
-      expect(session.refreshCalls, 1);
-    });
+        expect(identical(result, expectedResult), isTrue);
+        expect(readCalls, 2);
+        expect(resultCreations, 1);
+        expect(session.refreshCalls, 1);
+      },
+    );
   });
 }
 
@@ -234,11 +235,7 @@ PlatformSessionCoordinator _coordinator({
 }
 
 Matcher _failureCode(PlatformFailureCode code) {
-  return isA<PlatformFailure>().having(
-    (failure) => failure.code,
-    'code',
-    code,
-  );
+  return isA<PlatformFailure>().having((failure) => failure.code, 'code', code);
 }
 
 class FakePlatformSessionAccess implements PlatformSessionAccess {

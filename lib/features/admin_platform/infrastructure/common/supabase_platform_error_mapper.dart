@@ -71,7 +71,14 @@ class SupabasePlatformErrorMapper {
       return const PlatformFailure(PlatformFailureCode.unauthorized);
     }
 
-    const temporaryStatusCodes = <String>{'408', '429', '500', '502', '503', '504'};
+    const temporaryStatusCodes = <String>{
+      '408',
+      '429',
+      '500',
+      '502',
+      '503',
+      '504',
+    };
     if (temporaryStatusCodes.contains(statusCode)) {
       return const PlatformFailure(PlatformFailureCode.temporarilyUnavailable);
     }
@@ -102,7 +109,9 @@ class SupabasePlatformErrorMapper {
       case '57P01':
       case '57P02':
       case '57P03':
-        return const PlatformFailure(PlatformFailureCode.temporarilyUnavailable);
+        return const PlatformFailure(
+          PlatformFailureCode.temporarilyUnavailable,
+        );
       default:
         if (code != null && code.startsWith('08')) {
           return const PlatformFailure(
