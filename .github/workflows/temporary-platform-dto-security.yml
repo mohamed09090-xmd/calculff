@@ -1,0 +1,86 @@
+name: Temporary platform DTO security verification
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  verify-dto-diff:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Verify DTO diff and security boundaries
+        shell: bash
+        run: |
+          set -euo pipefail
+          base='a7601531ebbf87318aac9e996d35a0ab0a2362fc'
+          temporary_workflow='.github/workflows/temporary-platform-dto-security.yml'
+
+          git diff --check "$base"...HEAD
+
+          git diff --name-only "$base"...HEAD \
+            | grep -v -F "$temporary_workflow" \
+            > changed-files.txt
+
+          while IFS= read -r path; do
+            case "$path" in
+              lib/features/admin_platform/infrastructure/*|test/features/admin_platform/infrastructure/*|test/features/admin_platform/domain/admin_platform_domain_architecture_test.dart)
+                ;;
+              *)
+                echo "Out-of-scope file changed: $path" >&2
+                exit 1
+                ;;
+            esac
+
+            case "$path" in
+              *.env|*.jks|*.keystore|android/key.properties|google-services.json|GoogleService-Info.plist)
+                echo "Sensitive file changed: $path" >&2
+                exit 1
+                ;;
+            esac
+          done < changed-files.txt
+
+          git diff --unified=0 "$base"...HEAD -- \
+            . \
+            ":(exclude)$temporary_workflow" \
+            > dto-change.diff
+
+          if grep -Eqi \
+            'sb_secret_|service_role|github_pat_|ghp_[A-Za-z0-9]{20,}|-----BEGIN ([A-Z]+ )?PRIVATE KEY-----|eyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}' \
+            dto-change.diff; then
+            echo 'Potential secret material found in DTO diff.' >&2
+            exit 1
+          fi
+
+          production_root='lib/features/admin_platform/infrastructure'
+
+          if grep -ERni \
+            'txxokpovdbvsvnkpbrrp|zegjqwsvsaprnguvxuwk|supabase\.co|SupabaseClient|PostgrestFilterBuilder|package:supabase_flutter|package:postgrest|package:sqflite|AppRepository|DatabaseHelper' \
+            "$production_root"; then
+            echo 'Forbidden client, project, or persistence reference found.' >&2
+            exit 1
+          fi
+
+          if grep -ERni \
+            '\.(select|insert|update|delete|rpc)\s*\(|\.auth\.' \
+            "$production_root"; then
+            echo 'Query, mutation, RPC, or Auth operation found.' >&2
+            exit 1
+          fi
+
+          if grep -ERni \
+            'print\s*\(|debugPrint\s*\(|logger\.|payload\.toString\s*\(|jsonEncode\s*\(payload|rawResponse' \
+            "$production_root"; then
+            echo 'Raw payload or response logging found.' >&2
+            exit 1
+          fi
+
+          echo 'git diff --check: passed'
+          echo 'scope verification: passed'
+          echo 'secret scan: passed'
+          echo 'cloud/query/logging verification: passed'
