@@ -8,13 +8,9 @@ void main() {
   group('CustomerOrderSummaryDto', () {
     test('maps every supported order status', () {
       for (final status in OrderStatus.values) {
-        final payload = _summaryPayload()
-          ..['order_status'] = status.wireValue;
+        final payload = _summaryPayload()..['order_status'] = status.wireValue;
 
-        expect(
-          CustomerOrderSummaryDto.fromMap(payload).orderStatus,
-          status,
-        );
+        expect(CustomerOrderSummaryDto.fromMap(payload).orderStatus, status);
       }
     });
 
@@ -23,10 +19,7 @@ void main() {
         final payload = _summaryPayload()
           ..['payment_status'] = status.wireValue;
 
-        expect(
-          CustomerOrderSummaryDto.fromMap(payload).paymentStatus,
-          status,
-        );
+        expect(CustomerOrderSummaryDto.fromMap(payload).paymentStatus, status);
       }
     });
 
@@ -35,10 +28,7 @@ void main() {
         final payload = _summaryPayload()
           ..['payment_method'] = method.wireValue;
 
-        expect(
-          CustomerOrderSummaryDto.fromMap(payload).paymentMethod,
-          method,
-        );
+        expect(CustomerOrderSummaryDto.fromMap(payload).paymentMethod, method);
       }
     });
 
@@ -54,9 +44,7 @@ void main() {
       final withProof = CustomerOrderSummaryDto.fromMap(_summaryPayload());
       final withoutProofPayload = _summaryPayload()
         ..['payment_proof_path'] = null;
-      final withoutProof = CustomerOrderSummaryDto.fromMap(
-        withoutProofPayload,
-      );
+      final withoutProof = CustomerOrderSummaryDto.fromMap(withoutProofPayload);
 
       expect(withProof.hasPaymentProof, isTrue);
       expect(withProof.toDomain().hasPaymentProof, isTrue);
@@ -198,15 +186,14 @@ Map<String, Object?> _summaryPayload() {
 }
 
 Map<String, Object?> _detailsPayload() {
-  return _summaryPayload()
-    ..addAll(<String, Object?>{
-      'customer_email_snapshot': 'customer@example.test',
-      'customer_phone_snapshot': '0550000000',
-      'public_status_message': 'Payment is under review',
-      'updated_at': '2026-07-17T13:00:00+01:00',
-      'completed_at': '2026-07-18T00:00:00Z',
-      'refund_started_at': '2026-07-19T00:00:00Z',
-      'refunded_at': '2026-07-20T00:00:00Z',
-      'internal_note': 'must never be mapped',
-    });
+  return _summaryPayload()..addAll(<String, Object?>{
+    'customer_email_snapshot': 'customer@example.test',
+    'customer_phone_snapshot': '0550000000',
+    'public_status_message': 'Payment is under review',
+    'updated_at': '2026-07-17T13:00:00+01:00',
+    'completed_at': '2026-07-18T00:00:00Z',
+    'refund_started_at': '2026-07-19T00:00:00Z',
+    'refunded_at': '2026-07-20T00:00:00Z',
+    'internal_note': 'must never be mapped',
+  });
 }

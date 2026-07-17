@@ -77,7 +77,10 @@ void main() {
         'updated_at': DateTime(2026, 7, 17, 13),
       });
 
-      expect(reader.requiredDateTime('created_at'), DateTime.utc(2026, 7, 17, 11));
+      expect(
+        reader.requiredDateTime('created_at'),
+        DateTime.utc(2026, 7, 17, 11),
+      );
       expect(reader.requiredDateTime('updated_at').isUtc, isTrue);
     });
 

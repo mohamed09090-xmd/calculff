@@ -2,11 +2,7 @@ final RegExp _uuidPattern = RegExp(
   r'^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$',
 );
 
-enum PlatformPayloadFailureReason {
-  missingField,
-  wrongType,
-  invalidValue,
-}
+enum PlatformPayloadFailureReason { missingField, wrongType, invalidValue }
 
 class PlatformPayloadException implements Exception {
   const PlatformPayloadException({required this.field, required this.reason});

@@ -53,9 +53,7 @@ void main() {
 
     test('does not merge an accepted counter into processing', () {
       final payload = _dashboardPayload()..['accepted_orders_count'] = 99;
-      final summary = PlatformDashboardSummaryDto.fromMap(
-        payload,
-      ).toDomain();
+      final summary = PlatformDashboardSummaryDto.fromMap(payload).toDomain();
 
       expect(summary.processingOrdersCount, 3);
     });

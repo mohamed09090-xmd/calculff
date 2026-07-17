@@ -37,12 +37,8 @@ class CustomerOrderSummaryDto {
       inGameName: reader.optionalString('in_game_name'),
       salePriceDzd: reader.requiredInt('sale_price_dzd_snapshot'),
       rewardQuantity: reader.requiredInt('reward_quantity_snapshot'),
-      rewardUnitNameAr: reader.requiredString(
-        'reward_unit_name_ar_snapshot',
-      ),
-      rewardUnitNameFr: reader.requiredString(
-        'reward_unit_name_fr_snapshot',
-      ),
+      rewardUnitNameAr: reader.requiredString('reward_unit_name_ar_snapshot'),
+      rewardUnitNameFr: reader.requiredString('reward_unit_name_fr_snapshot'),
       paymentMethod: readPaymentMethod(reader, 'payment_method'),
       orderStatus: readOrderStatus(reader, 'order_status'),
       paymentStatus: readPaymentStatus(reader, 'payment_status'),

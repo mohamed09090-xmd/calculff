@@ -24,14 +24,8 @@ class PlatformDashboardSummaryDto {
         reader,
         'payments_under_review_count',
       ),
-      completedOrdersCount: _readNonNegative(
-        reader,
-        'completed_orders_count',
-      ),
-      publishedOffersCount: _readNonNegative(
-        reader,
-        'published_offers_count',
-      ),
+      completedOrdersCount: _readNonNegative(reader, 'completed_orders_count'),
+      publishedOffersCount: _readNonNegative(reader, 'published_offers_count'),
       activeGamesCount: _readNonNegative(reader, 'active_games_count'),
       refreshedAt: reader.requiredDateTime('refreshed_at'),
     );

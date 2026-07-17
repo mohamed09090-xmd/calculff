@@ -62,8 +62,7 @@ void main() {
     });
 
     test('rejects wrong integer and boolean types', () {
-      final wrongInteger = _offerPayload()
-        ..['reward_quantity'] = '100';
+      final wrongInteger = _offerPayload()..['reward_quantity'] = '100';
       final wrongBoolean = _offerPayload()..['is_published'] = 1;
 
       expect(

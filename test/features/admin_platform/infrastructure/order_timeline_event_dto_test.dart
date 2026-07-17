@@ -10,10 +10,7 @@ void main() {
         final payload = _timelinePayload()
           ..['event_type'] = eventType.wireValue;
 
-        expect(
-          OrderTimelineEventDto.fromMap(payload).eventType,
-          eventType,
-        );
+        expect(OrderTimelineEventDto.fromMap(payload).eventType, eventType);
       }
     });
 
@@ -32,10 +29,7 @@ void main() {
     test('supports a nullable public message', () {
       final payload = _timelinePayload()..['public_message'] = null;
 
-      expect(
-        OrderTimelineEventDto.fromMap(payload).publicMessage,
-        isNull,
-      );
+      expect(OrderTimelineEventDto.fromMap(payload).publicMessage, isNull);
     });
 
     test('rejects an unknown event type safely', () {
