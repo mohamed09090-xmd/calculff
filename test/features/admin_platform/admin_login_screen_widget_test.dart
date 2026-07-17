@@ -30,14 +30,24 @@ void main() {
   testWidgets('password visibility toggle changes obscureText', (tester) async {
     await _pumpLogin(tester);
 
-    TextFormField passwordField() => tester.widget<TextFormField>(
-      find.byKey(const Key('platform-password-field')),
+    final passwordEditableText = find.descendant(
+      of: find.byKey(const Key('platform-password-field')),
+      matching: find.byType(EditableText),
     );
+    expect(passwordEditableText, findsOneWidget);
 
-    expect(passwordField().obscureText, isTrue);
+    bool passwordIsObscured() =>
+        tester.widget<EditableText>(passwordEditableText).obscureText;
+
+    expect(passwordIsObscured(), isTrue);
+
     await tester.tap(find.byKey(const Key('platform-password-visibility')));
     await tester.pump();
-    expect(passwordField().obscureText, isFalse);
+    expect(passwordIsObscured(), isFalse);
+
+    await tester.tap(find.byKey(const Key('platform-password-visibility')));
+    await tester.pump();
+    expect(passwordIsObscured(), isTrue);
   });
 
   testWidgets('authenticating disables fields and submit button', (
