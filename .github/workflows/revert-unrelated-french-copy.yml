@@ -1,0 +1,42 @@
+name: Restore unrelated French copy
+
+on:
+  push:
+    branches:
+      - feat/admin-platform-foundation
+
+permissions:
+  contents: write
+
+jobs:
+  restore:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feat/admin-platform-foundation
+          fetch-depth: 1
+
+      - name: Restore the pre-existing translation and remove this workflow
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+
+          path = Path('lib/core/localization/french_catalog.dart')
+          content = path.read_text(encoding='utf-8')
+          old = 'Cette ancienne sauvegarde est compatible. Les noms des clients seront automatiquement convertis en fiches clients.'
+          original = 'Cette ancienne sauvegarde est compatible. Les noms de clients seront convertis automatiquement en fiches clients.'
+          if content.count(old) != 1:
+              raise SystemExit('Expected unrelated translation was not found exactly once.')
+          path.write_text(content.replace(old, original), encoding='utf-8')
+          PY
+          dart format lib/core/localization/french_catalog.dart
+          rm .github/workflows/revert-unrelated-french-copy.yml
+          git diff --check
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add lib/core/localization/french_catalog.dart .github/workflows/revert-unrelated-french-copy.yml
+          git commit -m "fix(platform): limit French copy changes"
+          git push origin HEAD:feat/admin-platform-foundation
