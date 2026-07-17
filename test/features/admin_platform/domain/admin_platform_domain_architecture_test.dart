@@ -16,6 +16,9 @@ void main() {
         'package:flutter/',
         'apprepository',
         'databasehelper',
+        'features/admin_platform/infrastructure',
+        '../infrastructure',
+        '/infrastructure/',
       ];
 
       for (final file in files) {
