@@ -128,11 +128,21 @@ void main() {
           .whereType<File>()
           .where((file) => file.path.endsWith('.dart'));
 
+      const forbiddenConnections = <String>[
+        'supabase' '.co',
+        'http' '://',
+        'https' '://',
+      ];
+
       for (final file in files) {
         final content = file.readAsStringSync().toLowerCase();
-        expect(content, isNot(contains('supabase.co')));
-        expect(content, isNot(contains('http://')));
-        expect(content, isNot(contains('https://')));
+        for (final connection in forbiddenConnections) {
+          expect(
+            content,
+            isNot(contains(connection)),
+            reason: '${file.path} must not connect to $connection',
+          );
+        }
       }
     });
 
