@@ -32,9 +32,7 @@ void main() {
     });
 
     test('derives an eight-character display id from a valid UUID', () {
-      final summary = _summary(
-        id: 'ABCDEF12-3456-7890-ABCD-EF1234567890',
-      );
+      final summary = _summary(id: 'ABCDEF12-3456-7890-ABCD-EF1234567890');
 
       expect(summary.displayId, 'abcdef12');
     });
