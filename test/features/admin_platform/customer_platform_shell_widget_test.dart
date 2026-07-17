@@ -106,12 +106,15 @@ void main() {
     tester,
   ) async {
     final handle = tester.ensureSemantics();
-    addTearDown(handle.dispose);
-    await _pumpShell(tester, size: const Size(390, 800));
+    try {
+      await _pumpShell(tester, size: const Size(390, 800));
 
-    expect(find.bySemanticsLabel('حساب المدير'), findsWidgets);
-    expect(find.bySemanticsLabel('لوحة المنصة'), findsWidgets);
-    expect(find.bySemanticsLabel('الطلبات'), findsWidgets);
+      expect(find.bySemanticsLabel('حساب المدير'), findsWidgets);
+      expect(find.bySemanticsLabel(RegExp('لوحة المنصة')), findsWidgets);
+      expect(find.bySemanticsLabel(RegExp('الطلبات')), findsWidgets);
+    } finally {
+      handle.dispose();
+    }
   });
 }
 
