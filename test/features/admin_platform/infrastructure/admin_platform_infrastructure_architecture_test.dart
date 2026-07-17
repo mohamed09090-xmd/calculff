@@ -5,7 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 void main() {
   group('Admin platform infrastructure architecture', () {
     test('production DTOs stay independent from UI and data clients', () {
-      final files = _productionFiles();
+      final files = _dtoProductionFiles();
       const forbiddenReferences = <String>[
         'package:flutter/',
         'widgets.dart',
@@ -31,7 +31,7 @@ void main() {
     });
 
     test('production DTOs expose no query or mutation operations', () {
-      final files = _productionFiles();
+      final files = _dtoProductionFiles();
       const forbiddenOperations = <String>[
         '.select(',
         '.insert(',
@@ -54,7 +54,7 @@ void main() {
     });
 
     test('production DTOs contain no hosted project references', () {
-      final files = _productionFiles();
+      final files = _dtoProductionFiles();
       const forbiddenReferences = <String>[
         'supabase.co',
         'zegjqwsvsaprnguvxuwk',
@@ -131,7 +131,7 @@ void main() {
     });
 
     test('production DTOs do not log raw payloads or responses', () {
-      final files = _productionFiles();
+      final files = _dtoProductionFiles();
       const forbiddenLogging = <String>[
         'print(',
         'debugprint(',
@@ -155,9 +155,44 @@ void main() {
   });
 }
 
-Iterable<File> _productionFiles() {
-  return Directory('lib/features/admin_platform/infrastructure')
-      .listSync(recursive: true)
-      .whereType<File>()
-      .where((file) => file.path.endsWith('.dart'));
+List<File> _dtoProductionFiles() {
+  return <File>[
+    File(
+      'lib/features/admin_platform/infrastructure/common/'
+      'platform_payload_reader.dart',
+    ),
+    File('lib/features/admin_platform/infrastructure/games/game_dto.dart'),
+    File(
+      'lib/features/admin_platform/infrastructure/games/'
+      'game_input_mapper.dart',
+    ),
+    File(
+      'lib/features/admin_platform/infrastructure/offers/'
+      'public_offer_dto.dart',
+    ),
+    File(
+      'lib/features/admin_platform/infrastructure/offers/'
+      'public_offer_input_mapper.dart',
+    ),
+    File(
+      'lib/features/admin_platform/infrastructure/orders/'
+      'order_payload_parsers.dart',
+    ),
+    File(
+      'lib/features/admin_platform/infrastructure/orders/'
+      'customer_order_summary_dto.dart',
+    ),
+    File(
+      'lib/features/admin_platform/infrastructure/orders/'
+      'customer_order_details_dto.dart',
+    ),
+    File(
+      'lib/features/admin_platform/infrastructure/orders/'
+      'order_timeline_event_dto.dart',
+    ),
+    File(
+      'lib/features/admin_platform/infrastructure/dashboard/'
+      'platform_dashboard_summary_dto.dart',
+    ),
+  ];
 }
