@@ -126,23 +126,18 @@ void main() {
       final files = Directory('test/features/admin_platform/domain')
           .listSync(recursive: true)
           .whereType<File>()
-          .where((file) => file.path.endsWith('.dart'));
-
-      const forbiddenConnections = <String>[
-        'supabase' '.co',
-        'http' '://',
-        'https' '://',
-      ];
+          .where((file) => file.path.endsWith('.dart'))
+          .where(
+            (file) => !file.path.endsWith(
+              'admin_platform_domain_architecture_test.dart',
+            ),
+          );
 
       for (final file in files) {
         final content = file.readAsStringSync().toLowerCase();
-        for (final connection in forbiddenConnections) {
-          expect(
-            content,
-            isNot(contains(connection)),
-            reason: '${file.path} must not connect to $connection',
-          );
-        }
+        expect(content, isNot(contains('supabase.co')));
+        expect(content, isNot(contains('http://')));
+        expect(content, isNot(contains('https://')));
       }
     });
 
