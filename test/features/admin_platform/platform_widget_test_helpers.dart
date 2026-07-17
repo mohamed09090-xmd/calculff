@@ -15,9 +15,7 @@ Future<void> pumpPlatformGate(
 }) async {
   await tester.pumpWidget(
     ProviderScope(
-      overrides: [
-        adminAuthRepositoryProvider.overrideWithValue(repository),
-      ],
+      overrides: [adminAuthRepositoryProvider.overrideWithValue(repository)],
       child: MaterialApp(
         locale: locale,
         supportedLocales: const [Locale('ar', 'DZ'), Locale('fr', 'FR')],

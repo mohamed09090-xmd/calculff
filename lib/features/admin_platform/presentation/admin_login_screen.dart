@@ -13,10 +13,8 @@ class AdminLoginScreen extends StatefulWidget {
 
   final bool authenticating;
   final AdminAuthFailureCode? failureCode;
-  final Future<void> Function({
-    required String email,
-    required String password,
-  }) onSignIn;
+  final Future<void> Function({required String email, required String password})
+  onSignIn;
 
   @override
   State<AdminLoginScreen> createState() => _AdminLoginScreenState();
@@ -46,9 +44,7 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
     if (value.isEmpty) {
       return platformText(context, 'البريد مطلوب.');
     }
-    final isValid = RegExp(
-      r'^[^\s@]+@[^\s@]+\.[^\s@]+$',
-    ).hasMatch(value);
+    final isValid = RegExp(r'^[^\s@]+@[^\s@]+\.[^\s@]+$').hasMatch(value);
     if (!isValid) {
       return platformText(context, 'صيغة البريد غير صالحة.');
     }
@@ -86,9 +82,7 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
         : platformFailureText(context, widget.failureCode);
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(platformText(context, 'منصة الزبائن')),
-      ),
+      appBar: AppBar(title: Text(platformText(context, 'منصة الزبائن'))),
       body: SafeArea(
         child: LayoutBuilder(
           builder: (context, constraints) {
@@ -159,7 +153,10 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
                                 autocorrect: false,
                                 enableSuggestions: false,
                                 decoration: InputDecoration(
-                                  labelText: platformText(context, 'كلمة المرور'),
+                                  labelText: platformText(
+                                    context,
+                                    'كلمة المرور',
+                                  ),
                                   prefixIcon: const Icon(Icons.lock_outline),
                                   suffixIcon: Semantics(
                                     button: true,

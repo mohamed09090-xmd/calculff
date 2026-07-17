@@ -140,21 +140,18 @@ const Map<String, String> additionalFrenchTranslations = {
   'تحقق من الاتصال ثم أعد المحاولة.':
       'Vérifiez votre connexion, puis réessayez.',
   'انتهت الجلسة.': 'La session a expiré.',
-  'سجّل الدخول مجددًا للمتابعة.':
-      'Reconnectez-vous pour continuer.',
+  'سجّل الدخول مجددًا للمتابعة.': 'Reconnectez-vous pour continuer.',
   'الحساب غير مخول لإدارة المنصة.':
       'Ce compte ne dispose pas des droits administrateur.',
   'استخدم حساب مدير مخول للوصول إلى منصة الزبائن.':
       'Utilisez un compte administrateur autorisé pour accéder à la plateforme clients.',
-  'حدث خطأ آمن. أعد المحاولة.':
-      'Une erreur est survenue. Réessayez.',
+  'حدث خطأ آمن. أعد المحاولة.': 'Une erreur est survenue. Réessayez.',
   'استعادة جلسة المدير': 'Restauration de la session administrateur',
   'البريد مطلوب.': 'L’adresse e-mail est requise.',
   'صيغة البريد غير صالحة.': 'Adresse e-mail non valide.',
   'كلمة المرور مطلوبة.': 'Le mot de passe est requis.',
   'بيانات الدخول غير صحيحة.': 'Identifiants incorrects.',
-  'هناك محاولة تسجيل دخول قيد التنفيذ.':
-      'Une connexion est déjà en cours.',
+  'هناك محاولة تسجيل دخول قيد التنفيذ.': 'Une connexion est déjà en cours.',
   'جاري تسجيل الدخول...': 'Connexion en cours…',
   'العودة إلى تسجيل الدخول': 'Retour à la connexion',
   'لوحة المنصة': 'Tableau de bord',

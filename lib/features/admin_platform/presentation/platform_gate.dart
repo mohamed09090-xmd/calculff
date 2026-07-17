@@ -21,64 +21,64 @@ class PlatformGate extends ConsumerWidget {
 
     return switch (authState.status) {
       AdminAuthStatus.unavailable => _PlatformStatusScreen(
-          icon: Icons.cloud_off_outlined,
-          title: 'إعداد المنصة غير متوفر.',
-          message: 'يمكنك متابعة استخدام التطبيق المحلي دون تسجيل دخول.',
-          primaryLabel: 'الرجوع إلى التطبيق',
-          onPrimary: () => context.go('/dashboard'),
-        ),
+        icon: Icons.cloud_off_outlined,
+        title: 'إعداد المنصة غير متوفر.',
+        message: 'يمكنك متابعة استخدام التطبيق المحلي دون تسجيل دخول.',
+        primaryLabel: 'الرجوع إلى التطبيق',
+        onPrimary: () => context.go('/dashboard'),
+      ),
       AdminAuthStatus.restoring => const _PlatformLoadingScreen(),
       AdminAuthStatus.signedOut => AdminLoginScreen(
-          authenticating: false,
-          onSignIn: controller.signIn,
-        ),
+        authenticating: false,
+        onSignIn: controller.signIn,
+      ),
       AdminAuthStatus.authenticating => AdminLoginScreen(
-          authenticating: true,
-          onSignIn: controller.signIn,
-        ),
+        authenticating: true,
+        onSignIn: controller.signIn,
+      ),
       AdminAuthStatus.authorized => CustomerPlatformShell(
-          onSignOut: controller.signOut,
-        ),
+        onSignOut: controller.signOut,
+      ),
       AdminAuthStatus.unauthorized => _PlatformStatusScreen(
-          icon: Icons.gpp_bad_outlined,
-          title: 'الحساب غير مخول لإدارة المنصة.',
-          message: 'استخدم حساب مدير مخول للوصول إلى منصة الزبائن.',
-          primaryLabel: 'العودة إلى تسجيل الدخول',
-          onPrimary: controller.signOut,
-          secondaryLabel: 'الرجوع إلى التطبيق',
-          onSecondary: () => context.go('/dashboard'),
-        ),
+        icon: Icons.gpp_bad_outlined,
+        title: 'الحساب غير مخول لإدارة المنصة.',
+        message: 'استخدم حساب مدير مخول للوصول إلى منصة الزبائن.',
+        primaryLabel: 'العودة إلى تسجيل الدخول',
+        onPrimary: controller.signOut,
+        secondaryLabel: 'الرجوع إلى التطبيق',
+        onSecondary: () => context.go('/dashboard'),
+      ),
       AdminAuthStatus.sessionExpired => _PlatformStatusScreen(
-          icon: Icons.schedule_outlined,
-          title: 'انتهت الجلسة.',
-          message: 'سجّل الدخول مجددًا للمتابعة.',
-          primaryLabel: 'العودة إلى تسجيل الدخول',
-          onPrimary: controller.signOut,
-          secondaryLabel: 'الرجوع إلى التطبيق',
-          onSecondary: () => context.go('/dashboard'),
-        ),
+        icon: Icons.schedule_outlined,
+        title: 'انتهت الجلسة.',
+        message: 'سجّل الدخول مجددًا للمتابعة.',
+        primaryLabel: 'العودة إلى تسجيل الدخول',
+        onPrimary: controller.signOut,
+        secondaryLabel: 'الرجوع إلى التطبيق',
+        onSecondary: () => context.go('/dashboard'),
+      ),
       AdminAuthStatus.offline => _PlatformStatusScreen(
-          icon: Icons.wifi_off_outlined,
-          title: 'لا يوجد اتصال بالمنصة.',
-          message: 'تحقق من الاتصال ثم أعد المحاولة.',
-          primaryLabel: 'إعادة المحاولة',
-          onPrimary: controller.restoreSession,
-          secondaryLabel: 'الرجوع إلى التطبيق',
-          onSecondary: () => context.go('/dashboard'),
-        ),
+        icon: Icons.wifi_off_outlined,
+        title: 'لا يوجد اتصال بالمنصة.',
+        message: 'تحقق من الاتصال ثم أعد المحاولة.',
+        primaryLabel: 'إعادة المحاولة',
+        onPrimary: controller.restoreSession,
+        secondaryLabel: 'الرجوع إلى التطبيق',
+        onSecondary: () => context.go('/dashboard'),
+      ),
       AdminAuthStatus.failure => _buildFailureState(
-          authState,
-          controller.signIn,
-          controller.restoreSession,
-          context,
-        ),
+        authState,
+        controller.signIn,
+        controller.restoreSession,
+        context,
+      ),
     };
   }
 
   Widget _buildFailureState(
     AdminAuthState authState,
     Future<void> Function({required String email, required String password})
-        onSignIn,
+    onSignIn,
     Future<void> Function() onRetry,
     BuildContext context,
   ) {
@@ -186,9 +186,7 @@ class _PlatformStatusScreen extends StatelessWidget {
                           Text(
                             platformText(context, title),
                             textAlign: TextAlign.center,
-                            style: Theme.of(context)
-                                .textTheme
-                                .headlineSmall
+                            style: Theme.of(context).textTheme.headlineSmall
                                 ?.copyWith(fontWeight: FontWeight.w800),
                           ),
                           const SizedBox(height: 12),
@@ -206,9 +204,7 @@ class _PlatformStatusScreen extends StatelessWidget {
                                 onPrimary();
                               },
                               icon: const Icon(Icons.refresh),
-                              label: Text(
-                                platformText(context, primaryLabel),
-                              ),
+                              label: Text(platformText(context, primaryLabel)),
                             ),
                           ),
                           if (secondaryLabel != null &&

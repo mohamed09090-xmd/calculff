@@ -23,10 +23,7 @@ void main() {
   testWidgets('drawer shows the Arabic platform entry and opens its route', (
     tester,
   ) async {
-    await _pumpDrawer(
-      tester,
-      language: AppLanguagePreference.arabic,
-    );
+    await _pumpDrawer(tester, language: AppLanguagePreference.arabic);
 
     await tester.tap(find.byIcon(Icons.menu));
     await tester.pumpAndSettle();
@@ -39,10 +36,7 @@ void main() {
   });
 
   testWidgets('drawer shows Plateforme clients in French', (tester) async {
-    await _pumpDrawer(
-      tester,
-      language: AppLanguagePreference.french,
-    );
+    await _pumpDrawer(tester, language: AppLanguagePreference.french);
 
     await tester.tap(find.byIcon(Icons.menu));
     await tester.pumpAndSettle();
@@ -59,16 +53,13 @@ Future<void> _pumpDrawer(
     routes: [
       GoRoute(
         path: '/',
-        builder: (context, state) => const AppShell(
-          title: 'local-app',
-          body: SizedBox.shrink(),
-        ),
+        builder: (context, state) =>
+            const AppShell(title: 'local-app', body: SizedBox.shrink()),
       ),
       GoRoute(
         path: '/platform',
-        builder: (context, state) => const Scaffold(
-          body: Center(child: Text('platform-open')),
-        ),
+        builder: (context, state) =>
+            const Scaffold(body: Center(child: Text('platform-open'))),
       ),
     ],
   );

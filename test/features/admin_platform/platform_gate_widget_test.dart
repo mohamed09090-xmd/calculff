@@ -23,10 +23,7 @@ void main() {
     });
 
     testWidgets('signedOut shows the administrator login form', (tester) async {
-      await pumpPlatformGate(
-        tester,
-        repository: FakeAdminAuthRepository(),
-      );
+      await pumpPlatformGate(tester, repository: FakeAdminAuthRepository());
 
       expect(find.byType(AdminLoginScreen), findsOneWidget);
       expect(find.text('تسجيل دخول المدير'), findsOneWidget);
@@ -36,11 +33,7 @@ void main() {
       final repository = _PendingRestoreRepository();
       addTearDown(repository.complete);
 
-      await pumpPlatformGate(
-        tester,
-        repository: repository,
-        settle: false,
-      );
+      await pumpPlatformGate(tester, repository: repository, settle: false);
 
       expect(find.byType(CircularProgressIndicator), findsOneWidget);
       expect(find.text('استعادة جلسة المدير'), findsOneWidget);
@@ -103,13 +96,13 @@ void main() {
       expect(find.text('الرجوع إلى التطبيق'), findsOneWidget);
     });
 
-    testWidgets('unknown failure never exposes a raw exception', (tester) async {
+    testWidgets('unknown failure never exposes a raw exception', (
+      tester,
+    ) async {
       await pumpPlatformGate(
         tester,
         repository: FakeAdminAuthRepository(
-          restoreFailure: const AdminAuthFailure(
-            AdminAuthFailureCode.unknown,
-          ),
+          restoreFailure: const AdminAuthFailure(AdminAuthFailureCode.unknown),
         ),
       );
 
@@ -144,9 +137,7 @@ void main() {
       final repository = FakeAdminAuthRepository(restoredSession: adminSession);
       await pumpPlatformGate(tester, repository: repository);
 
-      await tester.tap(
-        find.byKey(const Key('platform-admin-account-button')),
-      );
+      await tester.tap(find.byKey(const Key('platform-admin-account-button')));
       await tester.pumpAndSettle();
       await tester.tap(find.byKey(const Key('platform-sign-out-button')));
       await tester.pumpAndSettle();

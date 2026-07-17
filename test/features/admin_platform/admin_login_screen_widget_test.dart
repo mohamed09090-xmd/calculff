@@ -31,13 +31,11 @@ void main() {
     await _pumpLogin(tester);
 
     TextFormField passwordField() => tester.widget<TextFormField>(
-          find.byKey(const Key('platform-password-field')),
-        );
+      find.byKey(const Key('platform-password-field')),
+    );
 
     expect(passwordField().obscureText, isTrue);
-    await tester.tap(
-      find.byKey(const Key('platform-password-visibility')),
-    );
+    await tester.tap(find.byKey(const Key('platform-password-visibility')));
     await tester.pump();
     expect(passwordField().obscureText, isFalse);
   });
@@ -117,7 +115,7 @@ Future<void> _pumpLogin(
   bool authenticating = false,
   AdminAuthFailureCode? failureCode,
   Future<void> Function({required String email, required String password})?
-      onSignIn,
+  onSignIn,
 }) async {
   await tester.pumpWidget(
     MaterialApp(
@@ -131,8 +129,7 @@ Future<void> _pumpLogin(
       home: AdminLoginScreen(
         authenticating: authenticating,
         failureCode: failureCode,
-        onSignIn: onSignIn ??
-            ({required email, required password}) async {},
+        onSignIn: onSignIn ?? ({required email, required password}) async {},
       ),
     ),
   );

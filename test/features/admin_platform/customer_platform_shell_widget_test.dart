@@ -13,10 +13,7 @@ void main() {
     expect(find.text('الطلبات'), findsOneWidget);
     expect(find.text('العروض العامة'), findsOneWidget);
     expect(find.text('الألعاب'), findsOneWidget);
-    expect(
-      find.text('ستضاف هذه الوظيفة في المرحلة التالية.'),
-      findsOneWidget,
-    );
+    expect(find.text('ستضاف هذه الوظيفة في المرحلة التالية.'), findsOneWidget);
   });
 
   testWidgets('small layouts use NavigationBar', (tester) async {
@@ -143,9 +140,7 @@ Future<void> _pumpShell(
         data: MediaQuery.of(context).copyWith(textScaler: textScaler),
         child: child ?? const SizedBox.shrink(),
       ),
-      home: CustomerPlatformShell(
-        onSignOut: onSignOut ?? () async {},
-      ),
+      home: CustomerPlatformShell(onSignOut: onSignOut ?? () async {}),
     ),
   );
   await tester.pumpAndSettle();

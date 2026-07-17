@@ -3,10 +3,7 @@ import 'package:flutter/material.dart';
 import 'platform_ui_text.dart';
 
 class CustomerPlatformShell extends StatefulWidget {
-  const CustomerPlatformShell({
-    super.key,
-    required this.onSignOut,
-  });
+  const CustomerPlatformShell({super.key, required this.onSignOut});
 
   final Future<void> Function() onSignOut;
 
@@ -20,27 +17,27 @@ class _CustomerPlatformShellState extends State<CustomerPlatformShell> {
   int _selectedIndex = 0;
 
   List<_PlatformDestination> _destinations(BuildContext context) => [
-        _PlatformDestination(
-          label: platformText(context, 'لوحة المنصة'),
-          icon: Icons.space_dashboard_outlined,
-          selectedIcon: Icons.space_dashboard,
-        ),
-        _PlatformDestination(
-          label: platformText(context, 'الطلبات'),
-          icon: Icons.receipt_long_outlined,
-          selectedIcon: Icons.receipt_long,
-        ),
-        _PlatformDestination(
-          label: platformText(context, 'العروض العامة'),
-          icon: Icons.campaign_outlined,
-          selectedIcon: Icons.campaign,
-        ),
-        _PlatformDestination(
-          label: platformText(context, 'الألعاب'),
-          icon: Icons.sports_esports_outlined,
-          selectedIcon: Icons.sports_esports,
-        ),
-      ];
+    _PlatformDestination(
+      label: platformText(context, 'لوحة المنصة'),
+      icon: Icons.space_dashboard_outlined,
+      selectedIcon: Icons.space_dashboard,
+    ),
+    _PlatformDestination(
+      label: platformText(context, 'الطلبات'),
+      icon: Icons.receipt_long_outlined,
+      selectedIcon: Icons.receipt_long,
+    ),
+    _PlatformDestination(
+      label: platformText(context, 'العروض العامة'),
+      icon: Icons.campaign_outlined,
+      selectedIcon: Icons.campaign,
+    ),
+    _PlatformDestination(
+      label: platformText(context, 'الألعاب'),
+      icon: Icons.sports_esports_outlined,
+      selectedIcon: Icons.sports_esports,
+    ),
+  ];
 
   Future<void> _openAdminAccount() async {
     await showModalBottomSheet<void>(
@@ -62,9 +59,9 @@ class _CustomerPlatformShellState extends State<CustomerPlatformShell> {
               children: [
                 Text(
                   platformText(sheetContext, 'حساب المدير'),
-                  style: Theme.of(sheetContext).textTheme.titleLarge?.copyWith(
-                        fontWeight: FontWeight.w800,
-                      ),
+                  style: Theme.of(
+                    sheetContext,
+                  ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800),
                 ),
                 const SizedBox(height: 16),
                 ListTile(
@@ -204,9 +201,8 @@ class _PlatformDestinationBody extends StatelessWidget {
                     Text(
                       destination.label,
                       textAlign: TextAlign.center,
-                      style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                            fontWeight: FontWeight.w800,
-                          ),
+                      style: Theme.of(context).textTheme.headlineSmall
+                          ?.copyWith(fontWeight: FontWeight.w800),
                     ),
                     const SizedBox(height: 12),
                     Text(
