@@ -25,8 +25,7 @@ void main() {
   ) async {
     await _pumpDrawer(tester, language: AppLanguagePreference.arabic);
 
-    await tester.tap(find.byIcon(Icons.menu));
-    await tester.pumpAndSettle();
+    await _openDrawerAndRevealPlatformEntry(tester, 'منصة الزبائن');
     expect(find.text('منصة الزبائن'), findsOneWidget);
     expect(find.text('تسجيل دخول المدير'), findsNothing);
 
@@ -38,16 +37,58 @@ void main() {
   testWidgets('drawer shows Plateforme clients in French', (tester) async {
     await _pumpDrawer(tester, language: AppLanguagePreference.french);
 
-    await tester.tap(find.byIcon(Icons.menu));
-    await tester.pumpAndSettle();
+    await _openDrawerAndRevealPlatformEntry(tester, 'Plateforme clients');
     expect(find.text('Plateforme clients'), findsOneWidget);
   });
+
+  testWidgets('drawer supports small screens with 200 percent text', (
+    tester,
+  ) async {
+    await _pumpDrawer(
+      tester,
+      language: AppLanguagePreference.arabic,
+      size: const Size(320, 640),
+      textScaler: const TextScaler.linear(2),
+    );
+
+    await _openDrawerAndRevealPlatformEntry(tester, 'منصة الزبائن');
+    expect(find.text('منصة الزبائن'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+}
+
+Future<void> _openDrawerAndRevealPlatformEntry(
+  WidgetTester tester,
+  String label,
+) async {
+  await tester.tap(find.byIcon(Icons.menu));
+  await tester.pumpAndSettle();
+
+  final drawerScrollable = find.descendant(
+    of: find.byType(NavigationDrawer),
+    matching: find.byType(Scrollable),
+  );
+  expect(drawerScrollable, findsOneWidget);
+
+  await tester.scrollUntilVisible(
+    find.text(label),
+    240,
+    scrollable: drawerScrollable,
+  );
+  await tester.pumpAndSettle();
 }
 
 Future<void> _pumpDrawer(
   WidgetTester tester, {
   required AppLanguagePreference language,
+  Size size = const Size(800, 600),
+  TextScaler textScaler = TextScaler.noScaling,
 }) async {
+  tester.view.physicalSize = size;
+  tester.view.devicePixelRatio = 1;
+  addTearDown(tester.view.resetPhysicalSize);
+  addTearDown(tester.view.resetDevicePixelRatio);
+
   final locale = language.locale;
   final router = GoRouter(
     routes: [
@@ -80,6 +121,10 @@ Future<void> _pumpDrawer(
           GlobalWidgetsLocalizations.delegate,
           GlobalCupertinoLocalizations.delegate,
         ],
+        builder: (context, child) => MediaQuery(
+          data: MediaQuery.of(context).copyWith(textScaler: textScaler),
+          child: child ?? const SizedBox.shrink(),
+        ),
         routerConfig: router,
       ),
     ),
