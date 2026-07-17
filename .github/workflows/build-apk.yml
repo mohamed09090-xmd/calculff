@@ -34,6 +34,9 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
+      - name: Check formatting
+        run: dart format --output=none --set-exit-if-changed .
+
       - name: Analyze
         id: analyze
         continue-on-error: true
@@ -55,13 +58,17 @@ jobs:
         if: steps.analyze.outcome == 'failure'
         run: exit 1
 
-      - name: Test
+      - name: Test with coverage
         id: tests
         continue-on-error: true
         shell: bash
         run: |
           set -o pipefail
-          flutter test --reporter expanded 2>&1 | tee flutter-test.log
+          mkdir -p build/coverage
+          flutter test --coverage \
+            --coverage-path=build/coverage/lcov.info \
+            --reporter expanded \
+            2>&1 | tee flutter-test.log
 
       - name: Upload test log
         if: always()
@@ -96,6 +103,49 @@ jobs:
 
       - name: Install dependencies
         run: flutter pub get
+
+      - name: Validate Supabase release configuration
+        shell: bash
+        env:
+          CALCULFF_SUPABASE_URL: ${{ vars.CALCULFF_SUPABASE_URL }}
+          CALCULFF_SUPABASE_PUBLISHABLE_KEY: ${{ vars.CALCULFF_SUPABASE_PUBLISHABLE_KEY }}
+        run: |
+          set -euo pipefail
+
+          if [ -z "${CALCULFF_SUPABASE_URL:-}" ]; then
+            echo "::error::CALCULFF_SUPABASE_URL is missing or empty."
+            exit 1
+          fi
+
+          if [ -z "${CALCULFF_SUPABASE_PUBLISHABLE_KEY:-}" ]; then
+            echo "::error::CALCULFF_SUPABASE_PUBLISHABLE_KEY is missing or empty."
+            exit 1
+          fi
+
+          case "$CALCULFF_SUPABASE_URL" in
+            https://*) ;;
+            *)
+              echo "::error::CALCULFF_SUPABASE_URL is invalid."
+              exit 1
+              ;;
+          esac
+
+          key_lower="${CALCULFF_SUPABASE_PUBLISHABLE_KEY,,}"
+
+          if [[ "$key_lower" == sb_secret_* || "$key_lower" == *service_role* ]]; then
+            echo "::error::CALCULFF_SUPABASE_PUBLISHABLE_KEY is invalid."
+            exit 1
+          fi
+
+          if [[ "$key_lower" == *placeholder* ||
+                "$key_lower" == *replace_me* ||
+                "$key_lower" == *replace-me* ||
+                "$key_lower" == *changeme* ||
+                "$key_lower" == "your_publishable_key" ||
+                "$key_lower" == "test-publishable-key" ]]; then
+            echo "::error::CALCULFF_SUPABASE_PUBLISHABLE_KEY is a placeholder."
+            exit 1
+          fi
 
       - name: Prepare production signing
         shell: bash
@@ -141,15 +191,27 @@ jobs:
 
       - name: Build signed release APK
         shell: bash
+        env:
+          CALCULFF_SUPABASE_URL: ${{ vars.CALCULFF_SUPABASE_URL }}
+          CALCULFF_SUPABASE_PUBLISHABLE_KEY: ${{ vars.CALCULFF_SUPABASE_PUBLISHABLE_KEY }}
         run: |
-          set -o pipefail
-          flutter build apk --release 2>&1 | tee flutter-release-apk.log
+          set -euo pipefail
+          flutter build apk --release \
+            --dart-define=SUPABASE_URL="$CALCULFF_SUPABASE_URL" \
+            --dart-define=SUPABASE_PUBLISHABLE_KEY="$CALCULFF_SUPABASE_PUBLISHABLE_KEY" \
+            2>&1 | tee flutter-release-apk.log
 
       - name: Build signed release AAB
         shell: bash
+        env:
+          CALCULFF_SUPABASE_URL: ${{ vars.CALCULFF_SUPABASE_URL }}
+          CALCULFF_SUPABASE_PUBLISHABLE_KEY: ${{ vars.CALCULFF_SUPABASE_PUBLISHABLE_KEY }}
         run: |
-          set -o pipefail
-          flutter build appbundle --release 2>&1 | tee flutter-release-aab.log
+          set -euo pipefail
+          flutter build appbundle --release \
+            --dart-define=SUPABASE_URL="$CALCULFF_SUPABASE_URL" \
+            --dart-define=SUPABASE_PUBLISHABLE_KEY="$CALCULFF_SUPABASE_PUBLISHABLE_KEY" \
+            2>&1 | tee flutter-release-aab.log
 
       - name: Verify outputs and signatures
         shell: bash

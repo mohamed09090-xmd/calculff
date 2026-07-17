@@ -194,6 +194,11 @@ class _AppDrawerState extends State<_AppDrawer>
         icon: Icons.sd_storage_outlined,
         route: '/backup',
       ),
+      (
+        label: AppStrings.platform,
+        icon: Icons.storefront_outlined,
+        route: '/platform',
+      ),
     ];
 
     final headerAnimation = CurvedAnimation(
@@ -221,10 +226,16 @@ class _AppDrawerState extends State<_AppDrawer>
               ),
             );
           },
-          child: DrawerHeader(
+          child: Padding(
+            padding: EdgeInsets.fromLTRB(
+              28,
+              24 + MediaQuery.paddingOf(context).top,
+              28,
+              20,
+            ),
             child: Column(
+              mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.end,
               children: [
                 Icon(
                   Icons.stacked_line_chart,
