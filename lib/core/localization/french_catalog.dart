@@ -96,7 +96,7 @@ const Map<String, String> additionalFrenchTranslations = {
   'تاريخ التصدير': 'Date d’exportation',
   'رزم المخزون': 'Lots de stock',
   'هذه نسخة قديمة متوافقة. سيحوّل التطبيق أسماء العملاء إلى سجلات عملاء تلقائيًا.':
-      'Cette ancienne sauvegarde est compatible. Les noms de clients seront convertis automatiquement en fiches clients.',
+      'Cette ancienne sauvegarde est compatible. Les noms des clients seront automatiquement convertis en fiches clients.',
   'بعد التأكيد ستُستبدل كل البيانات الحالية بهذه النسخة.':
       'Après confirmation, toutes les données actuelles seront remplacées par cette sauvegarde.',
   'استيراد النسخة': 'Importer la sauvegarde',
@@ -124,6 +124,50 @@ const Map<String, String> additionalFrenchTranslations = {
   'محاولة جديدة': 'Nouvelle tentative',
   'تفعيل القفل': 'Activer le verrouillage',
   'إيقاف القفل': 'Désactiver le verrouillage',
+  'منصة الزبائن': 'Plateforme clients',
+  'تسجيل دخول المدير': 'Connexion administrateur',
+  'البريد': 'Adresse e-mail',
+  'كلمة المرور': 'Mot de passe',
+  'دخول': 'Se connecter',
+  'خروج': 'Se déconnecter',
+  'إعادة المحاولة': 'Réessayer',
+  'الرجوع إلى التطبيق': 'Retour à l’application',
+  'إعداد المنصة غير متوفر.':
+      'La configuration de la plateforme n’est pas disponible.',
+  'يمكنك متابعة استخدام التطبيق المحلي دون تسجيل دخول.':
+      'Vous pouvez continuer à utiliser l’application locale sans vous connecter.',
+  'لا يوجد اتصال بالمنصة.': 'Connexion à la plateforme indisponible.',
+  'تحقق من الاتصال ثم أعد المحاولة.':
+      'Vérifiez votre connexion, puis réessayez.',
+  'انتهت الجلسة.': 'La session a expiré.',
+  'سجّل الدخول مجددًا للمتابعة.':
+      'Reconnectez-vous pour continuer.',
+  'الحساب غير مخول لإدارة المنصة.':
+      'Ce compte ne dispose pas des droits administrateur.',
+  'استخدم حساب مدير مخول للوصول إلى منصة الزبائن.':
+      'Utilisez un compte administrateur autorisé pour accéder à la plateforme clients.',
+  'حدث خطأ آمن. أعد المحاولة.':
+      'Une erreur est survenue. Réessayez.',
+  'استعادة جلسة المدير': 'Restauration de la session administrateur',
+  'البريد مطلوب.': 'L’adresse e-mail est requise.',
+  'صيغة البريد غير صالحة.': 'Adresse e-mail non valide.',
+  'كلمة المرور مطلوبة.': 'Le mot de passe est requis.',
+  'بيانات الدخول غير صحيحة.': 'Identifiants incorrects.',
+  'هناك محاولة تسجيل دخول قيد التنفيذ.':
+      'Une connexion est déjà en cours.',
+  'جاري تسجيل الدخول...': 'Connexion en cours…',
+  'العودة إلى تسجيل الدخول': 'Retour à la connexion',
+  'لوحة المنصة': 'Tableau de bord',
+  'الطلبات': 'Commandes',
+  'العروض العامة': 'Offres publiques',
+  'الألعاب': 'Jeux',
+  'حساب المدير': 'Compte administrateur',
+  'الجلسة الحالية إدارية.':
+      'La session actuelle dispose des droits administrateur.',
+  'ستضاف هذه الوظيفة في المرحلة التالية.':
+      'Cette fonctionnalité sera ajoutée à l’étape suivante.',
+  'إظهار كلمة المرور': 'Afficher le mot de passe',
+  'إخفاء كلمة المرور': 'Masquer le mot de passe',
 };
 
 const Map<String, String> additionalFrenchPhrases = {
