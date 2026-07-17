@@ -64,7 +64,11 @@ jobs:
         shell: bash
         run: |
           set -o pipefail
-          flutter test --coverage --reporter expanded 2>&1 | tee flutter-test.log
+          mkdir -p build/coverage
+          flutter test --coverage \
+            --coverage-path=build/coverage/lcov.info \
+            --reporter expanded \
+            2>&1 | tee flutter-test.log
 
       - name: Upload test log
         if: always()
