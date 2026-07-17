@@ -7,13 +7,7 @@ abstract interface class GamesRepository {
 
   Future<Game> createGame(GameInput input);
 
-  Future<Game> updateGame({
-    required String gameId,
-    required GameInput input,
-  });
+  Future<Game> updateGame({required String gameId, required GameInput input});
 
-  Future<Game> setGameActive({
-    required String gameId,
-    required bool isActive,
-  });
+  Future<Game> setGameActive({required String gameId, required bool isActive});
 }

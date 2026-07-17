@@ -40,9 +40,9 @@ void main() {
         ),
       );
       expect(
-        _validInput(nameFr: 'a'.padRight(121, 'a')).validate(
-          selectedGameIsActive: true,
-        ),
+        _validInput(
+          nameFr: 'a'.padRight(121, 'a'),
+        ).validate(selectedGameIsActive: true),
         contains(
           _issue(
             PlatformValidationField.nameFr,
@@ -55,9 +55,9 @@ void main() {
     test('requires a positive reward quantity', () {
       for (final quantity in <int>[0, -1]) {
         expect(
-          _validInput(rewardQuantity: quantity).validate(
-            selectedGameIsActive: true,
-          ),
+          _validInput(
+            rewardQuantity: quantity,
+          ).validate(selectedGameIsActive: true),
           contains(
             _issue(
               PlatformValidationField.rewardQuantity,
@@ -71,9 +71,7 @@ void main() {
     test('requires a positive sale price', () {
       for (final price in <int>[0, -1]) {
         expect(
-          _validInput(salePriceDzd: price).validate(
-            selectedGameIsActive: true,
-          ),
+          _validInput(salePriceDzd: price).validate(selectedGameIsActive: true),
           contains(
             _issue(
               PlatformValidationField.salePriceDzd,
@@ -93,9 +91,7 @@ void main() {
 
     test('prevents publishing an offer for an inactive game', () {
       expect(
-        _validInput(isPublished: true).validate(
-          selectedGameIsActive: false,
-        ),
+        _validInput(isPublished: true).validate(selectedGameIsActive: false),
         contains(
           _issue(
             PlatformValidationField.selectedGameIsActive,
@@ -106,10 +102,7 @@ void main() {
     });
 
     test('allows saving a hidden offer for an inactive game', () {
-      expect(
-        _validInput().isValid(selectedGameIsActive: false),
-        isTrue,
-      );
+      expect(_validInput().isValid(selectedGameIsActive: false), isTrue);
     });
   });
 }

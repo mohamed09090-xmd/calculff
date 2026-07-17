@@ -21,9 +21,7 @@ class PublicOfferInput {
   final bool isPublished;
   final int sortOrder;
 
-  List<PlatformValidationIssue> validate({
-    required bool selectedGameIsActive,
-  }) {
+  List<PlatformValidationIssue> validate({required bool selectedGameIsActive}) {
     final issues = <PlatformValidationIssue>[];
 
     if (gameId.isEmpty) {

@@ -32,9 +32,7 @@ void main() {
 
     test('catalog repositories expose no destructive or order mutations', () {
       final repositoryFiles = <File>[
-        File(
-          'lib/features/admin_platform/domain/games/games_repository.dart',
-        ),
+        File('lib/features/admin_platform/domain/games/games_repository.dart'),
         File(
           'lib/features/admin_platform/domain/offers/'
           'public_offers_repository.dart',

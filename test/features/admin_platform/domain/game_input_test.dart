@@ -31,10 +31,7 @@ void main() {
       expect(
         _validInput(slug: ' ').validate(),
         contains(
-          _issue(
-            PlatformValidationField.slug,
-            PlatformValidationCode.required,
-          ),
+          _issue(PlatformValidationField.slug, PlatformValidationCode.required),
         ),
       );
     });
