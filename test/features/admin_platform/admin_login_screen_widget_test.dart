@@ -110,13 +110,16 @@ void main() {
     tester,
   ) async {
     final handle = tester.ensureSemantics();
-    addTearDown(handle.dispose);
-    await _pumpLogin(tester);
+    try {
+      await _pumpLogin(tester);
 
-    expect(find.bySemanticsLabel('البريد'), findsWidgets);
-    expect(find.bySemanticsLabel('كلمة المرور'), findsWidgets);
-    expect(find.bySemanticsLabel('إظهار كلمة المرور'), findsWidgets);
-    expect(find.bySemanticsLabel('دخول'), findsWidgets);
+      expect(find.bySemanticsLabel('البريد'), findsWidgets);
+      expect(find.bySemanticsLabel('كلمة المرور'), findsWidgets);
+      expect(find.bySemanticsLabel('إظهار كلمة المرور'), findsWidgets);
+      expect(find.bySemanticsLabel('دخول'), findsWidgets);
+    } finally {
+      handle.dispose();
+    }
   });
 }
 
