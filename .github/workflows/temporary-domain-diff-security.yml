@@ -31,7 +31,10 @@ jobs:
             esac
           done < <(git diff --name-only "$base"...HEAD)
 
-          git diff --unified=0 "$base"...HEAD > domain-change.diff
+          git diff --unified=0 "$base"...HEAD -- \
+            . \
+            ':(exclude).github/workflows/temporary-domain-diff-security.yml' \
+            > domain-change.diff
 
           if grep -Eqi \
             'sb_secret_|service_role|github_pat_|ghp_[A-Za-z0-9]{20,}|-----BEGIN ([A-Z]+ )?PRIVATE KEY-----|https://[a-z0-9]{20}\.supabase\.co|eyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}' \
