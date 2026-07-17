@@ -1,24 +1,21 @@
-name: Format platform UI diagnostics
+name: Apply platform UI formatting
 
 on:
-  pull_request:
-    paths:
-      - 'lib/app/router.dart'
-      - 'lib/core/constants/app_strings.dart'
-      - 'lib/core/localization/french_catalog.dart'
-      - 'lib/core/widgets/app_shell.dart'
-      - 'lib/features/admin_platform/presentation/**'
-      - 'test/features/admin_platform/**'
-      - '.github/workflows/format-platform-ui.yml'
+  push:
+    branches:
+      - feat/admin-platform-foundation
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   format:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: feat/admin-platform-foundation
+          fetch-depth: 1
 
       - uses: subosito/flutter-action@v2
         with:
@@ -26,9 +23,7 @@ jobs:
           channel: stable
           cache: true
 
-      - name: Format platform UI files
-        id: format
-        continue-on-error: true
+      - name: Apply Dart formatting and remove this temporary workflow
         shell: bash
         run: |
           set -euo pipefail
@@ -39,31 +34,17 @@ jobs:
             lib/core/widgets/app_shell.dart \
             lib/features/admin_platform/presentation \
             test/features/admin_platform
-          git diff --binary -- \
+          rm .github/workflows/format-platform-ui.yml
+          git diff --check
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add \
             lib/app/router.dart \
             lib/core/constants/app_strings.dart \
             lib/core/localization/french_catalog.dart \
             lib/core/widgets/app_shell.dart \
             lib/features/admin_platform/presentation \
             test/features/admin_platform \
-            > platform-ui-format.patch
-          git diff --exit-code -- \
-            lib/app/router.dart \
-            lib/core/constants/app_strings.dart \
-            lib/core/localization/french_catalog.dart \
-            lib/core/widgets/app_shell.dart \
-            lib/features/admin_platform/presentation \
-            test/features/admin_platform
-
-      - name: Upload formatter patch
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: platform-ui-format-patch
-          path: platform-ui-format.patch
-          if-no-files-found: error
-          retention-days: 1
-
-      - name: Stop on formatting changes
-        if: steps.format.outcome == 'failure'
-        run: exit 1
+            .github/workflows/format-platform-ui.yml
+          git commit -m "style(platform): format customer platform UI"
+          git push origin HEAD:feat/admin-platform-foundation
