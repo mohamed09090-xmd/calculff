@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../features/admin_platform/presentation/platform_gate.dart';
 import '../features/backup/presentation/backup_restore_screen.dart';
 import '../features/calculator/presentation/calculation_result_screen.dart';
 import '../features/calculator/presentation/calculator_screen.dart';
@@ -57,6 +58,11 @@ final GoRouter appRouter = GoRouter(
       path: '/dashboard',
       pageBuilder: (context, state) =>
           _animatedPage(state, const DashboardScreen()),
+    ),
+    GoRoute(
+      path: '/platform',
+      pageBuilder: (context, state) =>
+          _animatedPage(state, const PlatformGate()),
     ),
     GoRoute(
       path: '/calculate',
