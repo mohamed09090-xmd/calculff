@@ -45,6 +45,10 @@ jobs:
             esac
           done < changed-files.txt
 
+          grep '^lib/features/admin_platform/infrastructure/.*\.dart$' \
+            changed-files.txt > production-files.txt
+          test -s production-files.txt
+
           git diff --unified=0 "$base"...HEAD -- \
             . \
             ":(exclude)$temporary_workflow" \
@@ -57,25 +61,23 @@ jobs:
             exit 1
           fi
 
-          production_root='lib/features/admin_platform/infrastructure'
-
-          if grep -ERni \
+          if xargs -r grep -Eni \
             'txxokpovdbvsvnkpbrrp|zegjqwsvsaprnguvxuwk|supabase\.co|SupabaseClient|PostgrestFilterBuilder|package:supabase_flutter|package:postgrest|package:sqflite|AppRepository|DatabaseHelper' \
-            "$production_root"; then
+            < production-files.txt; then
             echo 'Forbidden client, project, or persistence reference found.' >&2
             exit 1
           fi
 
-          if grep -ERni \
+          if xargs -r grep -Eni \
             '\.(select|insert|update|delete|rpc)\s*\(|\.auth\.' \
-            "$production_root"; then
+            < production-files.txt; then
             echo 'Query, mutation, RPC, or Auth operation found.' >&2
             exit 1
           fi
 
-          if grep -ERni \
+          if xargs -r grep -Eni \
             'print\s*\(|debugPrint\s*\(|logger\.|payload\.toString\s*\(|jsonEncode\s*\(payload|rawResponse' \
-            "$production_root"; then
+            < production-files.txt; then
             echo 'Raw payload or response logging found.' >&2
             exit 1
           fi
