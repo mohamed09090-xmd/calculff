@@ -31,10 +31,7 @@ void main() {
     });
 
     test('enforces the documented 100 character limit', () {
-      expect(
-        OrderFilters(searchText: 'a'.padRight(100, 'a')).isValid,
-        isTrue,
-      );
+      expect(OrderFilters(searchText: 'a'.padRight(100, 'a')).isValid, isTrue);
       expect(
         OrderFilters(searchText: 'a'.padRight(101, 'a')).validate(),
         contains(
@@ -73,7 +70,10 @@ void main() {
     test('rejects equal or reversed date ranges', () {
       final start = DateTime.utc(2026, 7, 10);
 
-      for (final end in <DateTime>[start, start.subtract(const Duration(days: 1))]) {
+      for (final end in <DateTime>[
+        start,
+        start.subtract(const Duration(days: 1)),
+      ]) {
         expect(
           OrderFilters(dateFrom: start, dateToExclusive: end).validate(),
           contains(

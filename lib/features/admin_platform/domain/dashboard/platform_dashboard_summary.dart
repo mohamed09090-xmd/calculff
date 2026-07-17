@@ -10,10 +10,7 @@ class PlatformDashboardSummary {
   }) : refreshedAt = refreshedAt.toUtc() {
     _requireNonNegative('newOrdersCount', newOrdersCount);
     _requireNonNegative('processingOrdersCount', processingOrdersCount);
-    _requireNonNegative(
-      'paymentsUnderReviewCount',
-      paymentsUnderReviewCount,
-    );
+    _requireNonNegative('paymentsUnderReviewCount', paymentsUnderReviewCount);
     _requireNonNegative('completedOrdersCount', completedOrdersCount);
     _requireNonNegative('publishedOffersCount', publishedOffersCount);
     _requireNonNegative('activeGamesCount', activeGamesCount);
