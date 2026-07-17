@@ -194,6 +194,11 @@ class _AppDrawerState extends State<_AppDrawer>
         icon: Icons.sd_storage_outlined,
         route: '/backup',
       ),
+      (
+        label: AppStrings.platform,
+        icon: Icons.storefront_outlined,
+        route: '/platform',
+      ),
     ];
 
     final headerAnimation = CurvedAnimation(
