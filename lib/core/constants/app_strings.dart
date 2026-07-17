@@ -10,6 +10,7 @@ abstract final class AppStrings {
   static const transactions = 'سجل العمليات';
   static const settings = 'الإعدادات';
   static const backup = 'النسخ الاحتياطي';
+  static const platform = 'منصة الزبائن';
   static const save = 'حفظ';
   static const cancel = 'إلغاء';
   static const edit = 'تعديل';
