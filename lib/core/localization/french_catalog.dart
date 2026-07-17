@@ -96,7 +96,7 @@ const Map<String, String> additionalFrenchTranslations = {
   'تاريخ التصدير': 'Date d’exportation',
   'رزم المخزون': 'Lots de stock',
   'هذه نسخة قديمة متوافقة. سيحوّل التطبيق أسماء العملاء إلى سجلات عملاء تلقائيًا.':
-      'Cette ancienne sauvegarde est compatible. Les noms des clients seront automatiquement convertis en fiches clients.',
+      'Cette ancienne sauvegarde est compatible. Les noms de clients seront convertis automatiquement en fiches clients.',
   'بعد التأكيد ستُستبدل كل البيانات الحالية بهذه النسخة.':
       'Après confirmation, toutes les données actuelles seront remplacées par cette sauvegarde.',
   'استيراد النسخة': 'Importer la sauvegarde',
