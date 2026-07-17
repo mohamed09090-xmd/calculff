@@ -1,0 +1,51 @@
+name: Format admin auth diagnostics
+
+on:
+  pull_request:
+    paths:
+      - 'lib/features/admin_platform/**'
+      - 'test/features/admin_platform/**'
+      - '.github/workflows/format-admin-auth.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  format:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.44.0'
+          channel: stable
+          cache: true
+
+      - name: Format admin auth files
+        id: format
+        continue-on-error: true
+        shell: bash
+        run: |
+          set -euo pipefail
+          dart format lib/features/admin_platform test/features/admin_platform
+          git diff --binary -- \
+            lib/features/admin_platform \
+            test/features/admin_platform \
+            > admin-auth-format.patch
+          git diff --exit-code -- \
+            lib/features/admin_platform \
+            test/features/admin_platform
+
+      - name: Upload formatter patch
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: admin-auth-format-patch
+          path: admin-auth-format.patch
+          if-no-files-found: error
+          retention-days: 1
+
+      - name: Stop on formatting changes
+        if: steps.format.outcome == 'failure'
+        run: exit 1
