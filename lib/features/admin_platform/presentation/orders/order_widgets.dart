@@ -28,9 +28,13 @@ class CustomerOrderCard extends StatelessWidget {
     final createdAt = DateFormat.yMd(
       Localizations.localeOf(context).toLanguageTag(),
     ).add_Hm().format(order.createdAt.toLocal());
+    final proofLabel = order.hasPaymentProof
+        ? orderText(context, 'يوجد إثبات دفع')
+        : orderText(context, 'لا يوجد إثبات دفع');
 
     return Semantics(
       container: true,
+      explicitChildNodes: true,
       label:
           '${orderText(context, 'طلب')} ${order.displayId}، '
           '$gameName، $offerName، ${order.customerName}',
@@ -117,14 +121,17 @@ class CustomerOrderCard extends StatelessWidget {
                 label: orderText(context, 'وقت الإنشاء'),
                 value: createdAt,
               ),
-              _OrderField(
-                icon: order.hasPaymentProof
-                    ? Icons.attachment_outlined
-                    : Icons.do_not_disturb_alt_outlined,
-                label: order.hasPaymentProof
-                    ? orderText(context, 'يوجد إثبات دفع')
-                    : orderText(context, 'لا يوجد إثبات دفع'),
-                value: '',
+              Semantics(
+                label: proofLabel,
+                child: ExcludeSemantics(
+                  child: _OrderField(
+                    icon: order.hasPaymentProof
+                        ? Icons.attachment_outlined
+                        : Icons.do_not_disturb_alt_outlined,
+                    label: proofLabel,
+                    value: '',
+                  ),
+                ),
               ),
             ],
           ),
