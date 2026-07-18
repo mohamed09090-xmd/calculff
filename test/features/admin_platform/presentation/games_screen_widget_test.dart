@@ -122,10 +122,7 @@ void main() {
 
     await _pumpGames(tester, repository: repository);
 
-    expect(
-      find.bySemanticsLabel(RegExp('تحديث الألعاب')),
-      findsWidgets,
-    );
+    expect(find.bySemanticsLabel(RegExp('تحديث الألعاب')), findsWidgets);
     expect(find.bySemanticsLabel(RegExp('إضافة لعبة')), findsWidgets);
     expect(
       find.bySemanticsLabel(RegExp('تعديل اللعبة فري فاير')),
