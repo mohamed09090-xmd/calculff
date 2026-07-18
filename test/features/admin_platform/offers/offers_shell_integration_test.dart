@@ -14,9 +14,7 @@ void main() {
   test('offers reuse the repository exposed by gamesRepositoryProvider', () {
     final gamesRepository = FakeGamesRepository();
     final container = ProviderContainer(
-      overrides: [
-        gamesRepositoryProvider.overrideWithValue(gamesRepository),
-      ],
+      overrides: [gamesRepositoryProvider.overrideWithValue(gamesRepository)],
     );
     addTearDown(container.dispose);
 

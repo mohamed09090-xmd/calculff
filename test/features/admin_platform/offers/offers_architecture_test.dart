@@ -101,17 +101,20 @@ void main() {
       );
     });
 
-    test('offers reuse gamesRepositoryProvider without a second repository', () {
-      final content = File(
-        'lib/features/admin_platform/application/offers/'
-        'offers_providers.dart',
-      ).readAsStringSync();
+    test(
+      'offers reuse gamesRepositoryProvider without a second repository',
+      () {
+        final content = File(
+          'lib/features/admin_platform/application/offers/'
+          'offers_providers.dart',
+        ).readAsStringSync();
 
-      expect(content, contains("import '../games/games_providers.dart';"));
-      expect(content, contains('ref.watch(gamesRepositoryProvider)'));
-      expect(content, isNot(contains('SupabaseGamesRepository')));
-      expect(content, isNot(contains('SupabaseGamesDataSource')));
-    });
+        expect(content, contains("import '../games/games_providers.dart';"));
+        expect(content, contains('ref.watch(gamesRepositoryProvider)'));
+        expect(content, isNot(contains('SupabaseGamesRepository')));
+        expect(content, isNot(contains('SupabaseGamesDataSource')));
+      },
+    );
 
     test('offer implementation tests contain no hosted credentials', () {
       const forbidden = <String>[
