@@ -18,6 +18,7 @@ IMMUTABLE_MIGRATION_GIT_BLOB_SHA = "047da22289a3bc0a77d4df0fe8d6e13bb856fcb5"
 EXPECTED_MIGRATIONS = [
     "20260715192117_secure_platform_schema.sql",
     "20260716163910_harden_platform_security_and_rls.sql",
+    "20260718030259_admin_list_orders_read_only.sql",
 ]
 CLOUD_REFS = {
     "zegjqwsv" + "saprnguvxuwk",
@@ -130,6 +131,7 @@ def main() -> int:
         "040_admin_transitions.test.sql",
         "050_storage_policies.test.sql",
         "060_security_hardening.test.sql",
+        "070_admin_list_orders.test.sql",
     ]
     if [path.name for path in sql_files] != expected_names:
         fail("database test file set is incomplete or unexpectedly changed")

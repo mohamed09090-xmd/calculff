@@ -45,6 +45,18 @@ The customer timeline is read through `get_my_order_timeline`. Its projection ex
 
 Customers provide a UUID `client_request_id`. The database enforces `UNIQUE (user_id, client_request_id)`. A retry with the same normalized payload returns the existing order; reuse with a different offer, player, in-game name, or payment method fails. The first history row is written exactly once.
 
+## Administrator order-list RPC
+
+`public.admin_list_orders` is a read-only, `STABLE`, `SECURITY INVOKER` function. It requires an authenticated user and the signed `app_metadata.role = admin` claim before reading through the existing `orders_select_own_or_admin` RLS policy. Invoker mode is intentional: the caller already has the existing table `SELECT` grant and the function does not require privilege escalation or access to a private schema.
+
+The function uses an empty `search_path`, schema-qualified relations, typed enum and UUID filters, and no dynamic SQL. Search text is bounded to 100 characters, rejects control characters, and escapes `LIKE` metacharacters before matching the compact eight-character order number, customer name, Player ID, or in-game name.
+
+Pagination is keyset-based and ordered by `created_at DESC, id DESC`. The composite cursor requires both values, so UUID ordering remains the deterministic tie-breaker when several orders share the same timestamp. Page size is restricted to 1 through 25, and one extra candidate is inspected only to calculate `has_more`.
+
+The list projection contains only the fields required by the administrator list. It never returns customer email, customer phone, `user_id`, `client_request_id`, `payment_proof_path`, or `changed_by`. Proof presence is converted inside PostgreSQL to the boolean `has_payment_proof`; the Storage path never leaves the database through this RPC. The function does not access or alter Storage objects or policies.
+
+The migration adds `orders_created_at_id_desc_idx (created_at DESC, id DESC)` for deterministic cursor scans. It does not modify RLS policies, table grants, enums, Storage, or order rows.
+
 ## RLS matrix
 
 All five platform tables in the exposed `public` schema have RLS enabled. `private.order_internal_notes` also has RLS enabled as defense in depth even though client roles have neither schema usage nor table grants.
@@ -76,6 +88,7 @@ The migration first revokes broad defaults and then grants only the required cap
 | `private.order_internal_notes` and its sequence | None | None |
 | `public.create_order` | None | `EXECUTE` |
 | `public.get_my_order_timeline` | None | `EXECUTE` |
+| `public.admin_list_orders` | None | `EXECUTE`, followed by in-function admin authorization and existing RLS |
 | `public.admin_add_order_internal_note` | None | `EXECUTE`, followed by in-function admin authorization |
 | `public.admin_list_order_internal_notes` | None | `EXECUTE`, followed by in-function admin authorization |
 | `public.admin_set_order_status` | None | `EXECUTE`, followed by in-function admin authorization |
@@ -135,6 +148,7 @@ The hosted database also contains the platform-managed `public.rls_auto_enable()
 
 - `private.is_admin`: reads the signed `app_metadata.role` claim under caller rights. It has no client execution grant and is used only by privileged RPCs.
 - `private.set_updated_at`: trigger helper that updates only `updated_at` under the invoking table operation. It has no client execution grant.
+- `public.admin_list_orders`: reads only the administrator list projection under caller rights and existing `orders` RLS. It checks `auth.uid()` and signed `app_metadata`, has an empty `search_path`, exposes no proof path or customer contact fields, and uses no dynamic SQL.
 
 Invoker mode remains the default preference. Definer mode is limited to the audited cases above where direct grants would expose broader data or mutation capabilities.
 
@@ -153,7 +167,15 @@ That forward migration:
 
 The Security Advisor warnings for authenticated execution of application `SECURITY DEFINER` RPCs are intentional. Customers must call `create_order`, `get_my_order_timeline`, and `attach_payment_proof`; administrator clients must call the admin workflow RPCs. Anonymous execution remains revoked, every function has an empty `search_path`, customer functions verify `auth.uid()` and ownership, and administrator functions verify signed `app_metadata.role = admin`. Regression tests verify both the grants and rejection paths instead of disabling required functionality to silence the Advisor.
 
+`admin_list_orders` is not part of that definer inventory. It is intentionally `SECURITY INVOKER`, so the existing administrator RLS policy remains an authorization boundary rather than being bypassed by the function owner.
+
 `Leaked Password Protection Disabled` is an Auth configuration warning, not a SQL migration concern. Enabling it is deferred to the dedicated Auth setup step in the Supabase Dashboard or supported Auth configuration workflow. No Auth setting is changed by this migration.
+
+## Read-only order-list forward migration
+
+`20260718030259_admin_list_orders_read_only.sql` adds only the deterministic cursor index and `public.admin_list_orders`. Its pgTAP coverage is isolated in `070_admin_list_orders.test.sql` and covers the function contract, execution grants, privacy projection, authentication and admin-claim checks, filters, literal parameterized search, cursor correctness, page limits, and RLS/table-grant regressions.
+
+The migration is designed for local validation before any hosted application. It contains no project reference, remote command, data mutation, RLS change, table-grant change, enum change, or Storage change. Applying it to a hosted project remains a separately approved operation.
 
 ## Migration immutability and operational controls
 
