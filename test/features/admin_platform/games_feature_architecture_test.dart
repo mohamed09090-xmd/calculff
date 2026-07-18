@@ -92,11 +92,16 @@ void main() {
     }
   });
 
-  test('customer shell preserves games and offers and integrates orders', () {
+  test('customer shell preserves all implemented destinations', () {
     final content = File(
       'lib/features/admin_platform/presentation/customer_platform_shell.dart',
     ).readAsStringSync();
 
+    expect(
+      RegExp(r'builder:\s*\(_\) => const PlatformDashboardScreen\(\)')
+          .allMatches(content),
+      hasLength(1),
+    );
     expect(
       RegExp(r'builder:\s*\(_\) => const GamesScreen\(\)').allMatches(content),
       hasLength(1),
@@ -111,6 +116,5 @@ void main() {
       ).allMatches(content),
       hasLength(1),
     );
-    expect(content, isNot(contains('DashboardScreen')));
   });
 }
