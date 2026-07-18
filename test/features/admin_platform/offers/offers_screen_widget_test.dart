@@ -111,6 +111,11 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.textContaining('لعبة متوقفة').last);
     await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(
+      find.byKey(const Key('offer-published-field')),
+      240,
+      scrollable: find.byKey(const Key('offer-form-scroll-view')),
+    );
     await tester.tap(find.byKey(const Key('offer-published-field')));
     await tester.pumpAndSettle();
     expect(find.text('لا يمكن نشر عرض تابع للعبة غير فعالة.'), findsOneWidget);
