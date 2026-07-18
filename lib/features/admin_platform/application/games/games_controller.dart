@@ -28,10 +28,7 @@ class GamesState {
         ),
       );
     }
-    return GamesState(
-      games: const <Game>[],
-      status: GamesLoadStatus.loading,
-    );
+    return GamesState(games: const <Game>[], status: GamesLoadStatus.loading);
   }
 
   final List<Game> games;
@@ -128,15 +125,10 @@ class GamesController extends StateNotifier<GamesState> {
     _readInProgress = true;
     if (showInitialLoading && state.games.isEmpty) {
       _setState(
-        state.copyWith(
-          status: GamesLoadStatus.loading,
-          clearLoadFailure: true,
-        ),
+        state.copyWith(status: GamesLoadStatus.loading, clearLoadFailure: true),
       );
     } else {
-      _setState(
-        state.copyWith(isRefreshing: true, clearLoadFailure: true),
-      );
+      _setState(state.copyWith(isRefreshing: true, clearLoadFailure: true));
     }
 
     try {
@@ -179,23 +171,17 @@ class GamesController extends StateNotifier<GamesState> {
     }
 
     _writeInProgress = true;
-    _setState(
-      state.copyWith(isSubmitting: true, clearActionFailure: true),
-    );
+    _setState(state.copyWith(isSubmitting: true, clearActionFailure: true));
     try {
       await operation(repository);
       await _read(showInitialLoading: false);
       return null;
     } on PlatformFailure catch (failure) {
-      _setState(
-        state.copyWith(isSubmitting: false, actionFailure: failure),
-      );
+      _setState(state.copyWith(isSubmitting: false, actionFailure: failure));
       return failure;
     } catch (_) {
       const failure = PlatformFailure(PlatformFailureCode.unknown);
-      _setState(
-        state.copyWith(isSubmitting: false, actionFailure: failure),
-      );
+      _setState(state.copyWith(isSubmitting: false, actionFailure: failure));
       return failure;
     } finally {
       _writeInProgress = false;
@@ -210,11 +196,7 @@ class GamesController extends StateNotifier<GamesState> {
         ? GamesLoadStatus.offline
         : GamesLoadStatus.error;
     _setState(
-      state.copyWith(
-        status: status,
-        isRefreshing: false,
-        loadFailure: failure,
-      ),
+      state.copyWith(status: status, isRefreshing: false, loadFailure: failure),
     );
   }
 
