@@ -50,11 +50,7 @@ class GamesScreen extends ConsumerWidget {
     if (!context.mounted) {
       return;
     }
-    _showActionResult(
-      context,
-      failure,
-      activeState: isActive,
-    );
+    _showActionResult(context, failure, activeState: isActive);
   }
 
   void _showActionResult(
@@ -264,9 +260,9 @@ class _GamesFailureState extends StatelessWidget {
                 Text(
                   title,
                   textAlign: TextAlign.center,
-                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.w800,
-                  ),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800),
                 ),
                 const SizedBox(height: 8),
                 Text(message, textAlign: TextAlign.center),
@@ -310,13 +306,16 @@ class _GamesEmptyState extends StatelessWidget {
                 Text(
                   platformText(context, 'لا توجد ألعاب بعد.'),
                   textAlign: TextAlign.center,
-                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.w800,
-                  ),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800),
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  platformText(context, 'أضف أول لعبة لبدء إدارة العروض لاحقًا.'),
+                  platformText(
+                    context,
+                    'أضف أول لعبة لبدء إدارة العروض لاحقًا.',
+                  ),
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 16),
@@ -385,9 +384,7 @@ class _GameCard extends StatelessWidget {
     final isFrench = Localizations.localeOf(context).languageCode == 'fr';
     final primaryName = isFrench ? game.nameFr : game.nameAr;
     final secondaryName = isFrench ? game.nameAr : game.nameFr;
-    final rewardName = isFrench
-        ? game.rewardUnitNameFr
-        : game.rewardUnitNameAr;
+    final rewardName = isFrench ? game.rewardUnitNameFr : game.rewardUnitNameAr;
     final toggleLabel = game.isActive
         ? platformText(context, 'تعطيل اللعبة')
         : platformText(context, 'تفعيل اللعبة');
@@ -415,9 +412,8 @@ class _GameCard extends StatelessWidget {
                       children: [
                         Text(
                           primaryName,
-                          style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                            fontWeight: FontWeight.w800,
-                          ),
+                          style: Theme.of(context).textTheme.titleLarge
+                              ?.copyWith(fontWeight: FontWeight.w800),
                         ),
                         const SizedBox(height: 4),
                         Text(secondaryName),
@@ -505,9 +501,6 @@ class _InfoChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Chip(
-      avatar: Icon(icon, size: 18),
-      label: Text(label),
-    );
+    return Chip(avatar: Icon(icon, size: 18), label: Text(label));
   }
 }

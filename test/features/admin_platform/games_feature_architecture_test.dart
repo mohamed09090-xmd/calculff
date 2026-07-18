@@ -4,15 +4,15 @@ import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   final productionFiles = <File>[
-    ...Directory('lib/features/admin_platform/application/games')
-        .listSync(recursive: true)
-        .whereType<File>(),
-    ...Directory('lib/features/admin_platform/infrastructure/games')
-        .listSync(recursive: true)
-        .whereType<File>(),
-    ...Directory('lib/features/admin_platform/presentation/games')
-        .listSync(recursive: true)
-        .whereType<File>(),
+    ...Directory(
+      'lib/features/admin_platform/application/games',
+    ).listSync(recursive: true).whereType<File>(),
+    ...Directory(
+      'lib/features/admin_platform/infrastructure/games',
+    ).listSync(recursive: true).whereType<File>(),
+    ...Directory(
+      'lib/features/admin_platform/presentation/games',
+    ).listSync(recursive: true).whereType<File>(),
   ].where((file) => file.path.endsWith('.dart')).toList();
 
   test('games feature exposes no deletion, realtime, RPC, or SQLite', () {
@@ -72,9 +72,8 @@ void main() {
           .whereType<File>()
           .where((file) => file.path.contains('games'))
           .where(
-            (file) => !file.path.endsWith(
-              'games_feature_architecture_test.dart',
-            ),
+            (file) =>
+                !file.path.endsWith('games_feature_architecture_test.dart'),
           ),
     ];
     const forbidden = <String>[
@@ -100,9 +99,7 @@ void main() {
 
     expect(content, contains('builder: (_) => const GamesScreen()'));
     expect(
-      RegExp(
-        r'builder:\s*\(_\) => const GamesScreen\(\)',
-      ).allMatches(content),
+      RegExp(r'builder:\s*\(_\) => const GamesScreen\(\)').allMatches(content),
       hasLength(1),
     );
     expect(content, isNot(contains('OrdersScreen')));

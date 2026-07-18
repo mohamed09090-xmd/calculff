@@ -62,56 +62,62 @@ void main() {
       expect(controller.state.hasStaleData, isTrue);
     });
 
-    test('surfaces session expiry without retrying at controller level', () async {
-      final repository = _FakeGamesRepository()
-        ..listResults.add(
-          const PlatformFailure(PlatformFailureCode.sessionExpired),
+    test(
+      'surfaces session expiry without retrying at controller level',
+      () async {
+        final repository = _FakeGamesRepository()
+          ..listResults.add(
+            const PlatformFailure(PlatformFailureCode.sessionExpired),
+          );
+        final controller = GamesController(repository: repository);
+        addTearDown(controller.dispose);
+
+        await controller.load();
+
+        expect(repository.listCalls, 1);
+        expect(controller.state.status, GamesLoadStatus.error);
+        expect(
+          controller.state.loadFailure?.code,
+          PlatformFailureCode.sessionExpired,
         );
-      final controller = GamesController(repository: repository);
-      addTearDown(controller.dispose);
+      },
+    );
 
-      await controller.load();
+    test(
+      'prevents duplicate writes and refetches only after success',
+      () async {
+        final createCompleter = Completer<Game>();
+        final repository = _FakeGamesRepository()
+          ..listResults.add(
+            CursorPage<Game>(items: [_game], nextCursor: null, hasMore: false),
+          )
+          ..listResults.add(
+            CursorPage<Game>(
+              items: [_secondGame],
+              nextCursor: null,
+              hasMore: false,
+            ),
+          )
+          ..createCompleter = createCompleter;
+        final controller = GamesController(repository: repository);
+        addTearDown(controller.dispose);
+        await controller.load();
 
-      expect(repository.listCalls, 1);
-      expect(controller.state.status, GamesLoadStatus.error);
-      expect(
-        controller.state.loadFailure?.code,
-        PlatformFailureCode.sessionExpired,
-      );
-    });
+        final firstWrite = controller.createGame(_input);
+        final repeatedWrite = await controller.createGame(_input);
 
-    test('prevents duplicate writes and refetches only after success', () async {
-      final createCompleter = Completer<Game>();
-      final repository = _FakeGamesRepository()
-        ..listResults.add(
-          CursorPage<Game>(items: [_game], nextCursor: null, hasMore: false),
-        )
-        ..listResults.add(
-          CursorPage<Game>(
-            items: [_secondGame],
-            nextCursor: null,
-            hasMore: false,
-          ),
-        )
-        ..createCompleter = createCompleter;
-      final controller = GamesController(repository: repository);
-      addTearDown(controller.dispose);
-      await controller.load();
+        expect(repository.createCalls, 1);
+        expect(repeatedWrite?.code, PlatformFailureCode.temporarilyUnavailable);
+        expect(controller.state.games.single.id, _game.id);
+        expect(controller.state.isSubmitting, isTrue);
 
-      final firstWrite = controller.createGame(_input);
-      final repeatedWrite = await controller.createGame(_input);
-
-      expect(repository.createCalls, 1);
-      expect(repeatedWrite?.code, PlatformFailureCode.temporarilyUnavailable);
-      expect(controller.state.games.single.id, _game.id);
-      expect(controller.state.isSubmitting, isTrue);
-
-      createCompleter.complete(_secondGame);
-      expect(await firstWrite, isNull);
-      expect(repository.listCalls, 2);
-      expect(controller.state.games.single.id, _secondGame.id);
-      expect(controller.state.isSubmitting, isFalse);
-    });
+        createCompleter.complete(_secondGame);
+        expect(await firstWrite, isNull);
+        expect(repository.listCalls, 2);
+        expect(controller.state.games.single.id, _secondGame.id);
+        expect(controller.state.isSubmitting, isFalse);
+      },
+    );
 
     test('keeps list unchanged when duplicate slug write fails', () async {
       final repository = _FakeGamesRepository()
@@ -196,18 +202,12 @@ class _FakeGamesRepository implements GamesRepository {
   }
 
   @override
-  Future<Game> setGameActive({
-    required String gameId,
-    required bool isActive,
-  }) {
+  Future<Game> setGameActive({required String gameId, required bool isActive}) {
     return Future<Game>.value(_game);
   }
 
   @override
-  Future<Game> updateGame({
-    required String gameId,
-    required GameInput input,
-  }) {
+  Future<Game> updateGame({required String gameId, required GameInput input}) {
     return Future<Game>.value(_game);
   }
 }

@@ -119,7 +119,8 @@ class _CustomerPlatformShellState extends State<CustomerPlatformShell> {
       body: SafeArea(
         child: LayoutBuilder(
           builder: (context, constraints) {
-            final content = selected.builder?.call(context) ??
+            final content =
+                selected.builder?.call(context) ??
                 _PlatformDestinationBody(destination: selected);
             if (constraints.maxWidth < _wideBreakpoint) {
               return content;

@@ -28,10 +28,7 @@ String platformFailureText(BuildContext context, AdminAuthFailureCode? code) {
   return platformText(context, source);
 }
 
-String platformDataFailureText(
-  BuildContext context,
-  PlatformFailure failure,
-) {
+String platformDataFailureText(BuildContext context, PlatformFailure failure) {
   final source = switch (failure.code) {
     PlatformFailureCode.networkUnavailable =>
       'تعذر الاتصال بالمنصة. تحقق من الشبكة ثم أعد المحاولة.',
@@ -41,8 +38,7 @@ String platformDataFailureText(
       'لا يملك هذا الحساب صلاحية تنفيذ العملية.',
     PlatformFailureCode.notFound => 'لم تعد اللعبة المطلوبة موجودة.',
     PlatformFailureCode.validation => 'تحقق من القيم المدخلة.',
-    PlatformFailureCode.duplicateSlug =>
-      'المعرّف النصي مستخدم من لعبة أخرى.',
+    PlatformFailureCode.duplicateSlug => 'المعرّف النصي مستخدم من لعبة أخرى.',
     PlatformFailureCode.dependencyExists =>
       'لا يمكن تنفيذ العملية لوجود بيانات مرتبطة.',
     PlatformFailureCode.malformedResponse =>
@@ -79,8 +75,7 @@ const Map<String, String> _platformFrench = {
   'أحرف إنجليزية صغيرة وأرقام وشرطة سفلية فقط.':
       'Utilisez uniquement des lettres minuscules, des chiffres et un soulignement.',
   'اسم وحدة المكافأة بالعربية': 'Nom de l’unité de récompense en arabe',
-  'اسم وحدة المكافأة بالفرنسية':
-      'Nom de l’unité de récompense en français',
+  'اسم وحدة المكافأة بالفرنسية': 'Nom de l’unité de récompense en français',
   'ترتيب العرض': 'Ordre d’affichage',
   'اللعبة فعّالة': 'Jeu actif',
   'فعّالة': 'Actif',
@@ -99,8 +94,7 @@ const Map<String, String> _platformFrench = {
   'استخدم أحرفًا إنجليزية صغيرة فقط.':
       'Utilisez uniquement des lettres minuscules.',
   'صيغة القيمة غير صحيحة.': 'Le format de la valeur est invalide.',
-  'يجب أن تكون القيمة أكبر من صفر.':
-      'La valeur doit être supérieure à zéro.',
+  'يجب أن تكون القيمة أكبر من صفر.': 'La valeur doit être supérieure à zéro.',
   'اللعبة المحددة غير فعّالة.': 'Le jeu sélectionné est inactif.',
   'تحتوي القيمة على محارف غير مسموحة.':
       'La valeur contient des caractères non autorisés.',

@@ -174,11 +174,8 @@ TextDirection _directionOf(WidgetTester tester) {
       .textDirection;
 }
 
-CursorPage<Game> _page(Iterable<Game> games) => CursorPage<Game>(
-  items: games,
-  nextCursor: null,
-  hasMore: false,
-);
+CursorPage<Game> _page(Iterable<Game> games) =>
+    CursorPage<Game>(items: games, nextCursor: null, hasMore: false);
 
 final _game = Game(
   id: '11111111-1111-1111-1111-111111111111',

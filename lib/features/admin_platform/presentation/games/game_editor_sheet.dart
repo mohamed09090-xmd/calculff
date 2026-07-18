@@ -178,9 +178,8 @@ class _GameEditorSheetState extends State<GameEditorSheet> {
                         'أحرف إنجليزية صغيرة وأرقام وشرطة سفلية فقط.',
                       ),
                     ),
-                    validator: (_) => _validateField(
-                      PlatformValidationField.rewardUnitCode,
-                    ),
+                    validator: (_) =>
+                        _validateField(PlatformValidationField.rewardUnitCode),
                   ),
                   const SizedBox(height: 16),
                   TextFormField(
