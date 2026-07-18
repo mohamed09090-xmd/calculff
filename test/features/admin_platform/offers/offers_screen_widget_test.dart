@@ -111,15 +111,12 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.textContaining('لعبة متوقفة').last);
     await tester.pumpAndSettle();
-    final formScrollable = find.descendant(
-      of: find.byKey(const Key('offer-form-scroll-view')),
-      matching: find.byType(Scrollable),
+    await tester.drag(
+      find.byKey(const Key('offer-form-scroll-view')),
+      const Offset(0, -900),
     );
-    await tester.scrollUntilVisible(
-      find.byKey(const Key('offer-published-field')),
-      240,
-      scrollable: formScrollable,
-    );
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('offer-published-field')), findsOneWidget);
     await tester.tap(find.byKey(const Key('offer-published-field')));
     await tester.pumpAndSettle();
     expect(find.text('لا يمكن نشر عرض تابع للعبة غير فعالة.'), findsOneWidget);
