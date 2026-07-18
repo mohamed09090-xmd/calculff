@@ -220,10 +220,7 @@ class _OrderFiltersSheetState extends State<OrderFiltersSheet> {
   }
 
   DateTime? get _inclusiveEndDate {
-    final exclusive = _dateToExclusive;
-    return exclusive == null
-        ? null
-        : exclusive.subtract(const Duration(days: 1));
+    return _dateToExclusive?.subtract(const Duration(days: 1));
   }
 
   Future<void> _pickDate({required bool isStart}) async {
