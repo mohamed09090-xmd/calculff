@@ -77,15 +77,14 @@ class _OrderFiltersSheetState extends State<OrderFiltersSheet> {
                 controller: _searchController,
                 maxLength: OrderFilters.maxSearchLength,
                 inputFormatters: <TextInputFormatter>[
-                  LengthLimitingTextInputFormatter(OrderFilters.maxSearchLength),
+                  LengthLimitingTextInputFormatter(
+                    OrderFilters.maxSearchLength,
+                  ),
                 ],
                 textInputAction: TextInputAction.search,
                 decoration: InputDecoration(
                   labelText: orderText(context, 'بحث'),
-                  hintText: orderText(
-                    context,
-                    'ابحث باسم الزبون أو Player ID',
-                  ),
+                  hintText: orderText(context, 'ابحث باسم الزبون أو Player ID'),
                   prefixIcon: const Icon(Icons.search),
                 ),
               ),
@@ -222,7 +221,9 @@ class _OrderFiltersSheetState extends State<OrderFiltersSheet> {
 
   DateTime? get _inclusiveEndDate {
     final exclusive = _dateToExclusive;
-    return exclusive == null ? null : exclusive.subtract(const Duration(days: 1));
+    return exclusive == null
+        ? null
+        : exclusive.subtract(const Duration(days: 1));
   }
 
   Future<void> _pickDate({required bool isStart}) async {

@@ -178,18 +178,12 @@ class _FakeGamesRepository implements GamesRepository {
   }
 
   @override
-  Future<Game> setGameActive({
-    required String gameId,
-    required bool isActive,
-  }) {
+  Future<Game> setGameActive({required String gameId, required bool isActive}) {
     throw UnsupportedError('Read-only fake.');
   }
 
   @override
-  Future<Game> updateGame({
-    required String gameId,
-    required GameInput input,
-  }) {
+  Future<Game> updateGame({required String gameId, required GameInput input}) {
     throw UnsupportedError('Read-only fake.');
   }
 }

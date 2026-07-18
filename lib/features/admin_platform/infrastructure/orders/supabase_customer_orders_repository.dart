@@ -50,7 +50,9 @@ class SupabaseCustomerOrdersRepository implements CustomerOrdersRepository {
         final items = <CustomerOrderSummaryDto>[];
         bool? hasMore;
         for (final row in rows) {
-          final rowHasMore = PlatformPayloadReader(row).requiredBool('has_more');
+          final rowHasMore = PlatformPayloadReader(
+            row,
+          ).requiredBool('has_more');
           hasMore ??= rowHasMore;
           if (hasMore != rowHasMore) {
             throw const PlatformPayloadException(
@@ -61,7 +63,9 @@ class SupabaseCustomerOrdersRepository implements CustomerOrdersRepository {
           items.add(CustomerOrderSummaryDto.fromMap(row));
         }
 
-        final domains = items.map((item) => item.toDomain()).toList(growable: false);
+        final domains = items
+            .map((item) => item.toDomain())
+            .toList(growable: false);
         final last = domains.last;
         final pageHasMore = hasMore ?? false;
         return OrderPage(

@@ -67,10 +67,8 @@ class CustomerOrdersScreen extends ConsumerWidget {
       context: context,
       isScrollControlled: true,
       showDragHandle: true,
-      builder: (_) => OrderFiltersSheet(
-        initialFilters: state.filters,
-        games: state.games,
-      ),
+      builder: (_) =>
+          OrderFiltersSheet(initialFilters: state.filters, games: state.games),
     );
     if (filters != null) {
       await controller.updateFilters(filters);
@@ -101,10 +99,7 @@ class _OrdersBody extends StatelessWidget {
           title: orderText(context, 'لا توجد طلبات.'),
           message: state.filters.isEmpty
               ? orderText(context, 'لا توجد طلبات.')
-              : orderText(
-                  context,
-                  'لا توجد نتائج مطابقة للفلاتر الحالية.',
-                ),
+              : orderText(context, 'لا توجد نتائج مطابقة للفلاتر الحالية.'),
           onRefresh: controller.refresh,
         );
       case OrdersViewStatus.offline:
@@ -148,9 +143,7 @@ class _OrdersBody extends StatelessWidget {
                 if (currentIndex == 0) {
                   return Padding(
                     padding: const EdgeInsets.only(bottom: 10),
-                    child: OrdersStaleBanner(
-                      failureCode: state.failureCode,
-                    ),
+                    child: OrdersStaleBanner(failureCode: state.failureCode),
                   );
                 }
                 currentIndex -= 1;

@@ -98,31 +98,34 @@ void main() {
       }
     });
 
-    test('orders are connected once while other destinations remain intact', () {
-      final content = File(
-        'lib/features/admin_platform/presentation/'
-        'customer_platform_shell.dart',
-      ).readAsStringSync();
+    test(
+      'orders are connected once while other destinations remain intact',
+      () {
+        final content = File(
+          'lib/features/admin_platform/presentation/'
+          'customer_platform_shell.dart',
+        ).readAsStringSync();
 
-      expect(
-        RegExp(
-          r'builder:\s*\(_\)\s*=>\s*const CustomerOrdersScreen\(\)',
-        ).allMatches(content),
-        hasLength(1),
-      );
-      expect(
-        RegExp(
-          r'builder:\s*\(_\)\s*=>\s*const OffersScreen\(\)',
-        ).allMatches(content),
-        hasLength(1),
-      );
-      expect(
-        RegExp(
-          r'builder:\s*\(_\)\s*=>\s*const GamesScreen\(\)',
-        ).allMatches(content),
-        hasLength(1),
-      );
-    });
+        expect(
+          RegExp(
+            r'builder:\s*\(_\)\s*=>\s*const CustomerOrdersScreen\(\)',
+          ).allMatches(content),
+          hasLength(1),
+        );
+        expect(
+          RegExp(
+            r'builder:\s*\(_\)\s*=>\s*const OffersScreen\(\)',
+          ).allMatches(content),
+          hasLength(1),
+        );
+        expect(
+          RegExp(
+            r'builder:\s*\(_\)\s*=>\s*const GamesScreen\(\)',
+          ).allMatches(content),
+          hasLength(1),
+        );
+      },
+    );
 
     test('implementation tests contain no hosted credentials', () {
       const forbidden = <String>[
@@ -166,9 +169,7 @@ List<File> _productionFiles() {
       'lib/features/admin_platform/presentation/orders/'
       'order_filters_sheet.dart',
     ),
-    File(
-      'lib/features/admin_platform/presentation/orders/order_widgets.dart',
-    ),
+    File('lib/features/admin_platform/presentation/orders/order_widgets.dart'),
   ];
 }
 
@@ -178,8 +179,6 @@ List<File> _testFiles() {
       'test/features/admin_platform/orders/'
       'supabase_customer_orders_repository_test.dart',
     ),
-    File(
-      'test/features/admin_platform/orders/orders_controller_test.dart',
-    ),
+    File('test/features/admin_platform/orders/orders_controller_test.dart'),
   ];
 }

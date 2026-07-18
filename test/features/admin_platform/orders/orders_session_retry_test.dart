@@ -8,30 +8,33 @@ import 'package:game_credit_profit_manager/features/admin_platform/infrastructur
 import 'package:game_credit_profit_manager/features/admin_platform/infrastructure/orders/supabase_orders_data_source.dart';
 
 void main() {
-  test('session expiry refreshes once and retries the list read once', () async {
-    final session = _FakeSessionAccess();
-    final dataScope = _FakeDataScope();
-    final dataSource = _ExpiringOrdersDataSource();
-    final repository = SupabaseCustomerOrdersRepository(
-      dataSource: dataSource,
-      errorMapper: const SupabasePlatformErrorMapper(),
-      readCoordinator: PlatformSessionCoordinator(
-        sessionAccess: session,
-        mapError: (error) => error is PlatformFailure
-            ? error
-            : const PlatformFailure(PlatformFailureCode.unknown),
-        dataScope: dataScope,
-      ),
-    );
+  test(
+    'session expiry refreshes once and retries the list read once',
+    () async {
+      final session = _FakeSessionAccess();
+      final dataScope = _FakeDataScope();
+      final dataSource = _ExpiringOrdersDataSource();
+      final repository = SupabaseCustomerOrdersRepository(
+        dataSource: dataSource,
+        errorMapper: const SupabasePlatformErrorMapper(),
+        readCoordinator: PlatformSessionCoordinator(
+          sessionAccess: session,
+          mapError: (error) => error is PlatformFailure
+              ? error
+              : const PlatformFailure(PlatformFailureCode.unknown),
+          dataScope: dataScope,
+        ),
+      );
 
-    final page = await repository.listOrders(filters: OrderFilters());
+      final page = await repository.listOrders(filters: OrderFilters());
 
-    expect(page.items, hasLength(1));
-    expect(dataSource.calls, 2);
-    expect(session.refreshCalls, 1);
-    expect(dataScope.invalidationCalls, 1);
-    expect(dataScope.authorizedCalls, 1);
-  });
+      expect(page.items, hasLength(1));
+      expect(dataSource.calls, 2);
+      expect(session.refreshCalls, 1);
+      expect(dataScope.invalidationCalls, 1);
+      expect(dataScope.authorizedCalls, 1);
+    },
+  );
 }
 
 class _FakeSessionAccess implements PlatformSessionAccess {

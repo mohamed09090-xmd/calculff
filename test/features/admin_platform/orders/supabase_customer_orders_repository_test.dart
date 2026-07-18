@@ -10,41 +10,48 @@ import 'package:game_credit_profit_manager/features/admin_platform/infrastructur
 
 void main() {
   group('SupabaseCustomerOrdersRepository', () {
-    test('converts every filter and the full cursor to typed RPC params', () async {
-      final dataSource = _FakeOrdersDataSource(<Map<String, Object?>>[
-        _row(id: '00000000-0000-0000-0000-000000000002', hasMore: false),
-      ]);
-      final repository = _repository(dataSource);
-      final filters = OrderFilters(
-        orderStatus: OrderStatus.processing,
-        paymentStatus: PaymentStatus.underReview,
-        paymentMethod: PaymentMethod.transfer,
-        gameId: '10000000-0000-0000-0000-000000000001',
-        dateFrom: DateTime.parse('2026-07-01T01:00:00+01:00'),
-        dateToExclusive: DateTime.parse('2026-08-01T01:00:00+01:00'),
-        searchText: r"عميل français %_\ 'quote' (test)",
-      );
-      final cursor = OrderCursor(
-        createdAt: DateTime.parse('2026-07-17T13:00:00+01:00'),
-        id: '00000000-0000-0000-0000-000000000001',
-      );
+    test(
+      'converts every filter and the full cursor to typed RPC params',
+      () async {
+        final dataSource = _FakeOrdersDataSource(<Map<String, Object?>>[
+          _row(id: '00000000-0000-0000-0000-000000000002', hasMore: false),
+        ]);
+        final repository = _repository(dataSource);
+        final filters = OrderFilters(
+          orderStatus: OrderStatus.processing,
+          paymentStatus: PaymentStatus.underReview,
+          paymentMethod: PaymentMethod.transfer,
+          gameId: '10000000-0000-0000-0000-000000000001',
+          dateFrom: DateTime.parse('2026-07-01T01:00:00+01:00'),
+          dateToExclusive: DateTime.parse('2026-08-01T01:00:00+01:00'),
+          searchText: r"عميل français %_\ 'quote' (test)",
+        );
+        final cursor = OrderCursor(
+          createdAt: DateTime.parse('2026-07-17T13:00:00+01:00'),
+          id: '00000000-0000-0000-0000-000000000001',
+        );
 
-      await repository.listOrders(filters: filters, cursor: cursor, limit: 25);
+        await repository.listOrders(
+          filters: filters,
+          cursor: cursor,
+          limit: 25,
+        );
 
-      expect(dataSource.calls, 1);
-      expect(dataSource.lastParams, <String, Object?>{
-        'p_order_status': 'processing',
-        'p_payment_status': 'under_review',
-        'p_payment_method': 'transfer',
-        'p_game_id': '10000000-0000-0000-0000-000000000001',
-        'p_date_from': '2026-07-01T00:00:00.000Z',
-        'p_date_to_exclusive': '2026-08-01T00:00:00.000Z',
-        'p_search_text': r"عميل français %_\ 'quote' (test)",
-        'p_cursor_created_at': '2026-07-17T12:00:00.000Z',
-        'p_cursor_id': '00000000-0000-0000-0000-000000000001',
-        'p_limit': 25,
-      });
-    });
+        expect(dataSource.calls, 1);
+        expect(dataSource.lastParams, <String, Object?>{
+          'p_order_status': 'processing',
+          'p_payment_status': 'under_review',
+          'p_payment_method': 'transfer',
+          'p_game_id': '10000000-0000-0000-0000-000000000001',
+          'p_date_from': '2026-07-01T00:00:00.000Z',
+          'p_date_to_exclusive': '2026-08-01T00:00:00.000Z',
+          'p_search_text': r"عميل français %_\ 'quote' (test)",
+          'p_cursor_created_at': '2026-07-17T12:00:00.000Z',
+          'p_cursor_id': '00000000-0000-0000-0000-000000000001',
+          'p_limit': 25,
+        });
+      },
+    );
 
     test('uses the last returned row as a composite next cursor', () async {
       final timestamp = '2026-07-17T12:00:00Z';
@@ -71,10 +78,7 @@ void main() {
       ]);
       expect(page.hasMore, isTrue);
       expect(page.nextCursor?.createdAt, DateTime.utc(2026, 7, 17, 12));
-      expect(
-        page.nextCursor?.id,
-        '00000000-0000-0000-0000-000000000002',
-      );
+      expect(page.nextCursor?.id, '00000000-0000-0000-0000-000000000002');
     });
 
     test('last page has no cursor and loses no returned rows', () async {

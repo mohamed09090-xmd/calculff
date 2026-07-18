@@ -135,11 +135,7 @@ class CustomerOrderCard extends StatelessWidget {
 }
 
 class OrderStatusBadge extends StatelessWidget {
-  const OrderStatusBadge({
-    super.key,
-    required this.text,
-    required this.icon,
-  });
+  const OrderStatusBadge({super.key, required this.text, required this.icon});
 
   final String text;
   final IconData icon;
@@ -267,39 +263,30 @@ class _OrderField extends StatelessWidget {
 }
 
 String orderStatusText(BuildContext context, OrderStatus status) {
-  return orderText(
-    context,
-    switch (status) {
-      OrderStatus.newOrder => 'جديد',
-      OrderStatus.accepted => 'مقبول',
-      OrderStatus.processing => 'قيد المعالجة',
-      OrderStatus.completed => 'مكتمل',
-      OrderStatus.rejected => 'مرفوض',
-      OrderStatus.cancelled => 'ملغى',
-    },
-  );
+  return orderText(context, switch (status) {
+    OrderStatus.newOrder => 'جديد',
+    OrderStatus.accepted => 'مقبول',
+    OrderStatus.processing => 'قيد المعالجة',
+    OrderStatus.completed => 'مكتمل',
+    OrderStatus.rejected => 'مرفوض',
+    OrderStatus.cancelled => 'ملغى',
+  });
 }
 
 String paymentStatusText(BuildContext context, PaymentStatus status) {
-  return orderText(
-    context,
-    switch (status) {
-      PaymentStatus.awaitingPayment => 'بانتظار الدفع',
-      PaymentStatus.underReview => 'قيد المراجعة',
-      PaymentStatus.paid => 'مدفوع',
-      PaymentStatus.proofRejected => 'إثبات مرفوض',
-      PaymentStatus.refundPending => 'استرداد معلق',
-      PaymentStatus.refunded => 'مسترد',
-    },
-  );
+  return orderText(context, switch (status) {
+    PaymentStatus.awaitingPayment => 'بانتظار الدفع',
+    PaymentStatus.underReview => 'قيد المراجعة',
+    PaymentStatus.paid => 'مدفوع',
+    PaymentStatus.proofRejected => 'إثبات مرفوض',
+    PaymentStatus.refundPending => 'استرداد معلق',
+    PaymentStatus.refunded => 'مسترد',
+  });
 }
 
 String paymentMethodText(BuildContext context, PaymentMethod method) {
-  return orderText(
-    context,
-    switch (method) {
-      PaymentMethod.cash => 'نقدًا',
-      PaymentMethod.transfer => 'تحويل',
-    },
-  );
+  return orderText(context, switch (method) {
+    PaymentMethod.cash => 'نقدًا',
+    PaymentMethod.transfer => 'تحويل',
+  });
 }

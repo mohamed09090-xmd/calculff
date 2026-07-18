@@ -21,18 +21,20 @@ class FlutterSupabaseOrdersDataSource implements SupabaseOrdersDataSource {
     if (response is! List) {
       throw const FormatException('Unexpected orders RPC payload.');
     }
-    return response.map<Map<String, Object?>>((row) {
-      if (row is! Map) {
-        throw const FormatException('Unexpected orders RPC row.');
-      }
-      final mapped = <String, Object?>{};
-      for (final entry in row.entries) {
-        if (entry.key is! String) {
-          throw const FormatException('Unexpected orders RPC field.');
-        }
-        mapped[entry.key as String] = entry.value;
-      }
-      return Map<String, Object?>.unmodifiable(mapped);
-    }).toList(growable: false);
+    return response
+        .map<Map<String, Object?>>((row) {
+          if (row is! Map) {
+            throw const FormatException('Unexpected orders RPC row.');
+          }
+          final mapped = <String, Object?>{};
+          for (final entry in row.entries) {
+            if (entry.key is! String) {
+              throw const FormatException('Unexpected orders RPC field.');
+            }
+            mapped[entry.key as String] = entry.value;
+          }
+          return Map<String, Object?>.unmodifiable(mapped);
+        })
+        .toList(growable: false);
   }
 }

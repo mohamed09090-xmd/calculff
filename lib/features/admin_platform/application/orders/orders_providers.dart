@@ -41,9 +41,7 @@ final ordersGamesRepositoryProvider = Provider<GamesRepository?>((ref) {
 
 final ordersControllerProvider =
     StateNotifierProvider.autoDispose<OrdersController, OrdersState>((ref) {
-      ref.watch(
-        platformDataScopeProvider.select((scope) => scope.generation),
-      );
+      ref.watch(platformDataScopeProvider.select((scope) => scope.generation));
       final controller = OrdersController(
         ordersRepository: ref.watch(customerOrdersRepositoryProvider),
         gamesRepository: ref.watch(ordersGamesRepositoryProvider),
