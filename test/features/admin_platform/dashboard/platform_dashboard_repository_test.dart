@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:game_credit_profit_manager/features/admin_platform/application/common/platform_session_coordinator.dart';
 import 'package:game_credit_profit_manager/features/admin_platform/domain/admin_auth_models.dart';
@@ -67,21 +69,19 @@ class _CountingReadCoordinator implements PlatformReadCoordinator {
 }
 
 class _ControlledDataSource implements PlatformDashboardDataSource {
-  final List<Future<int>> _futures = [];
-  final List<void Function()> _completions = [];
+  final List<Completer<int>> _completers = [];
   int started = 0;
 
   Future<int> _count(int value) {
     started += 1;
-    final completer = _DashboardCompleter(value);
-    _futures.add(completer.future);
-    _completions.add(completer.complete);
-    return completer.future;
+    final completer = Completer<int>();
+    _completers.add(completer);
+    return completer.future.then((_) => value);
   }
 
   void completeAll() {
-    for (final complete in _completions) {
-      complete();
+    for (final completer in _completers) {
+      completer.complete(0);
     }
   }
 
@@ -97,40 +97,6 @@ class _ControlledDataSource implements PlatformDashboardDataSource {
   Future<int> countPublishedOffers() => _count(5);
   @override
   Future<int> countActiveGames() => _count(6);
-}
-
-class _DashboardCompleter {
-  _DashboardCompleter(this.value);
-
-  final int value;
-  final _completer = Future<int>.sync(() => throw StateError('pending'));
-
-  late final Future<int> future = _manual.future;
-  final _manual = _ManualCompleter<int>();
-
-  void complete() => _manual.complete(value);
-}
-
-class _ManualCompleter<T> {
-  final _callbacks = <void Function(T)>[];
-  T? _value;
-  bool _completed = false;
-
-  Future<T> get future async {
-    if (_completed) {
-      return _value as T;
-    }
-    return Future<T>((resolve) => _callbacks.add(resolve));
-  }
-
-  void complete(T value) {
-    if (_completed) return;
-    _completed = true;
-    _value = value;
-    for (final callback in _callbacks) {
-      callback(value);
-    }
-  }
 }
 
 class _FakeSessionAccess implements PlatformSessionAccess {
