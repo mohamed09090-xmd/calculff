@@ -36,15 +36,14 @@ final platformDashboardControllerProvider =
       PlatformDashboardController,
       PlatformDashboardState
     >((ref) {
-      ref.watch(platformDataScopeProvider.select((scope) => scope.generation));
+      ref.watch(
+        platformDataScopeProvider.select(
+          (scope) => (scope.generation, scope.isAuthorized),
+        ),
+      );
       final controller = PlatformDashboardController(
         repository: ref.watch(platformDashboardRepositoryProvider),
       );
-      ref.listen(platformDataScopeProvider, (previous, next) {
-        if (!next.isAuthorized || previous?.generation != next.generation) {
-          controller.invalidate();
-        }
-      });
       unawaited(controller.load());
       return controller;
     });
