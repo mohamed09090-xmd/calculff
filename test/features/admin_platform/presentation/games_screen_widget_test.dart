@@ -116,7 +116,6 @@ void main() {
     tester,
   ) async {
     final semantics = tester.ensureSemantics();
-    addTearDown(semantics.dispose);
     final repository = _FakeGamesRepository()
       ..listResults.add(_page(<Game>[_game]));
 
@@ -132,6 +131,7 @@ void main() {
       find.bySemanticsLabel(RegExp('تعطيل اللعبة فري فاير')),
       findsOneWidget,
     );
+    semantics.dispose();
   });
 }
 
