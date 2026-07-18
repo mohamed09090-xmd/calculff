@@ -68,9 +68,7 @@ class PlatformDashboardController
           );
     try {
       if (repository == null) {
-        throw const PlatformFailure(
-          PlatformFailureCode.temporarilyUnavailable,
-        );
+        throw const PlatformFailure(PlatformFailureCode.temporarilyUnavailable);
       }
       final summary = await repository.loadDashboardSummary();
       if (requestGeneration != _generation) {

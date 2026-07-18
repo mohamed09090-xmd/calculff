@@ -24,7 +24,10 @@ void main() {
     ];
     final source = files.map((file) => file.readAsStringSync()).join('\n');
 
-    expect(RegExp(r'\.count\(CountOption\.exact\)').allMatches(source), hasLength(6));
+    expect(
+      RegExp(r'\.count\(CountOption\.exact\)').allMatches(source),
+      hasLength(6),
+    );
     expect(source, isNot(contains("select('*')")));
     expect(source, isNot(contains('.rpc(')));
     expect(source, isNot(contains('.channel(')));

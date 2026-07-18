@@ -8,9 +8,7 @@ import 'package:game_credit_profit_manager/features/admin_platform/domain/dashbo
 
 void main() {
   test('starts loading and exposes successful data including zeros', () async {
-    final repository = _QueueRepository([
-      _summary(newOrders: 0),
-    ]);
+    final repository = _QueueRepository([_summary(newOrders: 0)]);
     final controller = PlatformDashboardController(repository: repository);
 
     expect(controller.state.status, PlatformDashboardStatus.loading);
@@ -53,18 +51,21 @@ void main() {
     expect(controller.state.summary?.newOrdersCount, 7);
   });
 
-  test('invalidation immediately clears data and ignores late results', () async {
-    final repository = _CompletingRepository();
-    final controller = PlatformDashboardController(repository: repository);
+  test(
+    'invalidation immediately clears data and ignores late results',
+    () async {
+      final repository = _CompletingRepository();
+      final controller = PlatformDashboardController(repository: repository);
 
-    final request = controller.load();
-    controller.invalidate();
-    repository.complete(_summary(newOrders: 9));
-    await request;
+      final request = controller.load();
+      controller.invalidate();
+      repository.complete(_summary(newOrders: 9));
+      await request;
 
-    expect(controller.state.status, PlatformDashboardStatus.loading);
-    expect(controller.state.summary, isNull);
-  });
+      expect(controller.state.status, PlatformDashboardStatus.loading);
+      expect(controller.state.summary, isNull);
+    },
+  );
 }
 
 PlatformDashboardSummary _summary({required int newOrders}) {

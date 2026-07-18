@@ -67,9 +67,9 @@ class _CustomerPlatformShellState extends State<CustomerPlatformShell> {
               children: [
                 Text(
                   platformText(sheetContext, 'حساب المدير'),
-                  style: Theme.of(sheetContext).textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.w800,
-                  ),
+                  style: Theme.of(
+                    sheetContext,
+                  ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800),
                 ),
                 const SizedBox(height: 16),
                 ListTile(

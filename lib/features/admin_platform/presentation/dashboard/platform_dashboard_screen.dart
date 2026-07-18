@@ -118,13 +118,25 @@ class _DashboardContent extends StatelessWidget {
         Icons.fact_check_outlined,
       ),
       ('المكتملة', summary.completedOrdersCount, Icons.task_alt_outlined),
-      ('العروض المنشورة', summary.publishedOffersCount, Icons.campaign_outlined),
-      ('الألعاب النشطة', summary.activeGamesCount, Icons.sports_esports_outlined),
+      (
+        'العروض المنشورة',
+        summary.publishedOffersCount,
+        Icons.campaign_outlined,
+      ),
+      (
+        'الألعاب النشطة',
+        summary.activeGamesCount,
+        Icons.sports_esports_outlined,
+      ),
     ];
     return LayoutBuilder(
       builder: (context, constraints) {
         final width = constraints.maxWidth;
-        final columns = width >= 720 ? 3 : width >= 360 ? 2 : 1;
+        final columns = width >= 720
+            ? 3
+            : width >= 360
+            ? 2
+            : 1;
         final spacing = 12.0;
         final cardWidth = (width - spacing * (columns - 1)) / columns;
         return Column(
@@ -249,9 +261,9 @@ class _FailureState extends StatelessWidget {
                 Text(
                   title,
                   textAlign: TextAlign.center,
-                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.w800,
-                  ),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800),
                 ),
                 const SizedBox(height: 8),
                 Text(
@@ -302,8 +314,8 @@ class _StaleBanner extends StatelessWidget {
 String _formattedRefreshTime(BuildContext context, DateTime refreshedAt) {
   final local = refreshedAt.toLocal();
   final date = MaterialLocalizations.of(context).formatCompactDate(local);
-  final time = MaterialLocalizations.of(context).formatTimeOfDay(
-    TimeOfDay.fromDateTime(local),
-  );
+  final time = MaterialLocalizations.of(
+    context,
+  ).formatTimeOfDay(TimeOfDay.fromDateTime(local));
   return '$date، $time';
 }

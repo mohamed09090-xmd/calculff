@@ -31,31 +31,34 @@ void main() {
     expect(summary.activeGamesCount, 6);
   });
 
-  test('session expiry refreshes once and retries the whole batch once', () async {
-    final session = _FakeSessionAccess();
-    final dataScope = _FakeDataScope();
-    final dataSource = _ExpiringDataSource();
-    final repository = SupabasePlatformDashboardRepository(
-      dataSource: dataSource,
-      errorMapper: const SupabasePlatformErrorMapper(),
-      readCoordinator: PlatformSessionCoordinator(
-        sessionAccess: session,
-        mapError: (error) => error is PlatformFailure
-            ? error
-            : const PlatformFailure(PlatformFailureCode.unknown),
-        dataScope: dataScope,
-      ),
-    );
+  test(
+    'session expiry refreshes once and retries the whole batch once',
+    () async {
+      final session = _FakeSessionAccess();
+      final dataScope = _FakeDataScope();
+      final dataSource = _ExpiringDataSource();
+      final repository = SupabasePlatformDashboardRepository(
+        dataSource: dataSource,
+        errorMapper: const SupabasePlatformErrorMapper(),
+        readCoordinator: PlatformSessionCoordinator(
+          sessionAccess: session,
+          mapError: (error) => error is PlatformFailure
+              ? error
+              : const PlatformFailure(PlatformFailureCode.unknown),
+          dataScope: dataScope,
+        ),
+      );
 
-    final summary = await repository.loadDashboardSummary();
+      final summary = await repository.loadDashboardSummary();
 
-    expect(summary.completedOrdersCount, 4);
-    expect(dataSource.newOrdersCalls, 2);
-    expect(dataSource.totalCalls, 12);
-    expect(session.refreshCalls, 1);
-    expect(dataScope.invalidationCalls, 1);
-    expect(dataScope.authorizedCalls, 1);
-  });
+      expect(summary.completedOrdersCount, 4);
+      expect(dataSource.newOrdersCalls, 2);
+      expect(dataSource.totalCalls, 12);
+      expect(session.refreshCalls, 1);
+      expect(dataScope.invalidationCalls, 1);
+      expect(dataScope.authorizedCalls, 1);
+    },
+  );
 }
 
 class _CountingReadCoordinator implements PlatformReadCoordinator {

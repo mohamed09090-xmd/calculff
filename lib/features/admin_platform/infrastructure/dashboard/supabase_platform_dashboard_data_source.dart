@@ -62,9 +62,6 @@ class SupabasePlatformDashboardDataSource
 
   @override
   Future<int> countActiveGames() {
-    return _client
-        .from('games')
-        .count(CountOption.exact)
-        .eq('is_active', true);
+    return _client.from('games').count(CountOption.exact).eq('is_active', true);
   }
 }

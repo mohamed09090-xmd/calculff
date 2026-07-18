@@ -31,21 +31,22 @@ final platformDashboardRepositoryProvider =
       );
     });
 
-final platformDashboardControllerProvider = StateNotifierProvider.autoDispose<
-  PlatformDashboardController,
-  PlatformDashboardState
->((ref) {
-  final scope = ref.watch(platformDataScopeProvider);
-  final controller = PlatformDashboardController(
-    repository: ref.watch(platformDashboardRepositoryProvider),
-  );
-  ref.listen(platformDataScopeProvider, (previous, next) {
-    if (!next.isAuthorized || previous?.generation != next.generation) {
-      controller.invalidate();
-    }
-  });
-  if (scope.isAuthorized) {
-    unawaited(controller.load());
-  }
-  return controller;
-});
+final platformDashboardControllerProvider =
+    StateNotifierProvider.autoDispose<
+      PlatformDashboardController,
+      PlatformDashboardState
+    >((ref) {
+      final scope = ref.watch(platformDataScopeProvider);
+      final controller = PlatformDashboardController(
+        repository: ref.watch(platformDashboardRepositoryProvider),
+      );
+      ref.listen(platformDataScopeProvider, (previous, next) {
+        if (!next.isAuthorized || previous?.generation != next.generation) {
+          controller.invalidate();
+        }
+      });
+      if (scope.isAuthorized) {
+        unawaited(controller.load());
+      }
+      return controller;
+    });
