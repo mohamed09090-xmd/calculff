@@ -1,8 +1,8 @@
 name: Temporary main run monitor
 
 on:
-  push:
-    branches: [feat/admin-platform-offers-management]
+  pull_request:
+    types: [opened, reopened, synchronize]
 
 permissions:
   actions: read
@@ -10,7 +10,7 @@ permissions:
 
 jobs:
   monitor:
-    if: github.actor != 'github-actions[bot]'
+    if: github.actor != 'github-actions[bot]' && github.head_ref == 'feat/admin-platform-offers-management'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
