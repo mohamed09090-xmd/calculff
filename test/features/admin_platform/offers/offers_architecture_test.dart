@@ -80,15 +80,37 @@ void main() {
       expect(content, isNot(contains('snapshot')));
     });
 
-    test('CustomerPlatformShell is not integrated by this branch', () {
+    test('shell integrates offers and preserves the games builder', () {
       final content = File(
         'lib/features/admin_platform/presentation/'
         'customer_platform_shell.dart',
-      ).readAsStringSync().toLowerCase();
+      ).readAsStringSync();
 
-      expect(content, isNot(contains('offers_screen.dart')));
-      expect(content, isNot(contains('offerscontroller')));
-      expect(content, isNot(contains('offerscontrollerprovider')));
+      expect(content, contains("import 'offers/offers_screen.dart';"));
+      expect(
+        RegExp(
+          r'builder:\s*\(_\)\s*=>\s*const OffersScreen\(\)',
+        ).allMatches(content),
+        hasLength(1),
+      );
+      expect(
+        RegExp(
+          r'builder:\s*\(_\)\s*=>\s*const GamesScreen\(\)',
+        ).allMatches(content),
+        hasLength(1),
+      );
+    });
+
+    test('offers reuse gamesRepositoryProvider without a second repository', () {
+      final content = File(
+        'lib/features/admin_platform/application/offers/'
+        'offers_providers.dart',
+      ).readAsStringSync();
+
+      expect(content, contains("import '../games/games_providers.dart';"));
+      expect(content, contains('ref.watch(gamesRepositoryProvider)'));
+      expect(content, isNot(contains('SupabaseGamesRepository')));
+      expect(content, isNot(contains('SupabaseGamesDataSource')));
     });
 
     test('offer implementation tests contain no hosted credentials', () {
@@ -153,6 +175,10 @@ List<File> _implementationTestFiles() {
     File(
       'test/features/admin_platform/offers/'
       'offers_screen_widget_test.dart',
+    ),
+    File(
+      'test/features/admin_platform/offers/'
+      'offers_shell_integration_test.dart',
     ),
   ];
 }
