@@ -177,9 +177,6 @@ class OrdersController extends StateNotifier<OrdersState> {
     required bool preserveExisting,
     bool incrementGeneration = true,
   }) async {
-    if (_firstPageInFlight && !incrementGeneration) {
-      return;
-    }
     if (incrementGeneration) {
       _generation += 1;
     }
@@ -202,8 +199,9 @@ class OrdersController extends StateNotifier<OrdersState> {
       if (repository == null) {
         throw const PlatformFailure(PlatformFailureCode.temporarilyUnavailable);
       }
+      final filters = state.filters;
       final ordersFuture = repository.listOrders(
-        filters: state.filters,
+        filters: filters,
         limit: pageSize,
       );
       final gamesFuture = _loadGames();
