@@ -25,9 +25,7 @@ void main() {
     });
 
     test('exposes offline and stale data states', () async {
-      final repository = FakePublicOffersRepository(
-        offers: <dynamic>[sampleOffer()],
-      );
+      final repository = FakePublicOffersRepository(offers: [sampleOffer()]);
       final controller = OffersController(
         offersRepository: repository,
         gamesRepository: FakeGamesRepository(),
@@ -112,9 +110,7 @@ void main() {
 
     test('prevents publishing an offer for an inactive game', () async {
       final repository = FakePublicOffersRepository(
-        offers: <dynamic>[
-          sampleOffer(gameId: inactiveGameId),
-        ],
+        offers: [sampleOffer(gameId: inactiveGameId)],
       );
       final controller = OffersController(
         offersRepository: repository,
@@ -145,9 +141,7 @@ void main() {
     });
 
     test('publishes and hides then refetches the list', () async {
-      final repository = FakePublicOffersRepository(
-        offers: <dynamic>[sampleOffer()],
-      );
+      final repository = FakePublicOffersRepository(offers: [sampleOffer()]);
       final controller = OffersController(
         offersRepository: repository,
         gamesRepository: FakeGamesRepository(),
