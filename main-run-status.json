@@ -1,0 +1,653 @@
+{
+  "merge_sha": "86962a0a3c757278a0e1f13744cd852fef92a01b",
+  "run": {
+    "id": 29628549115,
+    "name": "Verify and build signed Android release",
+    "node_id": "WFR_kwLOTVmPSs8AAAAG5f_H-w",
+    "head_branch": "main",
+    "head_sha": "86962a0a3c757278a0e1f13744cd852fef92a01b",
+    "path": ".github/workflows/build-apk.yml",
+    "display_title": "Merge pull request #10 from mohamed09090-xmd/feat/admin-platform-offe…",
+    "run_number": 220,
+    "event": "push",
+    "status": "completed",
+    "conclusion": "success",
+    "workflow_id": 311389204,
+    "check_suite_id": 80239689263,
+    "check_suite_node_id": "CS_kwDOTVmPSs8AAAASrqh-Lw",
+    "url": "https://api.github.com/repos/mohamed09090-xmd/calculff/actions/runs/29628549115",
+    "html_url": "https://github.com/mohamed09090-xmd/calculff/actions/runs/29628549115",
+    "pull_requests": [],
+    "created_at": "2026-07-18T03:17:08Z",
+    "updated_at": "2026-07-18T03:25:28Z",
+    "actor": {
+      "login": "mohamed09090-xmd",
+      "id": 144628717,
+      "node_id": "U_kgDOCJ7b7Q",
+      "avatar_url": "https://avatars.githubusercontent.com/u/144628717?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/mohamed09090-xmd",
+      "html_url": "https://github.com/mohamed09090-xmd",
+      "followers_url": "https://api.github.com/users/mohamed09090-xmd/followers",
+      "following_url": "https://api.github.com/users/mohamed09090-xmd/following{/other_user}",
+      "gists_url": "https://api.github.com/users/mohamed09090-xmd/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/mohamed09090-xmd/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/mohamed09090-xmd/subscriptions",
+      "organizations_url": "https://api.github.com/users/mohamed09090-xmd/orgs",
+      "repos_url": "https://api.github.com/users/mohamed09090-xmd/repos",
+      "events_url": "https://api.github.com/users/mohamed09090-xmd/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/mohamed09090-xmd/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "run_attempt": 1,
+    "referenced_workflows": [],
+    "run_started_at": "2026-07-18T03:17:08Z",
+    "triggering_actor": {
+      "login": "mohamed09090-xmd",
+      "id": 144628717,
+      "node_id": "U_kgDOCJ7b7Q",
+      "avatar_url": "https://avatars.githubusercontent.com/u/144628717?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/mohamed09090-xmd",
+      "html_url": "https://github.com/mohamed09090-xmd",
+      "followers_url": "https://api.github.com/users/mohamed09090-xmd/followers",
+      "following_url": "https://api.github.com/users/mohamed09090-xmd/following{/other_user}",
+      "gists_url": "https://api.github.com/users/mohamed09090-xmd/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/mohamed09090-xmd/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/mohamed09090-xmd/subscriptions",
+      "organizations_url": "https://api.github.com/users/mohamed09090-xmd/orgs",
+      "repos_url": "https://api.github.com/users/mohamed09090-xmd/repos",
+      "events_url": "https://api.github.com/users/mohamed09090-xmd/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/mohamed09090-xmd/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "jobs_url": "https://api.github.com/repos/mohamed09090-xmd/calculff/actions/runs/29628549115/jobs",
+    "logs_url": "https://api.github.com/repos/mohamed09090-xmd/calculff/actions/runs/29628549115/logs",
+    "check_suite_url": "https://api.github.com/repos/mohamed09090-xmd/calculff/check-suites/80239689263",
+    "artifacts_url": "https://api.github.com/repos/mohamed09090-xmd/calculff/actions/runs/29628549115/artifacts",
+    "cancel_url": "https://api.github.com/repos/mohamed09090-xmd/calculff/actions/runs/29628549115/cancel",
+    "rerun_url": "https://api.github.com/repos/mohamed09090-xmd/calculff/actions/runs/29628549115/rerun",
+    "previous_attempt_url": null,
+    "workflow_url": "https://api.github.com/repos/mohamed09090-xmd/calculff/actions/workflows/311389204",
+    "head_commit": {
+      "id": "86962a0a3c757278a0e1f13744cd852fef92a01b",
+      "tree_id": "8651785f60738fdc6c18be88a8c32a819cd2ab5d",
+      "message": "Merge pull request #10 from mohamed09090-xmd/feat/admin-platform-offers-management\n\nfeat: add admin public offers management",
+      "timestamp": "2026-07-18T03:17:05Z",
+      "author": {
+        "name": "g.m0h1",
+        "email": "144628717+mohamed09090-xmd@users.noreply.github.com"
+      },
+      "committer": {
+        "name": "GitHub",
+        "email": "noreply@github.com"
+      }
+    },
+    "repository": {
+      "id": 1297715018,
+      "node_id": "R_kgDOTVmPSg",
+      "name": "calculff",
+      "full_name": "mohamed09090-xmd/calculff",
+      "private": false,
+      "owner": {
+        "login": "mohamed09090-xmd",
+        "id": 144628717,
+        "node_id": "U_kgDOCJ7b7Q",
+        "avatar_url": "https://avatars.githubusercontent.com/u/144628717?v=4",
+        "gravatar_id": "",
+        "url": "https://api.github.com/users/mohamed09090-xmd",
+        "html_url": "https://github.com/mohamed09090-xmd",
+        "followers_url": "https://api.github.com/users/mohamed09090-xmd/followers",
+        "following_url": "https://api.github.com/users/mohamed09090-xmd/following{/other_user}",
+        "gists_url": "https://api.github.com/users/mohamed09090-xmd/gists{/gist_id}",
+        "starred_url": "https://api.github.com/users/mohamed09090-xmd/starred{/owner}{/repo}",
+        "subscriptions_url": "https://api.github.com/users/mohamed09090-xmd/subscriptions",
+        "organizations_url": "https://api.github.com/users/mohamed09090-xmd/orgs",
+        "repos_url": "https://api.github.com/users/mohamed09090-xmd/repos",
+        "events_url": "https://api.github.com/users/mohamed09090-xmd/events{/privacy}",
+        "received_events_url": "https://api.github.com/users/mohamed09090-xmd/received_events",
+        "type": "User",
+        "user_view_type": "public",
+        "site_admin": false
+      },
+      "html_url": "https://github.com/mohamed09090-xmd/calculff",
+      "description": null,
+      "fork": false,
+      "url": "https://api.github.com/repos/mohamed09090-xmd/calculff",
+      "forks_url": "https://api.github.com/repos/mohamed09090-xmd/calculff/forks",
+      "keys_url": "https://api.github.com/repos/mohamed09090-xmd/calculff/keys{/key_id}",
+      "collaborators_url": "https://api.github.com/repos/mohamed09090-xmd/calculff/collaborators{/collaborator}",
+      "teams_url": "https://api.github.com/repos/mohamed09090-xmd/calculff/teams",
+      "hooks_url": "https://api.github.com/repos/mohamed09090-xmd/calculff/hooks",
+      "issue_events_url": "https://api.github.com/repos/mohamed09090-xmd/calculff/issues/events{/number}",
+      "events_url": "https://api.github.com/repos/mohamed09090-xmd/calculff/events",
+      "assignees_url": "https://api.github.com/repos/mohamed09090-xmd/calculff/assignees{/user}",
+      "branches_url": "https://api.github.com/repos/mohamed09090-xmd/calculff/branches{/branch}",
+      "tags_url": "https://api.github.com/repos/mohamed09090-xmd/calculff/tags",
+      "blobs_url": "https://api.github.com/repos/mohamed09090-xmd/calculff/git/blobs{/sha}",
+      "git_tags_url": "https://api.github.com/repos/mohamed09090-xmd/calculff/git/tags{/sha}",
+      "git_refs_url": "https://api.github.com/repos/mohamed09090-xmd/calculff/git/refs{/sha}",
+      "trees_url": "https://api.github.com/repos/mohamed09090-xmd/calculff/git/trees{/sha}",
+      "statuses_url": "https://api.github.com/repos/mohamed09090-xmd/calculff/statuses/{sha}",
+      "languages_url": "https://api.github.com/repos/mohamed09090-xmd/calculff/languages",
+      "stargazers_url": "https://api.github.com/repos/mohamed09090-xmd/calculff/stargazers",
+      "contributors_url": "https://api.github.com/repos/mohamed09090-xmd/calculff/contributors",
+      "subscribers_url": "https://api.github.com/repos/mohamed09090-xmd/calculff/subscribers",
+      "subscription_url": "https://api.github.com/repos/mohamed09090-xmd/calculff/subscription",
+      "commits_url": "https://api.github.com/repos/mohamed09090-xmd/calculff/commits{/sha}",
+      "git_commits_url": "https://api.github.com/repos/mohamed09090-xmd/calculff/git/commits{/sha}",
+      "comments_url": "https://api.github.com/repos/mohamed09090-xmd/calculff/comments{/number}",
+      "issue_comment_url": "https://api.github.com/repos/mohamed09090-xmd/calculff/issues/comments{/number}",
+      "contents_url": "https://api.github.com/repos/mohamed09090-xmd/calculff/contents/{+path}",
+      "compare_url": "https://api.github.com/repos/mohamed09090-xmd/calculff/compare/{base}...{head}",
+      "merges_url": "https://api.github.com/repos/mohamed09090-xmd/calculff/merges",
+      "archive_url": "https://api.github.com/repos/mohamed09090-xmd/calculff/{archive_format}{/ref}",
+      "downloads_url": "https://api.github.com/repos/mohamed09090-xmd/calculff/downloads",
+      "issues_url": "https://api.github.com/repos/mohamed09090-xmd/calculff/issues{/number}",
+      "pulls_url": "https://api.github.com/repos/mohamed09090-xmd/calculff/pulls{/number}",
+      "milestones_url": "https://api.github.com/repos/mohamed09090-xmd/calculff/milestones{/number}",
+      "notifications_url": "https://api.github.com/repos/mohamed09090-xmd/calculff/notifications{?since,all,participating}",
+      "labels_url": "https://api.github.com/repos/mohamed09090-xmd/calculff/labels{/name}",
+      "releases_url": "https://api.github.com/repos/mohamed09090-xmd/calculff/releases{/id}",
+      "deployments_url": "https://api.github.com/repos/mohamed09090-xmd/calculff/deployments"
+    },
+    "head_repository": {
+      "id": 1297715018,
+      "node_id": "R_kgDOTVmPSg",
+      "name": "calculff",
+      "full_name": "mohamed09090-xmd/calculff",
+      "private": false,
+      "owner": {
+        "login": "mohamed09090-xmd",
+        "id": 144628717,
+        "node_id": "U_kgDOCJ7b7Q",
+        "avatar_url": "https://avatars.githubusercontent.com/u/144628717?v=4",
+        "gravatar_id": "",
+        "url": "https://api.github.com/users/mohamed09090-xmd",
+        "html_url": "https://github.com/mohamed09090-xmd",
+        "followers_url": "https://api.github.com/users/mohamed09090-xmd/followers",
+        "following_url": "https://api.github.com/users/mohamed09090-xmd/following{/other_user}",
+        "gists_url": "https://api.github.com/users/mohamed09090-xmd/gists{/gist_id}",
+        "starred_url": "https://api.github.com/users/mohamed09090-xmd/starred{/owner}{/repo}",
+        "subscriptions_url": "https://api.github.com/users/mohamed09090-xmd/subscriptions",
+        "organizations_url": "https://api.github.com/users/mohamed09090-xmd/orgs",
+        "repos_url": "https://api.github.com/users/mohamed09090-xmd/repos",
+        "events_url": "https://api.github.com/users/mohamed09090-xmd/events{/privacy}",
+        "received_events_url": "https://api.github.com/users/mohamed09090-xmd/received_events",
+        "type": "User",
+        "user_view_type": "public",
+        "site_admin": false
+      },
+      "html_url": "https://github.com/mohamed09090-xmd/calculff",
+      "description": null,
+      "fork": false,
+      "url": "https://api.github.com/repos/mohamed09090-xmd/calculff",
+      "forks_url": "https://api.github.com/repos/mohamed09090-xmd/calculff/forks",
+      "keys_url": "https://api.github.com/repos/mohamed09090-xmd/calculff/keys{/key_id}",
+      "collaborators_url": "https://api.github.com/repos/mohamed09090-xmd/calculff/collaborators{/collaborator}",
+      "teams_url": "https://api.github.com/repos/mohamed09090-xmd/calculff/teams",
+      "hooks_url": "https://api.github.com/repos/mohamed09090-xmd/calculff/hooks",
+      "issue_events_url": "https://api.github.com/repos/mohamed09090-xmd/calculff/issues/events{/number}",
+      "events_url": "https://api.github.com/repos/mohamed09090-xmd/calculff/events",
+      "assignees_url": "https://api.github.com/repos/mohamed09090-xmd/calculff/assignees{/user}",
+      "branches_url": "https://api.github.com/repos/mohamed09090-xmd/calculff/branches{/branch}",
+      "tags_url": "https://api.github.com/repos/mohamed09090-xmd/calculff/tags",
+      "blobs_url": "https://api.github.com/repos/mohamed09090-xmd/calculff/git/blobs{/sha}",
+      "git_tags_url": "https://api.github.com/repos/mohamed09090-xmd/calculff/git/tags{/sha}",
+      "git_refs_url": "https://api.github.com/repos/mohamed09090-xmd/calculff/git/refs{/sha}",
+      "trees_url": "https://api.github.com/repos/mohamed09090-xmd/calculff/git/trees{/sha}",
+      "statuses_url": "https://api.github.com/repos/mohamed09090-xmd/calculff/statuses/{sha}",
+      "languages_url": "https://api.github.com/repos/mohamed09090-xmd/calculff/languages",
+      "stargazers_url": "https://api.github.com/repos/mohamed09090-xmd/calculff/stargazers",
+      "contributors_url": "https://api.github.com/repos/mohamed09090-xmd/calculff/contributors",
+      "subscribers_url": "https://api.github.com/repos/mohamed09090-xmd/calculff/subscribers",
+      "subscription_url": "https://api.github.com/repos/mohamed09090-xmd/calculff/subscription",
+      "commits_url": "https://api.github.com/repos/mohamed09090-xmd/calculff/commits{/sha}",
+      "git_commits_url": "https://api.github.com/repos/mohamed09090-xmd/calculff/git/commits{/sha}",
+      "comments_url": "https://api.github.com/repos/mohamed09090-xmd/calculff/comments{/number}",
+      "issue_comment_url": "https://api.github.com/repos/mohamed09090-xmd/calculff/issues/comments{/number}",
+      "contents_url": "https://api.github.com/repos/mohamed09090-xmd/calculff/contents/{+path}",
+      "compare_url": "https://api.github.com/repos/mohamed09090-xmd/calculff/compare/{base}...{head}",
+      "merges_url": "https://api.github.com/repos/mohamed09090-xmd/calculff/merges",
+      "archive_url": "https://api.github.com/repos/mohamed09090-xmd/calculff/{archive_format}{/ref}",
+      "downloads_url": "https://api.github.com/repos/mohamed09090-xmd/calculff/downloads",
+      "issues_url": "https://api.github.com/repos/mohamed09090-xmd/calculff/issues{/number}",
+      "pulls_url": "https://api.github.com/repos/mohamed09090-xmd/calculff/pulls{/number}",
+      "milestones_url": "https://api.github.com/repos/mohamed09090-xmd/calculff/milestones{/number}",
+      "notifications_url": "https://api.github.com/repos/mohamed09090-xmd/calculff/notifications{?since,all,participating}",
+      "labels_url": "https://api.github.com/repos/mohamed09090-xmd/calculff/labels{/name}",
+      "releases_url": "https://api.github.com/repos/mohamed09090-xmd/calculff/releases{/id}",
+      "deployments_url": "https://api.github.com/repos/mohamed09090-xmd/calculff/deployments"
+    }
+  },
+  "jobs": {
+    "total_count": 2,
+    "jobs": [
+      {
+        "id": 88037704707,
+        "run_id": 29628549115,
+        "workflow_name": "Verify and build signed Android release",
+        "head_branch": "main",
+        "run_url": "https://api.github.com/repos/mohamed09090-xmd/calculff/actions/runs/29628549115",
+        "run_attempt": 1,
+        "node_id": "CR_kwDOTVmPSs8AAAAUf3TEAw",
+        "head_sha": "86962a0a3c757278a0e1f13744cd852fef92a01b",
+        "url": "https://api.github.com/repos/mohamed09090-xmd/calculff/actions/jobs/88037704707",
+        "html_url": "https://github.com/mohamed09090-xmd/calculff/actions/runs/29628549115/job/88037704707",
+        "status": "completed",
+        "conclusion": "success",
+        "created_at": "2026-07-18T03:17:08Z",
+        "started_at": "2026-07-18T03:17:10Z",
+        "completed_at": "2026-07-18T03:19:08Z",
+        "name": "verify",
+        "steps": [
+          {
+            "name": "Set up job",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 1,
+            "started_at": "2026-07-18T03:17:10Z",
+            "completed_at": "2026-07-18T03:17:12Z"
+          },
+          {
+            "name": "Run actions/checkout@v4",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 2,
+            "started_at": "2026-07-18T03:17:12Z",
+            "completed_at": "2026-07-18T03:17:13Z"
+          },
+          {
+            "name": "Run actions/setup-java@v4",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 3,
+            "started_at": "2026-07-18T03:17:13Z",
+            "completed_at": "2026-07-18T03:17:13Z"
+          },
+          {
+            "name": "Run subosito/flutter-action@v2",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 4,
+            "started_at": "2026-07-18T03:17:13Z",
+            "completed_at": "2026-07-18T03:17:27Z"
+          },
+          {
+            "name": "Install SQLite test libraries",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 5,
+            "started_at": "2026-07-18T03:17:27Z",
+            "completed_at": "2026-07-18T03:17:33Z"
+          },
+          {
+            "name": "Install dependencies",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 6,
+            "started_at": "2026-07-18T03:17:33Z",
+            "completed_at": "2026-07-18T03:17:38Z"
+          },
+          {
+            "name": "Check formatting",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 7,
+            "started_at": "2026-07-18T03:17:38Z",
+            "completed_at": "2026-07-18T03:17:38Z"
+          },
+          {
+            "name": "Analyze",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 8,
+            "started_at": "2026-07-18T03:17:38Z",
+            "completed_at": "2026-07-18T03:17:57Z"
+          },
+          {
+            "name": "Upload analyzer log",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 9,
+            "started_at": "2026-07-18T03:17:57Z",
+            "completed_at": "2026-07-18T03:17:58Z"
+          },
+          {
+            "name": "Stop on analyzer errors",
+            "status": "completed",
+            "conclusion": "skipped",
+            "number": 10,
+            "started_at": "2026-07-18T03:17:58Z",
+            "completed_at": "2026-07-18T03:17:58Z"
+          },
+          {
+            "name": "Test with coverage",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 11,
+            "started_at": "2026-07-18T03:17:58Z",
+            "completed_at": "2026-07-18T03:19:05Z"
+          },
+          {
+            "name": "Upload test log",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 12,
+            "started_at": "2026-07-18T03:19:05Z",
+            "completed_at": "2026-07-18T03:19:06Z"
+          },
+          {
+            "name": "Stop on test failures",
+            "status": "completed",
+            "conclusion": "skipped",
+            "number": 13,
+            "started_at": "2026-07-18T03:19:06Z",
+            "completed_at": "2026-07-18T03:19:06Z"
+          },
+          {
+            "name": "Post Run subosito/flutter-action@v2",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 24,
+            "started_at": "2026-07-18T03:19:06Z",
+            "completed_at": "2026-07-18T03:19:06Z"
+          },
+          {
+            "name": "Post Run actions/setup-java@v4",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 25,
+            "started_at": "2026-07-18T03:19:06Z",
+            "completed_at": "2026-07-18T03:19:06Z"
+          },
+          {
+            "name": "Post Run actions/checkout@v4",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 26,
+            "started_at": "2026-07-18T03:19:06Z",
+            "completed_at": "2026-07-18T03:19:06Z"
+          },
+          {
+            "name": "Complete job",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 27,
+            "started_at": "2026-07-18T03:19:06Z",
+            "completed_at": "2026-07-18T03:19:06Z"
+          }
+        ],
+        "check_run_url": "https://api.github.com/repos/mohamed09090-xmd/calculff/check-runs/88037704707",
+        "labels": [
+          "ubuntu-latest"
+        ],
+        "runner_id": 1000000585,
+        "runner_name": "GitHub Actions 1000000585",
+        "runner_group_id": 0,
+        "runner_group_name": "GitHub Actions"
+      },
+      {
+        "id": 88037866468,
+        "run_id": 29628549115,
+        "workflow_name": "Verify and build signed Android release",
+        "head_branch": "main",
+        "run_url": "https://api.github.com/repos/mohamed09090-xmd/calculff/actions/runs/29628549115",
+        "run_attempt": 1,
+        "node_id": "CR_kwDOTVmPSs8AAAAUf3c75A",
+        "head_sha": "86962a0a3c757278a0e1f13744cd852fef92a01b",
+        "url": "https://api.github.com/repos/mohamed09090-xmd/calculff/actions/jobs/88037866468",
+        "html_url": "https://github.com/mohamed09090-xmd/calculff/actions/runs/29628549115/job/88037866468",
+        "status": "completed",
+        "conclusion": "success",
+        "created_at": "2026-07-18T03:19:08Z",
+        "started_at": "2026-07-18T03:19:10Z",
+        "completed_at": "2026-07-18T03:25:27Z",
+        "name": "signed-release",
+        "steps": [
+          {
+            "name": "Set up job",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 1,
+            "started_at": "2026-07-18T03:19:11Z",
+            "completed_at": "2026-07-18T03:19:14Z"
+          },
+          {
+            "name": "Run actions/checkout@v4",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 2,
+            "started_at": "2026-07-18T03:19:14Z",
+            "completed_at": "2026-07-18T03:19:14Z"
+          },
+          {
+            "name": "Run actions/setup-java@v4",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 3,
+            "started_at": "2026-07-18T03:19:14Z",
+            "completed_at": "2026-07-18T03:19:15Z"
+          },
+          {
+            "name": "Run subosito/flutter-action@v2",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 4,
+            "started_at": "2026-07-18T03:19:15Z",
+            "completed_at": "2026-07-18T03:19:37Z"
+          },
+          {
+            "name": "Install dependencies",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 5,
+            "started_at": "2026-07-18T03:19:37Z",
+            "completed_at": "2026-07-18T03:19:40Z"
+          },
+          {
+            "name": "Validate Supabase release configuration",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 6,
+            "started_at": "2026-07-18T03:19:40Z",
+            "completed_at": "2026-07-18T03:19:40Z"
+          },
+          {
+            "name": "Prepare production signing",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 7,
+            "started_at": "2026-07-18T03:19:40Z",
+            "completed_at": "2026-07-18T03:19:42Z"
+          },
+          {
+            "name": "Make Gradle executable",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 8,
+            "started_at": "2026-07-18T03:19:42Z",
+            "completed_at": "2026-07-18T03:19:42Z"
+          },
+          {
+            "name": "Build signed release APK",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 9,
+            "started_at": "2026-07-18T03:19:42Z",
+            "completed_at": "2026-07-18T03:24:59Z"
+          },
+          {
+            "name": "Build signed release AAB",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 10,
+            "started_at": "2026-07-18T03:24:59Z",
+            "completed_at": "2026-07-18T03:25:15Z"
+          },
+          {
+            "name": "Verify outputs and signatures",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 11,
+            "started_at": "2026-07-18T03:25:15Z",
+            "completed_at": "2026-07-18T03:25:18Z"
+          },
+          {
+            "name": "Upload build logs",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 12,
+            "started_at": "2026-07-18T03:25:18Z",
+            "completed_at": "2026-07-18T03:25:19Z"
+          },
+          {
+            "name": "Upload signed APK and AAB",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 13,
+            "started_at": "2026-07-18T03:25:19Z",
+            "completed_at": "2026-07-18T03:25:23Z"
+          },
+          {
+            "name": "Remove signing material",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 14,
+            "started_at": "2026-07-18T03:25:23Z",
+            "completed_at": "2026-07-18T03:25:23Z"
+          },
+          {
+            "name": "Post Run subosito/flutter-action@v2",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 26,
+            "started_at": "2026-07-18T03:25:23Z",
+            "completed_at": "2026-07-18T03:25:24Z"
+          },
+          {
+            "name": "Post Run actions/setup-java@v4",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 27,
+            "started_at": "2026-07-18T03:25:24Z",
+            "completed_at": "2026-07-18T03:25:25Z"
+          },
+          {
+            "name": "Post Run actions/checkout@v4",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 28,
+            "started_at": "2026-07-18T03:25:25Z",
+            "completed_at": "2026-07-18T03:25:25Z"
+          },
+          {
+            "name": "Complete job",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 29,
+            "started_at": "2026-07-18T03:25:25Z",
+            "completed_at": "2026-07-18T03:25:25Z"
+          }
+        ],
+        "check_run_url": "https://api.github.com/repos/mohamed09090-xmd/calculff/check-runs/88037866468",
+        "labels": [
+          "ubuntu-latest"
+        ],
+        "runner_id": 1000000586,
+        "runner_name": "GitHub Actions 1000000586",
+        "runner_group_id": 0,
+        "runner_group_name": "GitHub Actions"
+      }
+    ]
+  },
+  "artifacts": {
+    "total_count": 4,
+    "artifacts": [
+      {
+        "id": 8424758434,
+        "node_id": "MDg6QXJ0aWZhY3Q4NDI0NzU4NDM0",
+        "name": "game-credit-profit-manager-signed-release",
+        "size_in_bytes": 93693782,
+        "url": "https://api.github.com/repos/mohamed09090-xmd/calculff/actions/artifacts/8424758434",
+        "archive_download_url": "https://api.github.com/repos/mohamed09090-xmd/calculff/actions/artifacts/8424758434/zip",
+        "expired": false,
+        "digest": "sha256:1ef023fc430314c9f32f4e8fb5836c46273eb5cd69885911ca22d920f7ef15a9",
+        "created_at": "2026-07-18T03:25:23Z",
+        "updated_at": "2026-07-18T03:25:23Z",
+        "expires_at": "2026-10-16T03:17:08Z",
+        "workflow_run": {
+          "id": 29628549115,
+          "repository_id": 1297715018,
+          "head_repository_id": 1297715018,
+          "head_branch": "main",
+          "head_sha": "86962a0a3c757278a0e1f13744cd852fef92a01b"
+        }
+      },
+      {
+        "id": 8424757764,
+        "node_id": "MDg6QXJ0aWZhY3Q4NDI0NzU3NzY0",
+        "name": "signed-release-build-logs",
+        "size_in_bytes": 2745,
+        "url": "https://api.github.com/repos/mohamed09090-xmd/calculff/actions/artifacts/8424757764",
+        "archive_download_url": "https://api.github.com/repos/mohamed09090-xmd/calculff/actions/artifacts/8424757764/zip",
+        "expired": false,
+        "digest": "sha256:2c73fd6909d70f1fc7398f3dc1216f4fcc7f0feadbfec6e8281d5a829cba845b",
+        "created_at": "2026-07-18T03:25:19Z",
+        "updated_at": "2026-07-18T03:25:19Z",
+        "expires_at": "2026-08-17T03:25:18Z",
+        "workflow_run": {
+          "id": 29628549115,
+          "repository_id": 1297715018,
+          "head_repository_id": 1297715018,
+          "head_branch": "main",
+          "head_sha": "86962a0a3c757278a0e1f13744cd852fef92a01b"
+        }
+      },
+      {
+        "id": 8424696608,
+        "node_id": "MDg6QXJ0aWZhY3Q4NDI0Njk2NjA4",
+        "name": "flutter-test-log",
+        "size_in_bytes": 9353,
+        "url": "https://api.github.com/repos/mohamed09090-xmd/calculff/actions/artifacts/8424696608",
+        "archive_download_url": "https://api.github.com/repos/mohamed09090-xmd/calculff/actions/artifacts/8424696608/zip",
+        "expired": false,
+        "digest": "sha256:3a48981cd1c570d730242ed0064b24a3b46e90b339667245dc2fc67bbe07fdbc",
+        "created_at": "2026-07-18T03:19:06Z",
+        "updated_at": "2026-07-18T03:19:06Z",
+        "expires_at": "2026-08-17T03:19:05Z",
+        "workflow_run": {
+          "id": 29628549115,
+          "repository_id": 1297715018,
+          "head_repository_id": 1297715018,
+          "head_branch": "main",
+          "head_sha": "86962a0a3c757278a0e1f13744cd852fef92a01b"
+        }
+      },
+      {
+        "id": 8424685595,
+        "node_id": "MDg6QXJ0aWZhY3Q4NDI0Njg1NTk1",
+        "name": "flutter-analyze-log",
+        "size_in_bytes": 211,
+        "url": "https://api.github.com/repos/mohamed09090-xmd/calculff/actions/artifacts/8424685595",
+        "archive_download_url": "https://api.github.com/repos/mohamed09090-xmd/calculff/actions/artifacts/8424685595/zip",
+        "expired": false,
+        "digest": "sha256:07176c83a60cdaee75ba750f4a70187e00e3c566a944a3301926a34ede490535",
+        "created_at": "2026-07-18T03:17:58Z",
+        "updated_at": "2026-07-18T03:17:58Z",
+        "expires_at": "2026-08-17T03:17:58Z",
+        "workflow_run": {
+          "id": 29628549115,
+          "repository_id": 1297715018,
+          "head_repository_id": 1297715018,
+          "head_branch": "main",
+          "head_sha": "86962a0a3c757278a0e1f13744cd852fef92a01b"
+        }
+      }
+    ]
+  }
+}
