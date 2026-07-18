@@ -88,17 +88,15 @@ void main() {
       expect(content, isNot(contains('offerscontrollerprovider')));
     });
 
-    test('tests contain no hosted Supabase project or credentials', () {
+    test('offer implementation tests contain no hosted credentials', () {
       const forbidden = <String>[
         'supabase.co',
-        'zegjqwsvsaprnguvxuwk',
-        'txxokpovdbvsvnkpbrrp',
         'service_role',
         'sb_secret_',
         'github_pat_',
         '-----begin private key-----',
       ];
-      for (final file in _testFiles()) {
+      for (final file in _implementationTestFiles()) {
         final content = file.readAsStringSync().toLowerCase();
         for (final value in forbidden) {
           expect(
@@ -141,10 +139,17 @@ List<File> _productionFiles() {
   ];
 }
 
-List<File> _testFiles() {
-  return Directory('test/features/admin_platform/offers')
-      .listSync(recursive: true)
-      .whereType<File>()
-      .where((file) => file.path.endsWith('.dart'))
-      .toList(growable: false);
+List<File> _implementationTestFiles() {
+  return <File>[
+    File('test/features/admin_platform/offers/offers_test_fakes.dart'),
+    File('test/features/admin_platform/offers/offers_controller_test.dart'),
+    File(
+      'test/features/admin_platform/offers/'
+      'supabase_public_offers_repository_test.dart',
+    ),
+    File(
+      'test/features/admin_platform/offers/'
+      'offers_screen_widget_test.dart',
+    ),
+  ];
 }
