@@ -23,10 +23,7 @@ class SupabasePublicOffersRepository implements PublicOffersRepository {
   final PlatformReadCoordinator _readCoordinator;
 
   @override
-  Future<CursorPage<PublicOffer>> listOffers({
-    String? cursor,
-    int? limit,
-  }) {
+  Future<CursorPage<PublicOffer>> listOffers({String? cursor, int? limit}) {
     final offset = _parseCursor(cursor);
     final pageSize = (limit ?? 50).clamp(1, 100).toInt();
 

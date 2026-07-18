@@ -34,14 +34,12 @@ final publicOffersRepositoryProvider = Provider<PublicOffersRepository?>((ref) {
 
 final offersGamesRepositoryProvider = Provider<GamesRepository?>((ref) => null);
 
-final offersControllerProvider = StateNotifierProvider.autoDispose<
-  OffersController,
-  OffersState
->((ref) {
-  final controller = OffersController(
-    offersRepository: ref.watch(publicOffersRepositoryProvider),
-    gamesRepository: ref.watch(offersGamesRepositoryProvider),
-  );
-  unawaited(controller.load());
-  return controller;
-});
+final offersControllerProvider =
+    StateNotifierProvider.autoDispose<OffersController, OffersState>((ref) {
+      final controller = OffersController(
+        offersRepository: ref.watch(publicOffersRepositoryProvider),
+        gamesRepository: ref.watch(offersGamesRepositoryProvider),
+      );
+      unawaited(controller.load());
+      return controller;
+    });

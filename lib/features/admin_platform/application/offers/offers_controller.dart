@@ -20,12 +20,11 @@ class OffersMutationResult {
     this.refreshFailureCode,
   });
 
-  const OffersMutationResult.success({
-    PlatformFailureCode? refreshFailureCode,
-  }) : this._(
-         status: OffersMutationStatus.success,
-         refreshFailureCode: refreshFailureCode,
-       );
+  const OffersMutationResult.success({PlatformFailureCode? refreshFailureCode})
+    : this._(
+        status: OffersMutationStatus.success,
+        refreshFailureCode: refreshFailureCode,
+      );
 
   OffersMutationResult.validation(
     Iterable<PlatformValidationIssue> validationIssues,
@@ -37,13 +36,9 @@ class OffersMutationResult {
       );
 
   const OffersMutationResult.failure(PlatformFailureCode failureCode)
-    : this._(
-        status: OffersMutationStatus.failure,
-        failureCode: failureCode,
-      );
+    : this._(status: OffersMutationStatus.failure, failureCode: failureCode);
 
-  const OffersMutationResult.busy()
-    : this._(status: OffersMutationStatus.busy);
+  const OffersMutationResult.busy() : this._(status: OffersMutationStatus.busy);
 
   final OffersMutationStatus status;
   final List<PlatformValidationIssue> validationIssues;
@@ -136,10 +131,8 @@ class OffersController extends StateNotifier<OffersState> {
   }) {
     return _mutateInput(
       input: input,
-      operation: (repository) => repository.updateOffer(
-        offerId: offerId,
-        input: input,
-      ),
+      operation: (repository) =>
+          repository.updateOffer(offerId: offerId, input: input),
     );
   }
 
@@ -178,9 +171,7 @@ class OffersController extends StateNotifier<OffersState> {
       );
       final refreshFailure = await _reloadOffersAfterMutation();
       state = state.copyWith(isSubmitting: false);
-      return OffersMutationResult.success(
-        refreshFailureCode: refreshFailure,
-      );
+      return OffersMutationResult.success(refreshFailureCode: refreshFailure);
     } catch (error) {
       state = state.copyWith(isSubmitting: false);
       return OffersMutationResult.failure(_failureFrom(error).code);
@@ -206,9 +197,7 @@ class OffersController extends StateNotifier<OffersState> {
       final offers = await offersFuture;
       final games = await gamesFuture;
       state = state.copyWith(
-        status: offers.isEmpty
-            ? OffersViewStatus.empty
-            : OffersViewStatus.data,
+        status: offers.isEmpty ? OffersViewStatus.empty : OffersViewStatus.data,
         offers: offers,
         games: games,
         isRefreshing: false,
@@ -241,9 +230,8 @@ class OffersController extends StateNotifier<OffersState> {
 
   Future<OffersMutationResult> _mutateInput({
     required PublicOfferInput input,
-    required Future<PublicOffer> Function(
-      PublicOffersRepository repository,
-    ) operation,
+    required Future<PublicOffer> Function(PublicOffersRepository repository)
+    operation,
   }) async {
     if (state.isSubmitting) {
       return const OffersMutationResult.busy();
@@ -277,9 +265,7 @@ class OffersController extends StateNotifier<OffersState> {
       await operation(repository);
       final refreshFailure = await _reloadOffersAfterMutation();
       state = state.copyWith(isSubmitting: false);
-      return OffersMutationResult.success(
-        refreshFailureCode: refreshFailure,
-      );
+      return OffersMutationResult.success(refreshFailureCode: refreshFailure);
     } catch (error) {
       state = state.copyWith(isSubmitting: false);
       return OffersMutationResult.failure(_failureFrom(error).code);
@@ -290,9 +276,7 @@ class OffersController extends StateNotifier<OffersState> {
     try {
       final offers = await _loadAllOffers();
       state = state.copyWith(
-        status: offers.isEmpty
-            ? OffersViewStatus.empty
-            : OffersViewStatus.data,
+        status: offers.isEmpty ? OffersViewStatus.empty : OffersViewStatus.data,
         offers: offers,
         isStale: false,
         clearFailure: true,
@@ -317,9 +301,7 @@ class OffersController extends StateNotifier<OffersState> {
   Future<List<PublicOffer>> _loadAllOffers() async {
     final repository = _offersRepository;
     if (repository == null) {
-      throw const PlatformFailure(
-        PlatformFailureCode.temporarilyUnavailable,
-      );
+      throw const PlatformFailure(PlatformFailureCode.temporarilyUnavailable);
     }
     final offers = <PublicOffer>[];
     String? cursor;
@@ -343,17 +325,12 @@ class OffersController extends StateNotifier<OffersState> {
   Future<List<Game>> _loadAllGames() async {
     final repository = _gamesRepository;
     if (repository == null) {
-      throw const PlatformFailure(
-        PlatformFailureCode.temporarilyUnavailable,
-      );
+      throw const PlatformFailure(PlatformFailureCode.temporarilyUnavailable);
     }
     final games = <Game>[];
     String? cursor;
     for (var pageIndex = 0; pageIndex < _maximumPages; pageIndex += 1) {
-      final page = await repository.listGames(
-        cursor: cursor,
-        limit: _pageSize,
-      );
+      final page = await repository.listGames(cursor: cursor, limit: _pageSize);
       games.addAll(page.items);
       if (!page.hasMore) {
         return List<Game>.unmodifiable(games);

@@ -73,9 +73,7 @@ class OffersScreen extends ConsumerWidget {
 
   Future<void> _openForm(BuildContext context, PublicOffer? offer) async {
     await Navigator.of(context).push<void>(
-      MaterialPageRoute<void>(
-        builder: (_) => OfferFormScreen(offer: offer),
-      ),
+      MaterialPageRoute<void>(builder: (_) => OfferFormScreen(offer: offer)),
     );
   }
 }
@@ -128,10 +126,7 @@ class _OffersBody extends StatelessWidget {
           key: const Key('offers-error-state'),
           icon: Icons.error_outline,
           title: _failureText(context, state.failureCode),
-          message: offerText(
-            context,
-            'تعذر تحميل العروض بأمان. أعد المحاولة.',
-          ),
+          message: offerText(context, 'تعذر تحميل العروض بأمان. أعد المحاولة.'),
           onRefresh: onRefresh,
           actionLabel: offerText(context, 'إعادة المحاولة'),
         );
@@ -143,8 +138,7 @@ class _OffersBody extends StatelessWidget {
             physics: const AlwaysScrollableScrollPhysics(),
             padding: const EdgeInsets.fromLTRB(12, 12, 12, 104),
             children: [
-              if (state.isStale)
-                _StaleBanner(failureCode: state.failureCode),
+              if (state.isStale) _StaleBanner(failureCode: state.failureCode),
               for (final offer in state.offers)
                 Padding(
                   padding: const EdgeInsets.only(bottom: 10),
@@ -152,8 +146,7 @@ class _OffersBody extends StatelessWidget {
                     offer: offer,
                     isSubmitting: state.isSubmitting,
                     onEdit: () => onEdit(offer),
-                    onPublishChanged: (value) =>
-                        onPublishChanged(offer, value),
+                    onPublishChanged: (value) => onPublishChanged(offer, value),
                   ),
                 ),
             ],
@@ -593,10 +586,7 @@ class _OfferFormScreenState extends ConsumerState<OfferFormScreen> {
     final controller = ref.read(offersControllerProvider.notifier);
     final result = widget.offer == null
         ? await controller.createOffer(input)
-        : await controller.updateOffer(
-            offerId: widget.offer!.id,
-            input: input,
-          );
+        : await controller.updateOffer(offerId: widget.offer!.id, input: input);
     if (!mounted) {
       return;
     }
@@ -666,10 +656,7 @@ String _failureText(BuildContext context, PlatformFailureCode? code) {
   return offerText(context, source);
 }
 
-String _mutationErrorText(
-  BuildContext context,
-  OffersMutationResult result,
-) {
+String _mutationErrorText(BuildContext context, OffersMutationResult result) {
   if (result.status == OffersMutationStatus.busy) {
     return offerText(context, 'عملية حفظ العرض قيد التنفيذ.');
   }
@@ -679,10 +666,7 @@ String _mutationErrorText(
           issue.field == PlatformValidationField.selectedGameIsActive &&
           issue.code == PlatformValidationCode.inactiveGame,
     )) {
-      return offerText(
-        context,
-        'لا يمكن نشر عرض تابع للعبة غير فعالة.',
-      );
+      return offerText(context, 'لا يمكن نشر عرض تابع للعبة غير فعالة.');
     }
     if (result.validationIssues.any(
       (issue) => issue.field == PlatformValidationField.gameId,
@@ -694,10 +678,7 @@ String _mutationErrorText(
   return _failureText(context, result.failureCode);
 }
 
-void _showMutationResult(
-  BuildContext context,
-  OffersMutationResult result,
-) {
+void _showMutationResult(BuildContext context, OffersMutationResult result) {
   if (result.isSuccess) {
     final message = result.refreshFailureCode == null
         ? offerText(context, 'تم تحديث حالة النشر.')
@@ -705,10 +686,12 @@ void _showMutationResult(
             context,
             'تم الحفظ، لكن تعذر تحديث القائمة. البيانات المعروضة قديمة.',
           );
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
     return;
   }
-  ScaffoldMessenger.of(context).showSnackBar(
-    SnackBar(content: Text(_mutationErrorText(context, result))),
-  );
+  ScaffoldMessenger.of(
+    context,
+  ).showSnackBar(SnackBar(content: Text(_mutationErrorText(context, result))));
 }

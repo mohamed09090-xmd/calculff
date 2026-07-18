@@ -105,10 +105,8 @@ Map<String, Object?> sampleOfferRow({
 }
 
 class FakeGamesRepository implements GamesRepository {
-  FakeGamesRepository({
-    List<Game>? games,
-    this.listFailure,
-  }) : games = List<Game>.of(games ?? <Game>[activeGame, inactiveGame]);
+  FakeGamesRepository({List<Game>? games, this.listFailure})
+    : games = List<Game>.of(games ?? <Game>[activeGame, inactiveGame]);
 
   final List<Game> games;
   Object? listFailure;
@@ -138,18 +136,12 @@ class FakeGamesRepository implements GamesRepository {
   }
 
   @override
-  Future<Game> setGameActive({
-    required String gameId,
-    required bool isActive,
-  }) {
+  Future<Game> setGameActive({required String gameId, required bool isActive}) {
     throw UnsupportedError('Not used by offers tests.');
   }
 
   @override
-  Future<Game> updateGame({
-    required String gameId,
-    required GameInput input,
-  }) {
+  Future<Game> updateGame({required String gameId, required GameInput input}) {
     throw UnsupportedError('Not used by offers tests.');
   }
 }
@@ -198,7 +190,10 @@ class FakePublicOffersRepository implements PublicOffersRepository {
     final offset = int.tryParse(cursor ?? '0') ?? 0;
     final pageSize = limit ?? offers.length;
     final end = (offset + pageSize).clamp(0, offers.length).toInt();
-    final pageItems = offers.sublist(offset.clamp(0, offers.length).toInt(), end);
+    final pageItems = offers.sublist(
+      offset.clamp(0, offers.length).toInt(),
+      end,
+    );
     final hasMore = end < offers.length;
     return CursorPage<PublicOffer>(
       items: pageItems,
@@ -320,7 +315,10 @@ class FakeSupabaseOffersDataSource implements SupabaseOffersDataSource {
     this.updateOutcome,
     this.publishOutcome,
   }) : listOutcomes = List<Object>.of(
-         listOutcomes ?? <Object>[<Map<String, Object?>>[sampleOfferRow()]],
+         listOutcomes ??
+             <Object>[
+               <Map<String, Object?>>[sampleOfferRow()],
+             ],
        );
 
   final List<Object> listOutcomes;
@@ -345,7 +343,9 @@ class FakeSupabaseOffersDataSource implements SupabaseOffersDataSource {
     final outcome = listOutcomes.length > 1
         ? listOutcomes.removeAt(0)
         : listOutcomes.single;
-    if (outcome is Error || outcome is Exception || outcome is PlatformFailure) {
+    if (outcome is Error ||
+        outcome is Exception ||
+        outcome is PlatformFailure) {
       throw outcome;
     }
     return List<Map<String, Object?>>.from(outcome as List);
@@ -383,7 +383,9 @@ class FakeSupabaseOffersDataSource implements SupabaseOffersDataSource {
   }
 
   Map<String, Object?> _resolveWriteOutcome(Object outcome) {
-    if (outcome is Error || outcome is Exception || outcome is PlatformFailure) {
+    if (outcome is Error ||
+        outcome is Exception ||
+        outcome is PlatformFailure) {
       throw outcome;
     }
     return Map<String, Object?>.from(outcome as Map);

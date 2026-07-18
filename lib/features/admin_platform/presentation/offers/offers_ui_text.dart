@@ -43,8 +43,7 @@ const Map<String, String> _offerFrench = {
   'العرض غير موجود.': 'L’offre est introuvable.',
   'تحقق من بيانات العرض.': 'Vérifiez les données de l’offre.',
   'استجابة المنصة غير صالحة.': 'La réponse de la plateforme est invalide.',
-  'المنصة غير متاحة مؤقتًا.':
-      'La plateforme est temporairement indisponible.',
+  'المنصة غير متاحة مؤقتًا.': 'La plateforme est temporairement indisponible.',
   'عملية حفظ العرض قيد التنفيذ.':
       'L’enregistrement de l’offre est déjà en cours.',
   'تم تحديث حالة النشر.': 'L’état de publication a été mis à jour.',

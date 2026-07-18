@@ -19,7 +19,9 @@ void main() {
     expect(find.text('عرض 100 جوهرة'), findsOneWidget);
     expect(find.byKey(const Key('offers-list')), findsOneWidget);
     expect(
-      tester.widget<Directionality>(find.byType(Directionality).first).textDirection,
+      tester
+          .widget<Directionality>(find.byType(Directionality).first)
+          .textDirection,
       TextDirection.rtl,
     );
 
@@ -39,7 +41,9 @@ void main() {
     expect(find.text('Offre 100 diamants'), findsOneWidget);
     expect(find.text('Free Fire'), findsOneWidget);
     expect(
-      tester.widget<Directionality>(find.byType(Directionality).first).textDirection,
+      tester
+          .widget<Directionality>(find.byType(Directionality).first)
+          .textDirection,
       TextDirection.ltr,
     );
   });
@@ -77,9 +81,7 @@ void main() {
     expect(find.text('عرض 100 جوهرة'), findsOneWidget);
   });
 
-  testWidgets('320 by 640 with text scale 2 has no overflow', (
-    tester,
-  ) async {
+  testWidgets('320 by 640 with text scale 2 has no overflow', (tester) async {
     await _pumpOffers(
       tester,
       offersRepository: FakePublicOffersRepository(offers: [sampleOffer()]),
@@ -111,10 +113,7 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('offer-published-field')));
     await tester.pumpAndSettle();
-    expect(
-      find.text('لا يمكن نشر عرض تابع للعبة غير فعالة.'),
-      findsOneWidget,
-    );
+    expect(find.text('لا يمكن نشر عرض تابع للعبة غير فعالة.'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
@@ -158,9 +157,7 @@ Future<void> _pumpOffers(
     ProviderScope(
       overrides: [
         publicOffersRepositoryProvider.overrideWithValue(offersRepository),
-        offersGamesRepositoryProvider.overrideWithValue(
-          FakeGamesRepository(),
-        ),
+        offersGamesRepositoryProvider.overrideWithValue(FakeGamesRepository()),
       ],
       child: MaterialApp(
         locale: locale,

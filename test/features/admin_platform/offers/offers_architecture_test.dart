@@ -4,39 +4,42 @@ import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   group('Offers management architecture', () {
-    test('production files avoid SQLite, hosted refs, and forbidden scopes', () {
-      const forbidden = <String>[
-        'package:sqflite',
-        'databasehelper',
-        'apprepository',
-        'supabase.co',
-        'zegjqwsvsaprnguvxuwk',
-        'txxokpovdbvsvnkpbrrp',
-        '.rpc(',
-        '.delete(',
-        '.stream(',
-        'realtime',
-        ".from('orders'",
-        '.from("orders"',
-        'customer_order',
-        'payment_proof',
-        '_snapshot',
-        'cost_',
-        'profit',
-        'inventory',
-      ];
+    test(
+      'production files avoid SQLite, hosted refs, and forbidden scopes',
+      () {
+        const forbidden = <String>[
+          'package:sqflite',
+          'databasehelper',
+          'apprepository',
+          'supabase.co',
+          'zegjqwsvsaprnguvxuwk',
+          'txxokpovdbvsvnkpbrrp',
+          '.rpc(',
+          '.delete(',
+          '.stream(',
+          'realtime',
+          ".from('orders'",
+          '.from("orders"',
+          'customer_order',
+          'payment_proof',
+          '_snapshot',
+          'cost_',
+          'profit',
+          'inventory',
+        ];
 
-      for (final file in _productionFiles()) {
-        final content = file.readAsStringSync().toLowerCase();
-        for (final value in forbidden) {
-          expect(
-            content,
-            isNot(contains(value)),
-            reason: '${file.path} must not contain $value',
-          );
+        for (final file in _productionFiles()) {
+          final content = file.readAsStringSync().toLowerCase();
+          for (final value in forbidden) {
+            expect(
+              content,
+              isNot(contains(value)),
+              reason: '${file.path} must not contain $value',
+            );
+          }
         }
-      }
-    });
+      },
+    );
 
     test('datasource uses explicit offer and game projections', () {
       final content = File(
