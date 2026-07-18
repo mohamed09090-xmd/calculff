@@ -1,0 +1,42 @@
+name: Temporary format games branch
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  format:
+    if: github.head_ref == 'feat/admin-platform-games-management'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.44.0'
+          channel: stable
+          cache: true
+
+      - name: Format Dart sources
+        run: dart format .
+
+      - name: Collect formatter changes
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p formatted-output
+          git diff --name-only -z -- '*.dart' > formatted-files.bin
+          while IFS= read -r -d '' file; do
+            mkdir -p "formatted-output/$(dirname "$file")"
+            cp "$file" "formatted-output/$file"
+          done < formatted-files.bin
+          git diff --name-only -- '*.dart' > formatted-output/formatted-files.txt
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: formatted-games-sources
+          path: formatted-output
+          if-no-files-found: error
+          retention-days: 1
