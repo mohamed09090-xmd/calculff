@@ -51,6 +51,17 @@ String platformDataFailureText(BuildContext context, PlatformFailure failure) {
 }
 
 const Map<String, String> _platformFrench = {
+  'ملخص مباشر لحالة منصة الزبائن.': 'Résumé actuel de la plateforme clients.',
+  'تحديث لوحة المنصة': 'Actualiser le tableau de bord',
+  'جارٍ تحميل لوحة المنصة.': 'Chargement du tableau de bord…',
+  'تعذر تحميل لوحة المنصة.': 'Impossible de charger le tableau de bord.',
+  'الطلبات الجديدة': 'Nouvelles commandes',
+  'قيد المعالجة': 'En traitement',
+  'مراجعة الدفع': 'Paiements à vérifier',
+  'المكتملة': 'Terminées',
+  'العروض المنشورة': 'Offres publiées',
+  'الألعاب النشطة': 'Jeux actifs',
+  'آخر تحديث محلي': 'Dernière mise à jour locale',
   'إدارة الألعاب': 'Gestion des jeux',
   'أضف الألعاب وعدّل بياناتها أو فعّلها وعطّلها.':
       'Ajoutez des jeux, modifiez leurs données, activez-les ou désactivez-les.',

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'dashboard/platform_dashboard_screen.dart';
 import 'games/games_screen.dart';
 import 'offers/offers_screen.dart';
 import 'orders/customer_orders_screen.dart';
@@ -24,6 +25,7 @@ class _CustomerPlatformShellState extends State<CustomerPlatformShell> {
       label: platformText(context, 'لوحة المنصة'),
       icon: Icons.space_dashboard_outlined,
       selectedIcon: Icons.space_dashboard,
+      builder: (_) => const PlatformDashboardScreen(),
     ),
     _PlatformDestination(
       label: platformText(context, 'الطلبات'),
@@ -102,7 +104,7 @@ class _CustomerPlatformShellState extends State<CustomerPlatformShell> {
   @override
   Widget build(BuildContext context) {
     final destinations = _destinations(context);
-    final selected = destinations[_selectedIndex];
+    final content = destinations[_selectedIndex].builder(context);
 
     return Scaffold(
       appBar: AppBar(
@@ -123,9 +125,6 @@ class _CustomerPlatformShellState extends State<CustomerPlatformShell> {
       body: SafeArea(
         child: LayoutBuilder(
           builder: (context, constraints) {
-            final content =
-                selected.builder?.call(context) ??
-                _PlatformDestinationBody(destination: selected);
             if (constraints.maxWidth < _wideBreakpoint) {
               return content;
             }
@@ -181,66 +180,16 @@ class _CustomerPlatformShellState extends State<CustomerPlatformShell> {
   }
 }
 
-class _PlatformDestinationBody extends StatelessWidget {
-  const _PlatformDestinationBody({required this.destination});
-
-  final _PlatformDestination destination;
-
-  @override
-  Widget build(BuildContext context) {
-    return ListView(
-      key: const Key('platform-placeholder-scroll-view'),
-      padding: const EdgeInsets.all(20),
-      children: [
-        Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 760),
-            child: Card(
-              child: Padding(
-                padding: const EdgeInsets.all(24),
-                child: Column(
-                  children: [
-                    Icon(
-                      destination.selectedIcon,
-                      size: 56,
-                      color: Theme.of(context).colorScheme.primary,
-                    ),
-                    const SizedBox(height: 16),
-                    Text(
-                      destination.label,
-                      textAlign: TextAlign.center,
-                      style: Theme.of(context).textTheme.headlineSmall
-                          ?.copyWith(fontWeight: FontWeight.w800),
-                    ),
-                    const SizedBox(height: 12),
-                    Text(
-                      platformText(
-                        context,
-                        'ستضاف هذه الوظيفة في المرحلة التالية.',
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
 class _PlatformDestination {
   const _PlatformDestination({
     required this.label,
     required this.icon,
     required this.selectedIcon,
-    this.builder,
+    required this.builder,
   });
 
   final String label;
   final IconData icon;
   final IconData selectedIcon;
-  final WidgetBuilder? builder;
+  final WidgetBuilder builder;
 }

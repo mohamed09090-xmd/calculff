@@ -1,10 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:game_credit_profit_manager/features/admin_platform/application/dashboard/platform_dashboard_controller.dart';
+import 'package:game_credit_profit_manager/features/admin_platform/application/dashboard/platform_dashboard_providers.dart';
+import 'package:game_credit_profit_manager/features/admin_platform/domain/dashboard/platform_dashboard_repository.dart';
+import 'package:game_credit_profit_manager/features/admin_platform/domain/dashboard/platform_dashboard_summary.dart';
 import 'package:game_credit_profit_manager/features/admin_platform/presentation/customer_platform_shell.dart';
 
 void main() {
-  testWidgets('contains the four temporary platform destinations', (
+  testWidgets('contains the four platform destinations and dashboard', (
     tester,
   ) async {
     await _pumpShell(tester, size: const Size(390, 800));
@@ -13,7 +18,10 @@ void main() {
     expect(find.text('الطلبات'), findsOneWidget);
     expect(find.text('العروض العامة'), findsOneWidget);
     expect(find.text('الألعاب'), findsOneWidget);
-    expect(find.text('ستضاف هذه الوظيفة في المرحلة التالية.'), findsOneWidget);
+    expect(
+      find.byKey(const Key('platform-dashboard-list-view')),
+      findsOneWidget,
+    );
   });
 
   testWidgets('small layouts use NavigationBar', (tester) async {
@@ -130,21 +138,46 @@ Future<void> _pumpShell(
   addTearDown(tester.view.resetPhysicalSize);
   addTearDown(tester.view.resetDevicePixelRatio);
 
+  final controller = PlatformDashboardController(
+    repository: _DashboardRepository(),
+  );
+  await controller.load();
+
   await tester.pumpWidget(
-    MaterialApp(
-      locale: locale,
-      supportedLocales: const [Locale('ar', 'DZ'), Locale('fr', 'FR')],
-      localizationsDelegates: const [
-        GlobalMaterialLocalizations.delegate,
-        GlobalWidgetsLocalizations.delegate,
-        GlobalCupertinoLocalizations.delegate,
+    ProviderScope(
+      overrides: [
+        platformDashboardControllerProvider.overrideWith((ref) => controller),
       ],
-      builder: (context, child) => MediaQuery(
-        data: MediaQuery.of(context).copyWith(textScaler: textScaler),
-        child: child ?? const SizedBox.shrink(),
+      child: MaterialApp(
+        locale: locale,
+        supportedLocales: const [Locale('ar', 'DZ'), Locale('fr', 'FR')],
+        localizationsDelegates: const [
+          GlobalMaterialLocalizations.delegate,
+          GlobalWidgetsLocalizations.delegate,
+          GlobalCupertinoLocalizations.delegate,
+        ],
+        builder: (context, child) => MediaQuery(
+          data: MediaQuery.of(context).copyWith(textScaler: textScaler),
+          child: child ?? const SizedBox.shrink(),
+        ),
+        home: CustomerPlatformShell(onSignOut: onSignOut ?? () async {}),
       ),
-      home: CustomerPlatformShell(onSignOut: onSignOut ?? () async {}),
     ),
   );
   await tester.pumpAndSettle();
+}
+
+class _DashboardRepository implements PlatformDashboardRepository {
+  @override
+  Future<PlatformDashboardSummary> loadDashboardSummary() async {
+    return PlatformDashboardSummary(
+      newOrdersCount: 0,
+      processingOrdersCount: 0,
+      paymentsUnderReviewCount: 0,
+      completedOrdersCount: 0,
+      publishedOffersCount: 0,
+      activeGamesCount: 0,
+      refreshedAt: DateTime.utc(2026, 7, 18, 12),
+    );
+  }
 }
