@@ -18,49 +18,55 @@ import 'package:game_credit_profit_manager/features/admin_platform/domain/orders
 
 void main() {
   group('OrdersController', () {
-    test('loads pages, prevents duplicate load more, and removes duplicates', () async {
-      final loadMoreCompleter = Completer<OrderPage>();
-      final repository = _FakeOrdersRepository(<Future<OrderPage> Function()>[
-        () async => OrderPage(
-          items: <CustomerOrderSummary>[_order(1), _order(2)],
-          nextCursor: OrderCursor(
-            createdAt: _order(2).createdAt,
-            id: _order(2).id,
+    test(
+      'loads pages, prevents duplicate load more, and removes duplicates',
+      () async {
+        final loadMoreCompleter = Completer<OrderPage>();
+        final repository = _FakeOrdersRepository(<Future<OrderPage> Function()>[
+          () async => OrderPage(
+            items: <CustomerOrderSummary>[_order(1), _order(2)],
+            nextCursor: OrderCursor(
+              createdAt: _order(2).createdAt,
+              id: _order(2).id,
+            ),
+            hasMore: true,
           ),
-          hasMore: true,
-        ),
-        () => loadMoreCompleter.future,
-      ]);
-      final controller = OrdersController(
-        ordersRepository: repository,
-        gamesRepository: const _FakeGamesRepository(),
-      );
+          () => loadMoreCompleter.future,
+        ]);
+        final controller = OrdersController(
+          ordersRepository: repository,
+          gamesRepository: const _FakeGamesRepository(),
+        );
 
-      await controller.load();
-      final first = controller.loadMore();
-      final duplicate = controller.loadMore();
-      await Future<void>.delayed(Duration.zero);
+        await controller.load();
+        final first = controller.loadMore();
+        final duplicate = controller.loadMore();
+        await Future<void>.delayed(Duration.zero);
 
-      expect(repository.calls, 2);
-      expect(repository.maximumConcurrentCalls, 1);
+        expect(repository.calls, 2);
+        expect(repository.maximumConcurrentCalls, 1);
 
-      loadMoreCompleter.complete(
-        OrderPage(
-          items: <CustomerOrderSummary>[_order(2), _order(3)],
-          nextCursor: null,
-          hasMore: false,
-        ),
-      );
-      await Future.wait(<Future<void>>[first, duplicate]);
+        loadMoreCompleter.complete(
+          OrderPage(
+            items: <CustomerOrderSummary>[_order(2), _order(3)],
+            nextCursor: null,
+            hasMore: false,
+          ),
+        );
+        await Future.wait(<Future<void>>[first, duplicate]);
 
-      expect(controller.state.orders.map((order) => order.displayId), <String>[
-        _order(1).displayId,
-        _order(2).displayId,
-        _order(3).displayId,
-      ]);
-      expect(controller.state.hasMore, isFalse);
-      expect(controller.state.isLoadingMore, isFalse);
-    });
+        expect(
+          controller.state.orders.map((order) => order.displayId),
+          <String>[
+            _order(1).displayId,
+            _order(2).displayId,
+            _order(3).displayId,
+          ],
+        );
+        expect(controller.state.hasMore, isFalse);
+        expect(controller.state.isLoadingMore, isFalse);
+      },
+    );
 
     test('resets on filter changes and ignores the old response', () async {
       final oldResponse = Completer<OrderPage>();
@@ -178,7 +184,11 @@ class _FakeGamesRepository implements GamesRepository {
 
   @override
   Future<CursorPage<Game>> listGames({String? cursor, int? limit}) async {
-    return const CursorPage<Game>(items: <Game>[], hasMore: false);
+    return CursorPage<Game>(
+      items: const <Game>[],
+      nextCursor: null,
+      hasMore: false,
+    );
   }
 
   @override
