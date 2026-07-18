@@ -98,11 +98,15 @@ void main() {
     ).readAsStringSync();
 
     expect(
-      RegExp(r'builder:\s*\(_\) => const GamesScreen\(\)').allMatches(content),
+      RegExp(
+        r'builder:\s*\(_\) => const GamesScreen\(\)',
+      ).allMatches(content),
       hasLength(1),
     );
     expect(
-      RegExp(r'builder:\s*\(_\) => const OffersScreen\(\)').allMatches(content),
+      RegExp(
+        r'builder:\s*\(_\) => const OffersScreen\(\)',
+      ).allMatches(content),
       hasLength(1),
     );
     expect(content, isNot(contains('OrdersScreen')));
