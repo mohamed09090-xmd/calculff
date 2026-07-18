@@ -40,16 +40,46 @@ void main() {
       expect(summary.createdAt, DateTime.utc(2026, 7, 17, 11));
     });
 
-    test('converts proof path presence directly to a boolean', () {
+    test('reads the required proof boolean directly', () {
       final withProof = CustomerOrderSummaryDto.fromMap(_summaryPayload());
-      final withoutProofPayload = _summaryPayload()
-        ..['payment_proof_path'] = null;
-      final withoutProof = CustomerOrderSummaryDto.fromMap(withoutProofPayload);
+      final withoutProof = CustomerOrderSummaryDto.fromMap(
+        _summaryPayload()..['has_payment_proof'] = false,
+      );
 
       expect(withProof.hasPaymentProof, isTrue);
       expect(withProof.toDomain().hasPaymentProof, isTrue);
       expect(withoutProof.hasPaymentProof, isFalse);
       expect(withoutProof.toDomain().hasPaymentProof, isFalse);
+    });
+
+    test('rejects a missing or wrongly typed proof boolean', () {
+      final missing = _summaryPayload()..remove('has_payment_proof');
+      final wrongType = _summaryPayload()..['has_payment_proof'] = 'true';
+
+      expect(
+        () => CustomerOrderSummaryDto.fromMap(missing),
+        throwsA(
+          isA<PlatformPayloadException>()
+              .having((error) => error.field, 'field', 'has_payment_proof')
+              .having(
+                (error) => error.reason,
+                'reason',
+                PlatformPayloadFailureReason.missingField,
+              ),
+        ),
+      );
+      expect(
+        () => CustomerOrderSummaryDto.fromMap(wrongType),
+        throwsA(
+          isA<PlatformPayloadException>()
+              .having((error) => error.field, 'field', 'has_payment_proof')
+              .having(
+                (error) => error.reason,
+                'reason',
+                PlatformPayloadFailureReason.wrongType,
+              ),
+        ),
+      );
     });
 
     test('rejects malformed payloads and unknown enum values', () {
@@ -96,7 +126,6 @@ void main() {
         'player-123',
         'customer@example.test',
         '0550000000',
-        'private/proofs/proof.jpg',
       ]) {
         expect(dtoText, isNot(contains(sensitiveValue)));
         expect(domainText, isNot(contains(sensitiveValue)));
@@ -176,7 +205,7 @@ Map<String, Object?> _summaryPayload() {
     'order_status': 'processing',
     'payment_status': 'under_review',
     'created_at': '2026-07-17T12:00:00+01:00',
-    'payment_proof_path': 'private/proofs/proof.jpg',
+    'has_payment_proof': true,
     'customer_email_snapshot': 'customer@example.test',
     'customer_phone_snapshot': '0550000000',
     'user_id': '22222222-2222-2222-2222-222222222222',

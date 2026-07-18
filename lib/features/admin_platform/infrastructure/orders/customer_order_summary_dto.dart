@@ -43,7 +43,7 @@ class CustomerOrderSummaryDto {
       orderStatus: readOrderStatus(reader, 'order_status'),
       paymentStatus: readPaymentStatus(reader, 'payment_status'),
       createdAt: reader.requiredDateTime('created_at'),
-      hasPaymentProof: reader.optionalString('payment_proof_path') != null,
+      hasPaymentProof: reader.requiredBool('has_payment_proof'),
     );
   }
 

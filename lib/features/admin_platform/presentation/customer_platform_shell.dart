@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'games/games_screen.dart';
 import 'offers/offers_screen.dart';
+import 'orders/customer_orders_screen.dart';
 import 'platform_ui_text.dart';
 
 class CustomerPlatformShell extends StatefulWidget {
@@ -28,6 +29,7 @@ class _CustomerPlatformShellState extends State<CustomerPlatformShell> {
       label: platformText(context, 'الطلبات'),
       icon: Icons.receipt_long_outlined,
       selectedIcon: Icons.receipt_long,
+      builder: (_) => const CustomerOrdersScreen(),
     ),
     _PlatformDestination(
       label: platformText(context, 'العروض العامة'),

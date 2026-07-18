@@ -1,8 +1,7 @@
-import '../common/cursor_page.dart';
 import 'customer_order_details.dart';
-import 'customer_order_summary.dart';
 import 'order_cursor.dart';
 import 'order_filters.dart';
+import 'order_page.dart';
 import 'order_timeline_event.dart';
 
 const int customerOrdersMaxPageSize = 25;
@@ -12,7 +11,7 @@ bool isValidCustomerOrdersPageLimit(int limit) {
 }
 
 abstract interface class CustomerOrdersRepository {
-  Future<CursorPage<CustomerOrderSummary>> listOrders({
+  Future<OrderPage> listOrders({
     required OrderFilters filters,
     OrderCursor? cursor,
     int limit = customerOrdersMaxPageSize,

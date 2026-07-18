@@ -92,7 +92,7 @@ void main() {
     }
   });
 
-  test('customer shell preserves games and integrates offers only', () {
+  test('customer shell preserves games and offers and integrates orders', () {
     final content = File(
       'lib/features/admin_platform/presentation/customer_platform_shell.dart',
     ).readAsStringSync();
@@ -105,7 +105,12 @@ void main() {
       RegExp(r'builder:\s*\(_\) => const OffersScreen\(\)').allMatches(content),
       hasLength(1),
     );
-    expect(content, isNot(contains('OrdersScreen')));
+    expect(
+      RegExp(
+        r'builder:\s*\(_\) => const CustomerOrdersScreen\(\)',
+      ).allMatches(content),
+      hasLength(1),
+    );
     expect(content, isNot(contains('DashboardScreen')));
   });
 }
