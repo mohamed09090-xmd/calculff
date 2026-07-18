@@ -98,8 +98,9 @@ void main() {
     ).readAsStringSync();
 
     expect(
-      RegExp(r'builder:\s*\(_\) => const PlatformDashboardScreen\(\)')
-          .allMatches(content),
+      RegExp(
+        r'builder:\s*\(_\) => const PlatformDashboardScreen\(\)',
+      ).allMatches(content),
       hasLength(1),
     );
     expect(

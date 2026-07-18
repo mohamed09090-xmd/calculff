@@ -18,7 +18,10 @@ void main() {
     expect(find.text('الطلبات'), findsOneWidget);
     expect(find.text('العروض العامة'), findsOneWidget);
     expect(find.text('الألعاب'), findsOneWidget);
-    expect(find.byKey(const Key('platform-dashboard-list-view')), findsOneWidget);
+    expect(
+      find.byKey(const Key('platform-dashboard-list-view')),
+      findsOneWidget,
+    );
   });
 
   testWidgets('small layouts use NavigationBar', (tester) async {
