@@ -2,7 +2,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:game_credit_profit_manager/features/admin_platform/application/common/platform_session_coordinator.dart';
 import 'package:game_credit_profit_manager/features/admin_platform/domain/common/platform_failure.dart';
 import 'package:game_credit_profit_manager/features/admin_platform/domain/offers/public_offer_input.dart';
-import 'package:game_credit_profit_manager/features/admin_platform/infrastructure/common/platform_payload_reader.dart';
 import 'package:game_credit_profit_manager/features/admin_platform/infrastructure/common/supabase_platform_error_mapper.dart';
 import 'package:game_credit_profit_manager/features/admin_platform/infrastructure/offers/supabase_public_offers_repository.dart';
 
@@ -73,13 +72,24 @@ void main() {
       final repository = SupabasePublicOffersRepository(
         dataSource: dataSource,
         errorMapper: const SupabasePlatformErrorMapper(),
-        readCoordinator: const ImmediateReadCoordinator(),
+        readCoordinator: PlatformSessionCoordinator(
+          sessionAccess: FakeSessionAccess(),
+          mapError: const SupabasePlatformErrorMapper().map,
+          dataScope: FakeDataScopeSink(),
+        ),
       );
 
       await expectLater(
         repository.listOffers(),
-        throwsA(isA<PlatformPayloadException>()),
+        throwsA(
+          isA<PlatformFailure>().having(
+            (failure) => failure.code,
+            'code',
+            PlatformFailureCode.malformedResponse,
+          ),
+        ),
       );
+      expect(dataSource.listCalls, 1);
     });
 
     test('create and update send only approved offer columns', () async {
