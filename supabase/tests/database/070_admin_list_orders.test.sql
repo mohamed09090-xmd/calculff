@@ -305,22 +305,24 @@ select results_eq(
 );
 
 select ok(
-  not (to_jsonb(r) ?| array[
-    'customer_email_snapshot',
-    'customer_phone_snapshot',
-    'user_id',
-    'client_request_id',
-    'payment_proof_path',
-    'changed_by'
-  ])
-  from public.admin_list_orders(p_limit => 1) as r,
+  (select not (to_jsonb(r) ?| array[
+      'customer_email_snapshot',
+      'customer_phone_snapshot',
+      'user_id',
+      'client_request_id',
+      'payment_proof_path',
+      'changed_by'
+    ])
+   from public.admin_list_orders(p_limit => 1) as r
+   limit 1),
   'runtime response contains none of the forbidden keys'
 );
 select ok(
-  position('alpha@test.invalid' in to_jsonb(r)::text) = 0
-  and position('0550000001' in to_jsonb(r)::text) = 0
-  and position('/proof.' in to_jsonb(r)::text) = 0
-  from public.admin_list_orders(p_limit => 1) as r,
+  (select position('alpha@test.invalid' in to_jsonb(r)::text) = 0
+      and position('0550000001' in to_jsonb(r)::text) = 0
+      and position('/proof.' in to_jsonb(r)::text) = 0
+   from public.admin_list_orders(p_limit => 1) as r
+   limit 1),
   'runtime response contains no email, phone, or proof path values'
 );
 select is(
