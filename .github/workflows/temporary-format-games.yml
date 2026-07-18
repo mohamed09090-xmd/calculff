@@ -4,7 +4,7 @@ on:
   pull_request:
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   format:
@@ -12,6 +12,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref }}
 
       - uses: subosito/flutter-action@v2
         with:
@@ -19,24 +21,26 @@ jobs:
           channel: stable
           cache: true
 
-      - name: Format Dart sources
-        run: dart format .
-
-      - name: Collect formatter changes
+      - name: Format and commit Dart sources
         shell: bash
         run: |
           set -euo pipefail
-          mkdir -p formatted-output
-          git diff --name-only -z -- '*.dart' > formatted-files.bin
-          while IFS= read -r -d '' file; do
-            mkdir -p "formatted-output/$(dirname "$file")"
-            cp "$file" "formatted-output/$file"
-          done < formatted-files.bin
-          git diff --name-only -- '*.dart' > formatted-output/formatted-files.txt
-
-      - uses: actions/upload-artifact@v4
-        with:
-          name: formatted-games-sources
-          path: formatted-output
-          if-no-files-found: error
-          retention-days: 1
+          dart format .
+          if git diff --quiet -- '*.dart'; then
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add \
+            lib/features/admin_platform/application/games \
+            lib/features/admin_platform/infrastructure/games \
+            lib/features/admin_platform/presentation/games \
+            lib/features/admin_platform/presentation/customer_platform_shell.dart \
+            lib/features/admin_platform/presentation/platform_ui_text.dart \
+            test/features/admin_platform/application/games_controller_test.dart \
+            test/features/admin_platform/infrastructure/supabase_games_data_source_test.dart \
+            test/features/admin_platform/infrastructure/supabase_games_repository_test.dart \
+            test/features/admin_platform/presentation/games_screen_widget_test.dart \
+            test/features/admin_platform/games_feature_architecture_test.dart
+          git commit -m 'style: format games implementation'
+          git push origin "HEAD:${{ github.head_ref }}"
