@@ -7,6 +7,7 @@ import '../../domain/offers/public_offers_repository.dart';
 import '../../infrastructure/offers/supabase_offers_datasource.dart';
 import '../../infrastructure/offers/supabase_public_offers_repository.dart';
 import '../common/platform_common_providers.dart';
+import '../games/games_providers.dart';
 import '../supabase_providers.dart';
 import 'offers_controller.dart';
 
@@ -32,7 +33,9 @@ final publicOffersRepositoryProvider = Provider<PublicOffersRepository?>((ref) {
   );
 });
 
-final offersGamesRepositoryProvider = Provider<GamesRepository?>((ref) => null);
+final offersGamesRepositoryProvider = Provider<GamesRepository?>((ref) {
+  return ref.watch(gamesRepositoryProvider);
+});
 
 final offersControllerProvider =
     StateNotifierProvider.autoDispose<OffersController, OffersState>((ref) {
