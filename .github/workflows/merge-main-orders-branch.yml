@@ -1,0 +1,35 @@
+name: Temporary merge main into orders branch
+
+on:
+  push:
+    branches: [feat/admin-platform-orders-list]
+
+permissions:
+  contents: write
+
+jobs:
+  merge-main:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feat/admin-platform-orders-list
+          fetch-depth: 0
+
+      - name: Verify refs and merge origin/main
+        shell: bash
+        run: |
+          set -euo pipefail
+          expected_original_head='6978a84e1bfe75e6f9ae154dc2335720af281bb6'
+          expected_main='883dac1ebb398ff76a914c94796fb99260bc7e2b'
+
+          git fetch --no-tags origin main feat/admin-platform-orders-list
+          test "$(git rev-parse origin/main)" = "$expected_main"
+          git merge-base --is-ancestor "$expected_original_head" HEAD
+
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git merge --no-ff origin/main \
+            -m 'Merge origin/main into feat/admin-platform-orders-list'
+          git push origin HEAD:feat/admin-platform-orders-list
