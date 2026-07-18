@@ -111,10 +111,14 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.textContaining('لعبة متوقفة').last);
     await tester.pumpAndSettle();
+    final formScrollable = find.descendant(
+      of: find.byKey(const Key('offer-form-scroll-view')),
+      matching: find.byType(Scrollable),
+    );
     await tester.scrollUntilVisible(
       find.byKey(const Key('offer-published-field')),
       240,
-      scrollable: find.byKey(const Key('offer-form-scroll-view')),
+      scrollable: formScrollable,
     );
     await tester.tap(find.byKey(const Key('offer-published-field')));
     await tester.pumpAndSettle();
