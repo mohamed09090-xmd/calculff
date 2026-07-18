@@ -61,6 +61,12 @@ class CustomerOrderCard extends StatelessWidget {
                     text: orderStatusText(context, order.orderStatus),
                     icon: Icons.receipt_long_outlined,
                   ),
+                  OrderStatusBadge(
+                    text: proofLabel,
+                    icon: order.hasPaymentProof
+                        ? Icons.attachment_outlined
+                        : Icons.do_not_disturb_alt_outlined,
+                  ),
                 ],
               ),
               const SizedBox(height: 10),
@@ -120,18 +126,6 @@ class CustomerOrderCard extends StatelessWidget {
                 icon: Icons.schedule_outlined,
                 label: orderText(context, 'وقت الإنشاء'),
                 value: createdAt,
-              ),
-              Semantics(
-                label: proofLabel,
-                child: ExcludeSemantics(
-                  child: _OrderField(
-                    icon: order.hasPaymentProof
-                        ? Icons.attachment_outlined
-                        : Icons.do_not_disturb_alt_outlined,
-                    label: proofLabel,
-                    value: '',
-                  ),
-                ),
               ),
             ],
           ),
