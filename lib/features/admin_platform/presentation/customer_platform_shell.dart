@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'games/games_screen.dart';
+import 'offers/offers_screen.dart';
 import 'platform_ui_text.dart';
 
 class CustomerPlatformShell extends StatefulWidget {
@@ -32,6 +33,7 @@ class _CustomerPlatformShellState extends State<CustomerPlatformShell> {
       label: platformText(context, 'العروض العامة'),
       icon: Icons.campaign_outlined,
       selectedIcon: Icons.campaign,
+      builder: (_) => const OffersScreen(),
     ),
     _PlatformDestination(
       label: platformText(context, 'الألعاب'),
