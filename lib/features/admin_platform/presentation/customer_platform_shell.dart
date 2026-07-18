@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'games/games_screen.dart';
 import 'platform_ui_text.dart';
 
 class CustomerPlatformShell extends StatefulWidget {
@@ -36,6 +37,7 @@ class _CustomerPlatformShellState extends State<CustomerPlatformShell> {
       label: platformText(context, 'الألعاب'),
       icon: Icons.sports_esports_outlined,
       selectedIcon: Icons.sports_esports,
+      builder: (_) => const GamesScreen(),
     ),
   ];
 
@@ -117,7 +119,9 @@ class _CustomerPlatformShellState extends State<CustomerPlatformShell> {
       body: SafeArea(
         child: LayoutBuilder(
           builder: (context, constraints) {
-            final content = _PlatformDestinationBody(destination: selected);
+            final content =
+                selected.builder?.call(context) ??
+                _PlatformDestinationBody(destination: selected);
             if (constraints.maxWidth < _wideBreakpoint) {
               return content;
             }
@@ -228,9 +232,11 @@ class _PlatformDestination {
     required this.label,
     required this.icon,
     required this.selectedIcon,
+    this.builder,
   });
 
   final String label;
   final IconData icon;
   final IconData selectedIcon;
+  final WidgetBuilder? builder;
 }
