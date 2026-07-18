@@ -92,18 +92,20 @@ void main() {
     }
   });
 
-  test('customer shell wires only the games destination', () {
+  test('customer shell preserves games and integrates offers only', () {
     final content = File(
       'lib/features/admin_platform/presentation/customer_platform_shell.dart',
     ).readAsStringSync();
 
-    expect(content, contains('builder: (_) => const GamesScreen()'));
     expect(
       RegExp(r'builder:\s*\(_\) => const GamesScreen\(\)').allMatches(content),
       hasLength(1),
     );
+    expect(
+      RegExp(r'builder:\s*\(_\) => const OffersScreen\(\)').allMatches(content),
+      hasLength(1),
+    );
     expect(content, isNot(contains('OrdersScreen')));
-    expect(content, isNot(contains('OffersScreen')));
     expect(content, isNot(contains('DashboardScreen')));
   });
 }
