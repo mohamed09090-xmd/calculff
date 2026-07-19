@@ -83,7 +83,15 @@ void main() {
         'order_details_providers.dart',
       ).readAsStringSync();
 
-      expect(content, contains('StateNotifierProvider.autoDispose.family'));
+      expect(
+        content,
+        matches(
+          RegExp(
+            r'StateNotifierProvider\.autoDispose\s*\.family',
+            multiLine: true,
+          ),
+        ),
+      );
       expect(content, contains('platformDataScopeProvider.select'));
       expect(content, contains('value.generation'));
       expect(content, isNot(contains('keepAlive')));
