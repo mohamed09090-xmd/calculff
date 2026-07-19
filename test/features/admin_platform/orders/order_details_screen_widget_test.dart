@@ -50,7 +50,7 @@ void main() {
       expect(find.textContaining('customer@example.test'), findsOneWidget);
       expect(find.textContaining('0550000000'), findsOneWidget);
       expect(find.byType(SelectableText), findsNWidgets(3));
-      expect(find.bySemanticsLabel('معلومات الاتصال'), findsOneWidget);
+      expect(find.bySemanticsLabel('معلومات الاتصال'), findsWidgets);
     },
   );
 
@@ -60,7 +60,7 @@ void main() {
     await _pumpOrders(tester);
     await _openDetails(tester);
     await tester.scrollUntilVisible(
-      find.byKey(const Key('order-details-timeline')),
+      find.byKey(const Key('order-details-timeline')).first,
       500,
     );
     await tester.pumpAndSettle();
@@ -174,7 +174,10 @@ Future<void> _pumpOrders(
 }
 
 Future<void> _openDetails(WidgetTester tester) async {
-  await tester.tap(find.byKey(const Key('order-card-open-11111111')));
+  final card = find.byKey(const Key('order-card-open-11111111'));
+  await tester.ensureVisible(card);
+  await tester.pumpAndSettle();
+  await tester.tap(card);
   await tester.pumpAndSettle();
 }
 

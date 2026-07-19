@@ -69,17 +69,25 @@ class CustomerOrderCard extends StatelessWidget {
                     spacing: 12,
                     runSpacing: 8,
                     children: [
-                      Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(
-                            '#${order.displayId}',
-                            style: Theme.of(context).textTheme.titleMedium
-                                ?.copyWith(fontWeight: FontWeight.w800),
-                          ),
-                          const SizedBox(width: 4),
-                          Icon(openIcon),
-                        ],
+                      ConstrainedBox(
+                        constraints: BoxConstraints(
+                          maxWidth: MediaQuery.sizeOf(context).width - 48,
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Flexible(
+                              child: Text(
+                                '#${order.displayId}',
+                                overflow: TextOverflow.ellipsis,
+                                style: Theme.of(context).textTheme.titleMedium
+                                    ?.copyWith(fontWeight: FontWeight.w800),
+                              ),
+                            ),
+                            const SizedBox(width: 4),
+                            Icon(openIcon),
+                          ],
+                        ),
                       ),
                       OrderStatusBadge(
                         text: orderStatusText(context, order.orderStatus),
