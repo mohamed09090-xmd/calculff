@@ -77,9 +77,7 @@ class _OrderDetailsScreenState extends ConsumerState<OrderDetailsScreen> {
             title: orderText(context, 'تعذر تحميل تفاصيل الطلب.'),
             message: platformDataFailureText(
               context,
-              PlatformFailure(
-                state.failureCode ?? PlatformFailureCode.unknown,
-              ),
+              PlatformFailure(state.failureCode ?? PlatformFailureCode.unknown),
             ),
             onRetry: controller.retry,
           ),
@@ -148,9 +146,7 @@ class _Content extends StatelessWidget {
   Widget build(BuildContext context) {
     final order = details.summary;
     final isFrench = AppTranslator.isFrench(context);
-    final game = isFrench
-        ? order.gameNameFrSnapshot
-        : order.gameNameArSnapshot;
+    final game = isFrench ? order.gameNameFrSnapshot : order.gameNameArSnapshot;
     final offer = isFrench
         ? order.offerNameFrSnapshot
         : order.offerNameArSnapshot;
@@ -400,9 +396,9 @@ class _TimelineLine extends StatelessWidget {
           children: [
             Text(
               title,
-              style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                fontWeight: FontWeight.w700,
-              ),
+              style: Theme.of(
+                context,
+              ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
             ),
             Text(date),
             const SizedBox(height: 6),
@@ -462,9 +458,9 @@ class _Failure extends StatelessWidget {
               Text(
                 title,
                 textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  fontWeight: FontWeight.w800,
-                ),
+                style: Theme.of(
+                  context,
+                ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800),
               ),
               const SizedBox(height: 10),
               Text(message, textAlign: TextAlign.center),

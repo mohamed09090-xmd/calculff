@@ -1,18 +1,14 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-typedef OrdersRpcCall = Future<Object?> Function(
-  String rpcName,
-  Map<String, Object?> params,
-);
+typedef OrdersRpcCall =
+    Future<Object?> Function(String rpcName, Map<String, Object?> params);
 
 abstract interface class SupabaseOrdersDataSource {
   Future<List<Map<String, Object?>>> listOrders({
     required Map<String, Object?> params,
   });
 
-  Future<List<Map<String, Object?>>> getOrderDetails({
-    required String orderId,
-  });
+  Future<List<Map<String, Object?>>> getOrderDetails({required String orderId});
 
   Future<List<Map<String, Object?>>> getOrderTimeline({
     required String orderId,

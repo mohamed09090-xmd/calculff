@@ -4,52 +4,55 @@ import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   group('Order details architecture', () {
-    test('production implementation is read-only and contains no private fields', () {
-      const forbidden = <String>[
-        'package:sqflite',
-        'databasehelper',
-        'flutter_secure_storage',
-        'payment_proof_path',
-        'changed_by',
-        'internal_note',
-        'internal notes',
-        'client_request_id',
-        'service_role',
-        'sb_secret_',
-        'txxokpovdbvsvnkpbrrp',
-        'zegjqwsvsaprnguvxuwk',
-        'supabase.co',
-        "select('*')",
-        'select("*")',
-        ".from('orders')",
-        '.from("orders")',
-        ".from('order_status_history')",
-        '.from("order_status_history")',
-        '.insert(',
-        '.update(',
-        '.delete(',
-        '.upsert(',
-        '.stream(',
-        'realtime',
-        'timer.periodic',
-        'admin_update_',
-        'admin_accept_',
-        'admin_reject_',
-        'refund_order',
-        'signedurl',
-      ];
+    test(
+      'production implementation is read-only and contains no private fields',
+      () {
+        const forbidden = <String>[
+          'package:sqflite',
+          'databasehelper',
+          'flutter_secure_storage',
+          'payment_proof_path',
+          'changed_by',
+          'internal_note',
+          'internal notes',
+          'client_request_id',
+          'service_role',
+          'sb_secret_',
+          'txxokpovdbvsvnkpbrrp',
+          'zegjqwsvsaprnguvxuwk',
+          'supabase.co',
+          "select('*')",
+          'select("*")',
+          ".from('orders')",
+          '.from("orders")',
+          ".from('order_status_history')",
+          '.from("order_status_history")',
+          '.insert(',
+          '.update(',
+          '.delete(',
+          '.upsert(',
+          '.stream(',
+          'realtime',
+          'timer.periodic',
+          'admin_update_',
+          'admin_accept_',
+          'admin_reject_',
+          'refund_order',
+          'signedurl',
+        ];
 
-      for (final file in _productionFiles()) {
-        final content = file.readAsStringSync().toLowerCase();
-        for (final value in forbidden) {
-          expect(
-            content,
-            isNot(contains(value)),
-            reason: '${file.path} must not contain $value',
-          );
+        for (final file in _productionFiles()) {
+          final content = file.readAsStringSync().toLowerCase();
+          for (final value in forbidden) {
+            expect(
+              content,
+              isNot(contains(value)),
+              reason: '${file.path} must not contain $value',
+            );
+          }
         }
-      }
-    });
+      },
+    );
 
     test('widgets do not import Supabase or local persistence', () {
       for (final file in _presentationFiles()) {
@@ -86,23 +89,26 @@ void main() {
       expect(content, isNot(contains('keepAlive')));
     });
 
-    test('detail fixtures contain no hosted configuration or real credentials', () {
-      const forbidden = <String>[
-        'supabase.co',
-        'service_role',
-        'sb_secret_',
-        'github_pat_',
-        'txxokpovdbvsvnkpbrrp',
-        'zegjqwsvsaprnguvxuwk',
-        '-----begin private key-----',
-      ];
-      for (final file in _testFiles()) {
-        final content = file.readAsStringSync().toLowerCase();
-        for (final value in forbidden) {
-          expect(content, isNot(contains(value)), reason: file.path);
+    test(
+      'detail fixtures contain no hosted configuration or real credentials',
+      () {
+        const forbidden = <String>[
+          'supabase.co',
+          'service_role',
+          'sb_secret_',
+          'github_pat_',
+          'txxokpovdbvsvnkpbrrp',
+          'zegjqwsvsaprnguvxuwk',
+          '-----begin private key-----',
+        ];
+        for (final file in _testFiles()) {
+          final content = file.readAsStringSync().toLowerCase();
+          for (final value in forbidden) {
+            expect(content, isNot(contains(value)), reason: file.path);
+          }
         }
-      }
-    });
+      },
+    );
   });
 }
 
@@ -111,9 +117,7 @@ List<File> _productionFiles() {
     File(
       'lib/features/admin_platform/domain/orders/customer_order_details.dart',
     ),
-    File(
-      'lib/features/admin_platform/domain/orders/order_timeline_event.dart',
-    ),
+    File('lib/features/admin_platform/domain/orders/order_timeline_event.dart'),
     File(
       'lib/features/admin_platform/infrastructure/orders/'
       'customer_order_details_dto.dart',
@@ -152,9 +156,7 @@ List<File> _presentationFiles() {
       'lib/features/admin_platform/presentation/orders/'
       'order_details_screen.dart',
     ),
-    File(
-      'lib/features/admin_platform/presentation/orders/order_widgets.dart',
-    ),
+    File('lib/features/admin_platform/presentation/orders/order_widgets.dart'),
   ];
 }
 

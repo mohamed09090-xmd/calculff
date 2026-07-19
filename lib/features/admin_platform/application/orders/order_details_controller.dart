@@ -22,7 +22,8 @@ class OrderDetailsState {
   factory OrderDetailsState.failure(PlatformFailureCode code) {
     return OrderDetailsState(
       status: switch (code) {
-        PlatformFailureCode.networkUnavailable => OrderDetailsViewStatus.offline,
+        PlatformFailureCode.networkUnavailable =>
+          OrderDetailsViewStatus.offline,
         PlatformFailureCode.notFound => OrderDetailsViewStatus.notFound,
         _ => OrderDetailsViewStatus.error,
       },

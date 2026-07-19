@@ -54,24 +54,26 @@ void main() {
         throwsA(isA<PlatformPayloadException>()),
       );
       expect(
-        () => OrderTimelineEventDto.fromMap(
-          _payload()..remove('payment_status'),
-        ),
+        () =>
+            OrderTimelineEventDto.fromMap(_payload()..remove('payment_status')),
         throwsA(isA<PlatformPayloadException>()),
       );
     });
 
-    test('safe representations omit public messages and ignored identifiers', () {
-      final dto = OrderTimelineEventDto.fromMap(_payload());
-      for (final forbidden in <String>[
-        'Public fixture update',
-        'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
-        'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb',
-      ]) {
-        expect(dto.toString(), isNot(contains(forbidden)));
-        expect(dto.toDomain().toString(), isNot(contains(forbidden)));
-      }
-    });
+    test(
+      'safe representations omit public messages and ignored identifiers',
+      () {
+        final dto = OrderTimelineEventDto.fromMap(_payload());
+        for (final forbidden in <String>[
+          'Public fixture update',
+          'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
+          'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb',
+        ]) {
+          expect(dto.toString(), isNot(contains(forbidden)));
+          expect(dto.toDomain().toString(), isNot(contains(forbidden)));
+        }
+      },
+    );
   });
 }
 

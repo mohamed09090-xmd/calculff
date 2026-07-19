@@ -50,8 +50,7 @@ const Map<String, String> _french = <String, String>{
   'الرسالة العامة': 'Message public',
   'تواريخ الطلب': 'Dates de la commande',
   'التسلسل الزمني': 'Chronologie',
-  'لا توجد أحداث عامة للطلب.':
-      'Aucun événement public pour cette commande.',
+  'لا توجد أحداث عامة للطلب.': 'Aucun événement public pour cette commande.',
   'الزبون': 'Client',
   'معرّف اللاعب': 'Player ID',
   'الاسم داخل اللعبة': 'Nom dans le jeu',

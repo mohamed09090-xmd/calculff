@@ -50,7 +50,7 @@ void main() {
       expect(find.textContaining('customer@example.test'), findsOneWidget);
       expect(find.textContaining('0550000000'), findsOneWidget);
       expect(find.byType(SelectableText), findsNWidgets(3));
-      expect(find.bySemanticsLabel('معلو؅ات الاتصال'), findsOneWidget);
+      expect(find.bySemanticsLabel('معلومات الاتصال'), findsOneWidget);
     },
   );
 
@@ -146,9 +146,7 @@ Future<void> _pumpOrders(
         platformAdminAuthStateProvider.overrideWith((ref) {
           return ref.watch(_testAuthStateProvider);
         }),
-        customerOrdersRepositoryProvider.overrideWithValue(
-          _OrdersRepository(),
-        ),
+        customerOrdersRepositoryProvider.overrideWithValue(_OrdersRepository()),
         ordersGamesRepositoryProvider.overrideWithValue(
           const _GamesRepository(),
         ),
@@ -252,18 +250,12 @@ class _GamesRepository implements GamesRepository {
   }
 
   @override
-  Future<Game> setGameActive({
-    required String gameId,
-    required bool isActive,
-  }) {
+  Future<Game> setGameActive({required String gameId, required bool isActive}) {
     throw UnsupportedError('Read-only fixture.');
   }
 
   @override
-  Future<Game> updateGame({
-    required String gameId,
-    required GameInput input,
-  }) {
+  Future<Game> updateGame({required String gameId, required GameInput input}) {
     throw UnsupportedError('Read-only fixture.');
   }
 }

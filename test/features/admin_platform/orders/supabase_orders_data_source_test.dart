@@ -7,7 +7,10 @@ void main() {
   test('uses exact detail RPC name with p_order_id only', () async {
     late String name;
     late Map<String, Object?> params;
-    final dataSource = FlutterSupabaseOrdersDataSource.withRpcCall((rpc, input) async {
+    final dataSource = FlutterSupabaseOrdersDataSource.withRpcCall((
+      rpc,
+      input,
+    ) async {
       name = rpc;
       params = input;
       return <Object?>[];
@@ -22,7 +25,10 @@ void main() {
   test('uses exact timeline RPC name with p_order_id only', () async {
     late String name;
     late Map<String, Object?> params;
-    final dataSource = FlutterSupabaseOrdersDataSource.withRpcCall((rpc, input) async {
+    final dataSource = FlutterSupabaseOrdersDataSource.withRpcCall((
+      rpc,
+      input,
+    ) async {
       name = rpc;
       params = input;
       return <Object?>[];
@@ -34,17 +40,24 @@ void main() {
     expect(params, <String, Object?>{'p_order_id': orderId});
   });
 
-  test('strictly rejects non-list, non-map, and non-string-key payloads', () async {
-    for (final payload in <Object?>[
-      <String, Object?>{},
-      <Object?>['row'],
-      <Object?>[<Object?, Object?>{1: 'value'}],
-    ]) {
-      final dataSource = FlutterSupabaseOrdersDataSource.withRpcCall((_, __) async => payload);
-      expect(
-        () => dataSource.getOrderDetails(orderId: orderId),
-        throwsA(isA<FormatException>()),
-      );
-    }
-  });
+  test(
+    'strictly rejects non-list, non-map, and non-string-key payloads',
+    () async {
+      for (final payload in <Object?>[
+        <String, Object?>{},
+        <Object?>['row'],
+        <Object?>[
+          <Object?, Object?>{1: 'value'},
+        ],
+      ]) {
+        final dataSource = FlutterSupabaseOrdersDataSource.withRpcCall(
+          (_, __) async => payload,
+        );
+        expect(
+          () => dataSource.getOrderDetails(orderId: orderId),
+          throwsA(isA<FormatException>()),
+        );
+      }
+    },
+  );
 }

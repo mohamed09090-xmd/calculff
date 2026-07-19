@@ -8,35 +8,41 @@ import 'package:game_credit_profit_manager/features/admin_platform/infrastructur
 import 'package:game_credit_profit_manager/features/admin_platform/infrastructure/orders/supabase_orders_data_source.dart';
 
 void main() {
-  test('session expiry refreshes once and retries the list read once', () async {
-    final session = _SessionAccess();
-    final scope = _DataScope();
-    final dataSource = _ExpiringDataSource(expireListOnce: true);
-    final repository = _repository(session, scope, dataSource);
+  test(
+    'session expiry refreshes once and retries the list read once',
+    () async {
+      final session = _SessionAccess();
+      final scope = _DataScope();
+      final dataSource = _ExpiringDataSource(expireListOnce: true);
+      final repository = _repository(session, scope, dataSource);
 
-    await repository.listOrders(filters: OrderFilters());
+      await repository.listOrders(filters: OrderFilters());
 
-    expect(dataSource.listCalls, 2);
-    expect(session.refreshCalls, 1);
-    expect(scope.invalidationCalls, 1);
-    expect(scope.authorizedCalls, 1);
-  });
+      expect(dataSource.listCalls, 2);
+      expect(session.refreshCalls, 1);
+      expect(scope.invalidationCalls, 1);
+      expect(scope.authorizedCalls, 1);
+    },
+  );
 
-  test('sequential detail and timeline reads never refresh concurrently', () async {
-    final session = _SessionAccess();
-    final scope = _DataScope();
-    final dataSource = _ExpiringDataSource(expireDetailsOnce: true);
-    final repository = _repository(session, scope, dataSource);
-    const orderId = '11111111-1111-1111-1111-111111111111';
+  test(
+    'sequential detail and timeline reads never refresh concurrently',
+    () async {
+      final session = _SessionAccess();
+      final scope = _DataScope();
+      final dataSource = _ExpiringDataSource(expireDetailsOnce: true);
+      final repository = _repository(session, scope, dataSource);
+      const orderId = '11111111-1111-1111-1111-111111111111';
 
-    await repository.getOrderDetails(orderId: orderId);
-    await repository.getOrderTimeline(orderId: orderId);
+      await repository.getOrderDetails(orderId: orderId);
+      await repository.getOrderTimeline(orderId: orderId);
 
-    expect(dataSource.detailCalls, 2);
-    expect(dataSource.timelineCalls, 1);
-    expect(session.refreshCalls, 1);
-    expect(session.maxConcurrentRefreshes, 1);
-  });
+      expect(dataSource.detailCalls, 2);
+      expect(dataSource.timelineCalls, 1);
+      expect(session.refreshCalls, 1);
+      expect(session.maxConcurrentRefreshes, 1);
+    },
+  );
 }
 
 SupabaseCustomerOrdersRepository _repository(
@@ -87,7 +93,10 @@ class _DataScope implements PlatformDataScopeSink {
 }
 
 class _ExpiringDataSource implements SupabaseOrdersDataSource {
-  _ExpiringDataSource({this.expireListOnce = false, this.expireDetailsOnce = false});
+  _ExpiringDataSource({
+    this.expireListOnce = false,
+    this.expireDetailsOnce = false,
+  });
 
   final bool expireListOnce;
   final bool expireDetailsOnce;
@@ -96,7 +105,9 @@ class _ExpiringDataSource implements SupabaseOrdersDataSource {
   int timelineCalls = 0;
 
   @override
-  Future<List<Map<String, Object?>>> listOrders({required Map<String, Object?> params}) async {
+  Future<List<Map<String, Object?>>> listOrders({
+    required Map<String, Object?> params,
+  }) async {
     listCalls += 1;
     if (expireListOnce && listCalls == 1) {
       throw const PlatformFailure(PlatformFailureCode.sessionExpired);
@@ -105,7 +116,9 @@ class _ExpiringDataSource implements SupabaseOrdersDataSource {
   }
 
   @override
-  Future<List<Map<String, Object?>>> getOrderDetails({required String orderId}) async {
+  Future<List<Map<String, Object?>>> getOrderDetails({
+    required String orderId,
+  }) async {
     detailCalls += 1;
     if (expireDetailsOnce && detailCalls == 1) {
       throw const PlatformFailure(PlatformFailureCode.sessionExpired);
@@ -114,7 +127,9 @@ class _ExpiringDataSource implements SupabaseOrdersDataSource {
   }
 
   @override
-  Future<List<Map<String, Object?>>> getOrderTimeline({required String orderId}) async {
+  Future<List<Map<String, Object?>>> getOrderTimeline({
+    required String orderId,
+  }) async {
     timelineCalls += 1;
     return const <Map<String, Object?>>[];
   }

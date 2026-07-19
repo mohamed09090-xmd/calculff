@@ -30,7 +30,9 @@ void main() {
   });
 
   test('maps one details row through PlatformReadCoordinator', () async {
-    final dataSource = _DataSource(detailsRows: <Map<String, Object?>>[_detailsRow()]);
+    final dataSource = _DataSource(
+      detailsRows: <Map<String, Object?>>[_detailsRow()],
+    );
     final coordinator = _Coordinator();
     final repository = _repository(dataSource, coordinator);
 
@@ -42,31 +44,58 @@ void main() {
     expect(details.summary.hasPaymentProof, isTrue);
   });
 
-  test('zero details rows are notFound and multiple rows are malformed', () async {
-    for (final entry in <(List<Map<String, Object?>>, PlatformFailureCode)>[
-      (<Map<String, Object?>>[], PlatformFailureCode.notFound),
-      (<Map<String, Object?>>[_detailsRow(), _detailsRow()], PlatformFailureCode.malformedResponse),
-    ]) {
-      final repository = _repository(_DataSource(detailsRows: entry.$1), _Coordinator());
-      await expectLater(
-        repository.getOrderDetails(orderId: orderId),
-        throwsA(isA<PlatformFailure>().having((failure) => failure.code, 'code', entry.$2)),
-      );
-    }
-  });
+  test(
+    'zero details rows are notFound and multiple rows are malformed',
+    () async {
+      for (final entry in <(List<Map<String, Object?>>, PlatformFailureCode)>[
+        (<Map<String, Object?>>[], PlatformFailureCode.notFound),
+        (
+          <Map<String, Object?>>[_detailsRow(), _detailsRow()],
+          PlatformFailureCode.malformedResponse,
+        ),
+      ]) {
+        final repository = _repository(
+          _DataSource(detailsRows: entry.$1),
+          _Coordinator(),
+        );
+        await expectLater(
+          repository.getOrderDetails(orderId: orderId),
+          throwsA(
+            isA<PlatformFailure>().having(
+              (failure) => failure.code,
+              'code',
+              entry.$2,
+            ),
+          ),
+        );
+      }
+    },
+  );
 
-  test('unknown enums and malformed payloads become malformedResponse', () async {
-    for (final row in <Map<String, Object?>>[
-      _detailsRow()..['order_status'] = 'private_state',
-      _detailsRow()..['has_payment_proof'] = 1,
-    ]) {
-      final repository = _repository(_DataSource(detailsRows: <Map<String, Object?>>[row]), _Coordinator());
-      await expectLater(
-        repository.getOrderDetails(orderId: orderId),
-        throwsA(isA<PlatformFailure>().having((failure) => failure.code, 'code', PlatformFailureCode.malformedResponse)),
-      );
-    }
-  });
+  test(
+    'unknown enums and malformed payloads become malformedResponse',
+    () async {
+      for (final row in <Map<String, Object?>>[
+        _detailsRow()..['order_status'] = 'private_state',
+        _detailsRow()..['has_payment_proof'] = 1,
+      ]) {
+        final repository = _repository(
+          _DataSource(detailsRows: <Map<String, Object?>>[row]),
+          _Coordinator(),
+        );
+        await expectLater(
+          repository.getOrderDetails(orderId: orderId),
+          throwsA(
+            isA<PlatformFailure>().having(
+              (failure) => failure.code,
+              'code',
+              PlatformFailureCode.malformedResponse,
+            ),
+          ),
+        );
+      }
+    },
+  );
 
   test('timeline is normalized to UTC and ordered oldest first', () async {
     final newer = _timelineRow('2026-07-18T14:00:00+01:00', 'payment_changed');
@@ -78,15 +107,21 @@ void main() {
 
     final timeline = await repository.getOrderTimeline(orderId: orderId);
 
-    expect(timeline.map((event) => event.createdAt), orderedEquals(<DateTime>[
-      DateTime.utc(2026, 7, 18, 10),
-      DateTime.utc(2026, 7, 18, 13),
-    ]));
+    expect(
+      timeline.map((event) => event.createdAt),
+      orderedEquals(<DateTime>[
+        DateTime.utc(2026, 7, 18, 10),
+        DateTime.utc(2026, 7, 18, 13),
+      ]),
+    );
   });
 
   test('network, unauthorized, and raw PostgREST errors are mapped', () async {
     final cases = <(Object, PlatformFailureCode)>[
-      (TimeoutException('network fixture'), PlatformFailureCode.networkUnavailable),
+      (
+        TimeoutException('network fixture'),
+        PlatformFailureCode.networkUnavailable,
+      ),
       (
         const PostgrestException(
           message: 'private database message',
@@ -98,7 +133,10 @@ void main() {
       ),
     ];
     for (final entry in cases) {
-      final repository = _repository(_DataSource(error: entry.$1), _Coordinator());
+      final repository = _repository(
+        _DataSource(error: entry.$1),
+        _Coordinator(),
+      );
       try {
         await repository.getOrderDetails(orderId: orderId);
         fail('Expected a PlatformFailure.');
@@ -116,7 +154,13 @@ void main() {
 
     await expectLater(
       repository.getOrderDetails(orderId: 'not-a-uuid'),
-      throwsA(isA<PlatformFailure>().having((failure) => failure.code, 'code', PlatformFailureCode.validation)),
+      throwsA(
+        isA<PlatformFailure>().having(
+          (failure) => failure.code,
+          'code',
+          PlatformFailureCode.validation,
+        ),
+      ),
     );
     expect(dataSource.detailCalls, 0);
   });
@@ -154,20 +198,26 @@ class _DataSource implements SupabaseOrdersDataSource {
   int detailCalls = 0;
 
   @override
-  Future<List<Map<String, Object?>>> getOrderDetails({required String orderId}) async {
+  Future<List<Map<String, Object?>>> getOrderDetails({
+    required String orderId,
+  }) async {
     detailCalls += 1;
     if (error case final value?) throw value;
     return detailsRows;
   }
 
   @override
-  Future<List<Map<String, Object?>>> getOrderTimeline({required String orderId}) async {
+  Future<List<Map<String, Object?>>> getOrderTimeline({
+    required String orderId,
+  }) async {
     if (error case final value?) throw value;
     return timelineRows;
   }
 
   @override
-  Future<List<Map<String, Object?>>> listOrders({required Map<String, Object?> params}) async {
+  Future<List<Map<String, Object?>>> listOrders({
+    required Map<String, Object?> params,
+  }) async {
     if (error case final value?) throw value;
     return const <Map<String, Object?>>[];
   }
@@ -201,10 +251,11 @@ Map<String, Object?> _detailsRow() => <String, Object?>{
   'has_payment_proof': true,
 };
 
-Map<String, Object?> _timelineRow(String createdAt, String type) => <String, Object?>{
-  'event_type': type,
-  'order_status': type == 'created' ? 'new' : 'processing',
-  'payment_status': type == 'created' ? 'awaiting_payment' : 'under_review',
-  'public_message': null,
-  'created_at': createdAt,
-};
+Map<String, Object?> _timelineRow(String createdAt, String type) =>
+    <String, Object?>{
+      'event_type': type,
+      'order_status': type == 'created' ? 'new' : 'processing',
+      'payment_status': type == 'created' ? 'awaiting_payment' : 'under_review',
+      'public_message': null,
+      'created_at': createdAt,
+    };

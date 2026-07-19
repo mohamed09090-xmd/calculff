@@ -17,7 +17,10 @@ void main() {
 
   test('loads details then timeline and publishes them atomically', () async {
     final repository = _QueueRepository();
-    final controller = OrderDetailsController(repository: repository, orderId: orderId);
+    final controller = OrderDetailsController(
+      repository: repository,
+      orderId: orderId,
+    );
 
     await controller.load();
 
@@ -29,9 +32,14 @@ void main() {
 
   test('does not retain partial details when timeline fails', () async {
     final repository = _QueueRepository(
-      timelineFailure: const PlatformFailure(PlatformFailureCode.networkUnavailable),
+      timelineFailure: const PlatformFailure(
+        PlatformFailureCode.networkUnavailable,
+      ),
     );
-    final controller = OrderDetailsController(repository: repository, orderId: orderId);
+    final controller = OrderDetailsController(
+      repository: repository,
+      orderId: orderId,
+    );
 
     await controller.load();
 
@@ -42,7 +50,10 @@ void main() {
 
   test('prevents concurrent retries', () async {
     final repository = _CompletingRepository();
-    final controller = OrderDetailsController(repository: repository, orderId: orderId);
+    final controller = OrderDetailsController(
+      repository: repository,
+      orderId: orderId,
+    );
 
     final first = controller.load();
     final second = controller.retry();
@@ -58,7 +69,10 @@ void main() {
 
   test('invalidation clears PII and ignores a late response', () async {
     final repository = _CompletingRepository();
-    final controller = OrderDetailsController(repository: repository, orderId: orderId);
+    final controller = OrderDetailsController(
+      repository: repository,
+      orderId: orderId,
+    );
 
     final request = controller.load();
     controller.invalidate(PlatformFailureCode.sessionExpired);
@@ -76,7 +90,10 @@ void main() {
         const PlatformFailure(PlatformFailureCode.unknown),
       ],
     );
-    final controller = OrderDetailsController(repository: repository, orderId: orderId);
+    final controller = OrderDetailsController(
+      repository: repository,
+      orderId: orderId,
+    );
 
     await controller.load();
     expect(controller.state.status, OrderDetailsViewStatus.error);
@@ -96,28 +113,38 @@ class _QueueRepository implements CustomerOrdersRepository {
   final List<String> calls = <String>[];
 
   @override
-  Future<CustomerOrderDetails> getOrderDetails({required String orderId}) async {
+  Future<CustomerOrderDetails> getOrderDetails({
+    required String orderId,
+  }) async {
     calls.add('details');
     if (detailFailures.isNotEmpty) throw detailFailures.removeAt(0);
     return _details();
   }
 
   @override
-  Future<List<OrderTimelineEvent>> getOrderTimeline({required String orderId}) async {
+  Future<List<OrderTimelineEvent>> getOrderTimeline({
+    required String orderId,
+  }) async {
     calls.add('timeline');
     if (timelineFailure case final failure?) throw failure;
     return <OrderTimelineEvent>[_event()];
   }
 
   @override
-  Future<OrderPage> listOrders({required OrderFilters filters, OrderCursor? cursor, int limit = customerOrdersMaxPageSize}) {
+  Future<OrderPage> listOrders({
+    required OrderFilters filters,
+    OrderCursor? cursor,
+    int limit = customerOrdersMaxPageSize,
+  }) {
     throw UnimplementedError();
   }
 }
 
 class _CompletingRepository implements CustomerOrdersRepository {
-  final Completer<CustomerOrderDetails> _detailsCompleter = Completer<CustomerOrderDetails>();
-  final Completer<List<OrderTimelineEvent>> _timelineCompleter = Completer<List<OrderTimelineEvent>>();
+  final Completer<CustomerOrderDetails> _detailsCompleter =
+      Completer<CustomerOrderDetails>();
+  final Completer<List<OrderTimelineEvent>> _timelineCompleter =
+      Completer<List<OrderTimelineEvent>>();
   int detailCalls = 0;
   int timelineCalls = 0;
 
@@ -133,11 +160,17 @@ class _CompletingRepository implements CustomerOrdersRepository {
     return _timelineCompleter.future;
   }
 
-  void completeDetails(CustomerOrderDetails value) => _detailsCompleter.complete(value);
-  void completeTimeline(List<OrderTimelineEvent> value) => _timelineCompleter.complete(value);
+  void completeDetails(CustomerOrderDetails value) =>
+      _detailsCompleter.complete(value);
+  void completeTimeline(List<OrderTimelineEvent> value) =>
+      _timelineCompleter.complete(value);
 
   @override
-  Future<OrderPage> listOrders({required OrderFilters filters, OrderCursor? cursor, int limit = customerOrdersMaxPageSize}) {
+  Future<OrderPage> listOrders({
+    required OrderFilters filters,
+    OrderCursor? cursor,
+    int limit = customerOrdersMaxPageSize,
+  }) {
     throw UnimplementedError();
   }
 }
