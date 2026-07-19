@@ -6,6 +6,7 @@ import '../../application/orders/orders_providers.dart';
 import '../../domain/common/platform_failure.dart';
 import '../../domain/orders/order_filters.dart';
 import '../platform_ui_text.dart';
+import 'order_details_screen.dart';
 import 'order_filters_sheet.dart';
 import 'order_widgets.dart';
 import 'orders_ui_text.dart';
@@ -53,7 +54,11 @@ class CustomerOrdersScreen extends ConsumerWidget {
         ],
       ),
       body: SafeArea(
-        child: _OrdersBody(state: state, controller: controller),
+        child: _OrdersBody(
+          state: state,
+          controller: controller,
+          onOpenDetails: (orderId) => _openDetails(context, orderId),
+        ),
       ),
     );
   }
@@ -74,13 +79,26 @@ class CustomerOrdersScreen extends ConsumerWidget {
       await controller.updateFilters(filters);
     }
   }
+
+  Future<void> _openDetails(BuildContext context, String orderId) {
+    return Navigator.of(context).push<void>(
+      MaterialPageRoute<void>(
+        builder: (_) => OrderDetailsScreen(orderId: orderId),
+      ),
+    );
+  }
 }
 
 class _OrdersBody extends StatelessWidget {
-  const _OrdersBody({required this.state, required this.controller});
+  const _OrdersBody({
+    required this.state,
+    required this.controller,
+    required this.onOpenDetails,
+  });
 
   final OrdersState state;
   final OrdersController controller;
+  final ValueChanged<String> onOpenDetails;
 
   @override
   Widget build(BuildContext context) {
@@ -132,7 +150,7 @@ class _OrdersBody extends StatelessWidget {
           child: ListView.builder(
             key: const Key('orders-list'),
             physics: const AlwaysScrollableScrollPhysics(),
-            padding: const EdgeInsets.fromLTRB(12, 12, 12, 32),
+            padding: const EdgeInsetsDirectional.fromSTEB(12, 12, 12, 32),
             itemCount:
                 state.orders.length +
                 (state.isStale ? 1 : 0) +
@@ -142,16 +160,20 @@ class _OrdersBody extends StatelessWidget {
               if (state.isStale) {
                 if (currentIndex == 0) {
                   return Padding(
-                    padding: const EdgeInsets.only(bottom: 10),
+                    padding: const EdgeInsetsDirectional.only(bottom: 10),
                     child: OrdersStaleBanner(failureCode: state.failureCode),
                   );
                 }
                 currentIndex -= 1;
               }
               if (currentIndex < state.orders.length) {
+                final order = state.orders[currentIndex];
                 return Padding(
-                  padding: const EdgeInsets.only(bottom: 10),
-                  child: CustomerOrderCard(order: state.orders[currentIndex]),
+                  padding: const EdgeInsetsDirectional.only(bottom: 10),
+                  child: CustomerOrderCard(
+                    order: order,
+                    onTap: () => onOpenDetails(order.id),
+                  ),
                 );
               }
               return Padding(
