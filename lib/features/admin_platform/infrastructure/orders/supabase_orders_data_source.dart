@@ -17,7 +17,7 @@ abstract interface class SupabaseOrdersDataSource {
 
 class FlutterSupabaseOrdersDataSource implements SupabaseOrdersDataSource {
   FlutterSupabaseOrdersDataSource(SupabaseClient client)
-    : _rpcCall = (rpcName, params) => client.rpc(rpcName, params: params);
+    : _rpcCall = _SupabaseOrdersRpcCall(client).call;
 
   FlutterSupabaseOrdersDataSource.withRpcCall(OrdersRpcCall rpcCall)
     : _rpcCall = rpcCall;
@@ -82,5 +82,15 @@ class FlutterSupabaseOrdersDataSource implements SupabaseOrdersDataSource {
           return Map<String, Object?>.unmodifiable(mapped);
         })
         .toList(growable: false);
+  }
+}
+
+class _SupabaseOrdersRpcCall {
+  const _SupabaseOrdersRpcCall(this._client);
+
+  final SupabaseClient _client;
+
+  Future<Object?> call(String rpcName, Map<String, Object?> rpcParams) {
+    return _client.rpc(rpcName, params: rpcParams);
   }
 }

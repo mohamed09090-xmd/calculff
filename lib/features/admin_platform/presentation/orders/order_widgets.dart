@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
+import 'package:intl/intl.dart' hide TextDirection;
 
 import '../../../../core/localization/app_translator.dart';
 import '../../domain/common/platform_failure.dart';
@@ -100,18 +100,18 @@ class CustomerOrderCard extends StatelessWidget {
                   ),
                   Text(offerName),
                   const Divider(height: 22),
-                  _OrderField(
+                  OrderField(
                     icon: Icons.person_outline,
                     label: orderText(context, 'الزبون'),
                     value: order.customerName,
                   ),
-                  _OrderField(
+                  OrderField(
                     icon: Icons.badge_outlined,
-                    label: orderText(context, 'معرّف اللاعب'),
+                    label: orderText(context, 'معركف اللاعب'),
                     value: order.playerId,
                   ),
                   if (order.inGameName case final name?)
-                    _OrderField(
+                    OrderField(
                       icon: Icons.sports_esports_outlined,
                       label: orderText(context, 'الاسم داخل اللعبة'),
                       value: name,
@@ -144,7 +144,7 @@ class CustomerOrderCard extends StatelessWidget {
                     ],
                   ),
                   const SizedBox(height: 12),
-                  _OrderField(
+                  OrderField(
                     icon: Icons.schedule_outlined,
                     label: orderText(context, 'وقت الإنشاء'),
                     value: createdAt,
