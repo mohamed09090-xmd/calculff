@@ -29,28 +29,31 @@ void main() {
     'card opens details while contact PII remains absent from the list',
     (tester) async {
       final semantics = tester.ensureSemantics();
-      addTearDown(semantics.dispose);
-      await _pumpOrders(tester);
+      try {
+        await _pumpOrders(tester);
 
-      expect(find.textContaining('customer@example.test'), findsNothing);
-      expect(find.textContaining('0550000000'), findsNothing);
-      expect(
-        find.bySemanticsLabel(RegExp('طلب 11111111.*فتح تفاصيل الطلب')),
-        findsOneWidget,
-      );
+        expect(find.textContaining('customer@example.test'), findsNothing);
+        expect(find.textContaining('0550000000'), findsNothing);
+        expect(
+          find.bySemanticsLabel(RegExp('طلب 11111111.*فتح تفاصيل الطلب')),
+          findsOneWidget,
+        );
 
-      await _openDetails(tester);
+        await _openDetails(tester);
 
-      expect(find.byType(OrderDetailsScreen), findsOneWidget);
-      expect(find.text('#11111111'), findsOneWidget);
-      expect(
-        find.textContaining('11111111-1111-1111-1111-111111111111'),
-        findsNothing,
-      );
-      expect(find.textContaining('customer@example.test'), findsOneWidget);
-      expect(find.textContaining('0550000000'), findsOneWidget);
-      expect(find.byType(SelectableText), findsNWidgets(3));
-      expect(find.bySemanticsLabel('معلومات الاتصال'), findsWidgets);
+        expect(find.byType(OrderDetailsScreen), findsOneWidget);
+        expect(find.text('#11111111'), findsOneWidget);
+        expect(
+          find.textContaining('11111111-1111-1111-1111-111111111111'),
+          findsNothing,
+        );
+        expect(find.textContaining('customer@example.test'), findsOneWidget);
+        expect(find.textContaining('0550000000'), findsOneWidget);
+        expect(find.byType(SelectableText), findsNWidgets(3));
+        expect(find.bySemanticsLabel('معلومات الاتصال'), findsWidgets);
+      } finally {
+        semantics.dispose();
+      }
     },
   );
 
@@ -59,9 +62,16 @@ void main() {
   ) async {
     await _pumpOrders(tester);
     await _openDetails(tester);
+    final detailsList = find.byKey(const Key('order-details-list'));
+    final detailsScrollable = find.descendant(
+      of: detailsList,
+      matching: find.byType(Scrollable),
+    );
+    expect(detailsScrollable, findsOneWidget);
     await tester.scrollUntilVisible(
-      find.byKey(const Key('order-details-timeline')).first,
+      find.byKey(const Key('order-details-timeline')),
       500,
+      scrollable: detailsScrollable,
     );
     await tester.pumpAndSettle();
 
@@ -175,9 +185,8 @@ Future<void> _pumpOrders(
 
 Future<void> _openDetails(WidgetTester tester) async {
   final card = find.byKey(const Key('order-card-open-11111111'));
-  await tester.ensureVisible(card);
-  await tester.pumpAndSettle();
-  await tester.tap(card);
+  expect(card, findsOneWidget);
+  await tester.tapAt(tester.getTopLeft(card) + const Offset(24, 24));
   await tester.pumpAndSettle();
 }
 
