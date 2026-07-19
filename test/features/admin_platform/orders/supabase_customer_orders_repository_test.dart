@@ -92,27 +92,15 @@ void main() {
         ]);
         expect(page.hasMore, isTrue);
         expect(page.nextCursor?.createdAt, DateTime.utc(2026, 7, 17, 12));
-        expect(
-          page.nextCursor?.id,
-          '00000000-0000-0000-0000-000000000002',
-        );
+        expect(page.nextCursor?.id, '00000000-0000-0000-0000-000000000002');
       },
     );
 
     test('last page has no cursor and loses or duplicates no rows', () async {
       final rows = <Map<String, Object?>>[
-        _listRow(
-          id: '00000000-0000-0000-0000-000000000003',
-          hasMore: false,
-        ),
-        _listRow(
-          id: '00000000-0000-0000-0000-000000000002',
-          hasMore: false,
-        ),
-        _listRow(
-          id: '00000000-0000-0000-0000-000000000001',
-          hasMore: false,
-        ),
+        _listRow(id: '00000000-0000-0000-0000-000000000003', hasMore: false),
+        _listRow(id: '00000000-0000-0000-0000-000000000002', hasMore: false),
+        _listRow(id: '00000000-0000-0000-0000-000000000001', hasMore: false),
       ];
 
       final page = await _repository(
@@ -147,10 +135,7 @@ void main() {
       final repository = _repository(
         _DataSource(
           listRows: <Map<String, Object?>>[
-            _listRow(
-              id: '00000000-0000-0000-0000-000000000002',
-              hasMore: true,
-            ),
+            _listRow(id: '00000000-0000-0000-0000-000000000002', hasMore: true),
             _listRow(
               id: '00000000-0000-0000-0000-000000000001',
               hasMore: false,
@@ -265,9 +250,7 @@ void main() {
             PlatformFailureCode.malformedResponse,
           ),
         ]) {
-          final repository = _repository(
-            _DataSource(detailsRows: entry.$1),
-          );
+          final repository = _repository(_DataSource(detailsRows: entry.$1));
           await expectLater(
             repository.getOrderDetails(orderId: orderId),
             throwsA(
@@ -350,34 +333,37 @@ void main() {
       );
     });
 
-    test('network, unauthorized, and raw PostgREST errors are mapped', () async {
-      final cases = <(Object, PlatformFailureCode)>[
-        (
-          TimeoutException('network fixture'),
-          PlatformFailureCode.networkUnavailable,
-        ),
-        (
-          const PostgrestException(
-            message: 'private database message',
-            code: '42501',
-            details: 'private payload',
-            hint: 'private hint',
+    test(
+      'network, unauthorized, and raw PostgREST errors are mapped',
+      () async {
+        final cases = <(Object, PlatformFailureCode)>[
+          (
+            TimeoutException('network fixture'),
+            PlatformFailureCode.networkUnavailable,
           ),
-          PlatformFailureCode.unauthorized,
-        ),
-      ];
-      for (final entry in cases) {
-        final repository = _repository(_DataSource(error: entry.$1));
-        try {
-          await repository.getOrderDetails(orderId: orderId);
-          fail('Expected a PlatformFailure.');
-        } catch (error) {
-          expect(error, isA<PlatformFailure>());
-          expect((error as PlatformFailure).code, entry.$2);
-          expect(error.toString(), isNot(contains('private payload')));
+          (
+            const PostgrestException(
+              message: 'private database message',
+              code: '42501',
+              details: 'private payload',
+              hint: 'private hint',
+            ),
+            PlatformFailureCode.unauthorized,
+          ),
+        ];
+        for (final entry in cases) {
+          final repository = _repository(_DataSource(error: entry.$1));
+          try {
+            await repository.getOrderDetails(orderId: orderId);
+            fail('Expected a PlatformFailure.');
+          } catch (error) {
+            expect(error, isA<PlatformFailure>());
+            expect((error as PlatformFailure).code, entry.$2);
+            expect(error.toString(), isNot(contains('private payload')));
+          }
         }
-      }
-    });
+      },
+    );
 
     test('invalid order ids fail before the data source is called', () async {
       final dataSource = _DataSource();
