@@ -5,72 +5,85 @@ import 'package:game_credit_profit_manager/features/admin_platform/infrastructur
 
 void main() {
   group('OrderTimelineEventDto', () {
-    test('maps every supported event type', () {
-      for (final eventType in OrderTimelineEventType.values) {
-        final payload = _timelinePayload()
-          ..['event_type'] = eventType.wireValue;
-
-        expect(OrderTimelineEventDto.fromMap(payload).eventType, eventType);
-      }
-    });
-
-    test('maps only the public timeline fields in their domain roles', () {
-      final event = OrderTimelineEventDto.fromMap(
-        _timelinePayload(),
-      ).toDomain();
+    test('maps the public payload and normalizes the timestamp to UTC', () {
+      final dto = OrderTimelineEventDto.fromMap(_payload());
+      final event = dto.toDomain();
 
       expect(event.eventType, OrderTimelineEventType.paymentChanged);
       expect(event.orderStatus, OrderStatus.processing);
       expect(event.paymentStatus, PaymentStatus.underReview);
-      expect(event.publicMessage, 'Payment is under review');
-      expect(event.createdAt, DateTime.utc(2026, 7, 17, 11));
+      expect(event.publicMessage, 'Public fixture update');
+      expect(event.createdAt, DateTime.utc(2026, 7, 18, 11));
+      expect(event.createdAt.isUtc, isTrue);
     });
 
-    test('supports a nullable public message', () {
-      final payload = _timelinePayload()..['public_message'] = null;
+    test('accepts a nullable public message', () {
+      final dto = OrderTimelineEventDto.fromMap(
+        _payload()..['public_message'] = null,
+      );
 
-      expect(OrderTimelineEventDto.fromMap(payload).publicMessage, isNull);
+      expect(dto.publicMessage, isNull);
+      expect(dto.toDomain().publicMessage, isNull);
     });
 
-    test('rejects an unknown event type safely', () {
-      final payload = _timelinePayload()..['event_type'] = 'private_note';
+    test('rejects unknown event, order, and payment enum values', () {
+      for (final entry in <(String, String)>[
+        ('event_type', 'private_note'),
+        ('order_status', 'private_state'),
+        ('payment_status', 'private_payment'),
+      ]) {
+        final payload = _payload()..[entry.$1] = entry.$2;
+        expect(
+          () => OrderTimelineEventDto.fromMap(payload),
+          throwsA(
+            isA<PlatformPayloadException>().having(
+              (error) => error.field,
+              'field',
+              entry.$1,
+            ),
+          ),
+        );
+      }
+    });
 
+    test('rejects malformed timestamps and missing required fields', () {
       expect(
-        () => OrderTimelineEventDto.fromMap(payload),
-        throwsA(
-          isA<PlatformPayloadException>()
-              .having((error) => error.field, 'field', 'event_type')
-              .having(
-                (error) => error.reason,
-                'reason',
-                PlatformPayloadFailureReason.invalidValue,
-              ),
+        () => OrderTimelineEventDto.fromMap(
+          _payload()..['created_at'] = 'not-a-date',
         ),
+        throwsA(isA<PlatformPayloadException>()),
+      );
+      expect(
+        () => OrderTimelineEventDto.fromMap(
+          _payload()..remove('payment_status'),
+        ),
+        throwsA(isA<PlatformPayloadException>()),
       );
     });
 
-    test('safe representations do not expose ignored identifiers', () {
-      final dto = OrderTimelineEventDto.fromMap(_timelinePayload());
-      const managerId = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa';
-      const orderId = 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb';
-
-      expect(dto.toString(), isNot(contains(managerId)));
-      expect(dto.toString(), isNot(contains(orderId)));
-      expect(dto.toDomain().toString(), isNot(contains(managerId)));
-      expect(dto.toDomain().toString(), isNot(contains(orderId)));
+    test('safe representations omit public messages and ignored identifiers', () {
+      final dto = OrderTimelineEventDto.fromMap(_payload());
+      for (final forbidden in <String>[
+        'Public fixture update',
+        'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
+        'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb',
+      ]) {
+        expect(dto.toString(), isNot(contains(forbidden)));
+        expect(dto.toDomain().toString(), isNot(contains(forbidden)));
+      }
     });
   });
 }
 
-Map<String, Object?> _timelinePayload() {
+Map<String, Object?> _payload() {
   return <String, Object?>{
     'event_type': 'payment_changed',
     'order_status': 'processing',
     'payment_status': 'under_review',
-    'public_message': 'Payment is under review',
-    'created_at': '2026-07-17T12:00:00+01:00',
+    'public_message': 'Public fixture update',
+    'created_at': '2026-07-18T12:00:00+01:00',
     'changed_by': 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
     'order_id': 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb',
-    'internal_note': 'must never be mapped',
+    'internal_note': 'ignored fixture value',
   };
 }
