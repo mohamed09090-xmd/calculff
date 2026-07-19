@@ -357,3 +357,17 @@ String paymentMethodText(BuildContext context, PaymentMethod method) {
     PaymentMethod.transfer => 'تحويل',
   });
 }
+
+String timelineEventTypeText(
+  BuildContext context,
+  OrderTimelineEventType eventType,
+) {
+  return orderText(context, switch (eventType) {
+    OrderTimelineEventType.created => 'إنشاء الطلب',
+    OrderTimelineEventType.orderChanged => 'تغيير حالة الطلب',
+    OrderTimelineEventType.paymentChanged => 'تغيير حالة الدفع',
+    OrderTimelineEventType.proofAttached => 'إرفاق إثبات الدفع',
+    OrderTimelineEventType.refundStarted => 'بدء الاسترداد',
+    OrderTimelineEventType.refunded => 'اكتمال الاسترداد',
+  });
+}
