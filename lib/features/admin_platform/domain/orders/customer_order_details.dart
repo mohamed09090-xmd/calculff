@@ -3,7 +3,7 @@ import 'customer_order_summary.dart';
 class CustomerOrderDetails {
   CustomerOrderDetails({
     required this.summary,
-    required this.rewardUnitCodeSnapshot,
+    this.rewardUnitCodeSnapshot = '',
     required this.customerEmail,
     required this.customerPhone,
     required this.publicStatusMessage,
