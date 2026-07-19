@@ -5,6 +5,14 @@ import 'package:game_credit_profit_manager/features/admin_platform/infrastructur
 
 void main() {
   group('OrderTimelineEventDto', () {
+    test('maps every supported event type', () {
+      for (final eventType in OrderTimelineEventType.values) {
+        final payload = _payload()..['event_type'] = eventType.wireValue;
+
+        expect(OrderTimelineEventDto.fromMap(payload).eventType, eventType);
+      }
+    });
+
     test('maps the public payload and normalizes the timestamp to UTC', () {
       final dto = OrderTimelineEventDto.fromMap(_payload());
       final event = dto.toDomain();
@@ -36,11 +44,13 @@ void main() {
         expect(
           () => OrderTimelineEventDto.fromMap(payload),
           throwsA(
-            isA<PlatformPayloadException>().having(
-              (error) => error.field,
-              'field',
-              entry.$1,
-            ),
+            isA<PlatformPayloadException>()
+                .having((error) => error.field, 'field', entry.$1)
+                .having(
+                  (error) => error.reason,
+                  'reason',
+                  PlatformPayloadFailureReason.invalidValue,
+                ),
           ),
         );
       }
