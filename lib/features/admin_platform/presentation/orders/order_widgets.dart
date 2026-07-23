@@ -346,7 +346,13 @@ class OrderField extends StatelessWidget {
     if (excludeFromSemantics) {
       return ExcludeSemantics(child: field);
     }
-    return forceLtr && value.isNotEmpty ? MergeSemantics(child: field) : field;
+    if (forceLtr && value.isNotEmpty) {
+      return Semantics(
+        label: '$label: $value',
+        child: ExcludeSemantics(child: field),
+      );
+    }
+    return field;
   }
 }
 
