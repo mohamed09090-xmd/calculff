@@ -5,6 +5,7 @@ import 'customer_order_summary_dto.dart';
 class CustomerOrderDetailsDto {
   const CustomerOrderDetailsDto({
     required this.summary,
+    required this.rewardUnitCodeSnapshot,
     required this.customerEmail,
     required this.customerPhone,
     required this.publicStatusMessage,
@@ -18,6 +19,9 @@ class CustomerOrderDetailsDto {
     final reader = PlatformPayloadReader(payload);
     return CustomerOrderDetailsDto(
       summary: CustomerOrderSummaryDto.fromMap(payload),
+      rewardUnitCodeSnapshot: reader.requiredString(
+        'reward_unit_code_snapshot',
+      ),
       customerEmail: reader.requiredString('customer_email_snapshot'),
       customerPhone: reader.requiredString('customer_phone_snapshot'),
       publicStatusMessage: reader.optionalString('public_status_message'),
@@ -29,6 +33,7 @@ class CustomerOrderDetailsDto {
   }
 
   final CustomerOrderSummaryDto summary;
+  final String rewardUnitCodeSnapshot;
   final String customerEmail;
   final String customerPhone;
   final String? publicStatusMessage;
@@ -40,6 +45,7 @@ class CustomerOrderDetailsDto {
   CustomerOrderDetails toDomain() {
     return CustomerOrderDetails(
       summary: summary.toDomain(),
+      rewardUnitCodeSnapshot: rewardUnitCodeSnapshot,
       customerEmail: customerEmail,
       customerPhone: customerPhone,
       publicStatusMessage: publicStatusMessage,
@@ -48,5 +54,12 @@ class CustomerOrderDetailsDto {
       refundStartedAt: refundStartedAt,
       refundedAt: refundedAt,
     );
+  }
+
+  @override
+  String toString() {
+    return 'CustomerOrderDetailsDto(displayId: ${summary.toDomain().displayId}, '
+        'orderStatus: ${summary.orderStatus.wireValue}, '
+        'paymentStatus: ${summary.paymentStatus.wireValue})';
   }
 }

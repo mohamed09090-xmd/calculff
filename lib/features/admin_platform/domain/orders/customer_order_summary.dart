@@ -5,6 +5,15 @@ final RegExp _hyphenatedUuidPattern = RegExp(
 );
 final RegExp _compactUuidPattern = RegExp(r'^[0-9a-f]{32}$');
 
+String customerOrderDisplayId(String id) {
+  final normalized = id.toLowerCase();
+  if (!_hyphenatedUuidPattern.hasMatch(normalized) &&
+      !_compactUuidPattern.hasMatch(normalized)) {
+    return '--------';
+  }
+  return normalized.replaceAll('-', '').substring(0, 8);
+}
+
 class CustomerOrderSummary {
   CustomerOrderSummary({
     required this.id,
@@ -44,14 +53,7 @@ class CustomerOrderSummary {
   final DateTime createdAt;
   final bool hasPaymentProof;
 
-  String get displayId {
-    final normalized = id.toLowerCase();
-    if (!_hyphenatedUuidPattern.hasMatch(normalized) &&
-        !_compactUuidPattern.hasMatch(normalized)) {
-      return '--------';
-    }
-    return normalized.replaceAll('-', '').substring(0, 8);
-  }
+  String get displayId => customerOrderDisplayId(id);
 
   @override
   String toString() {

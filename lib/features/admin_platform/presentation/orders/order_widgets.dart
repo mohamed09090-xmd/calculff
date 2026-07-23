@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
+import 'package:intl/intl.dart' hide TextDirection;
 
 import '../../../../core/localization/app_translator.dart';
 import '../../domain/common/platform_failure.dart';
@@ -9,9 +9,14 @@ import '../platform_ui_text.dart';
 import 'orders_ui_text.dart';
 
 class CustomerOrderCard extends StatelessWidget {
-  const CustomerOrderCard({super.key, required this.order});
+  const CustomerOrderCard({
+    super.key,
+    required this.order,
+    required this.onTap,
+  });
 
   final CustomerOrderSummary order;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
@@ -31,103 +36,134 @@ class CustomerOrderCard extends StatelessWidget {
     final proofLabel = order.hasPaymentProof
         ? orderText(context, 'يوجد إثبات دفع')
         : orderText(context, 'لا يوجد إثبات دفع');
+    final openIcon = Directionality.of(context) == TextDirection.rtl
+        ? Icons.chevron_left
+        : Icons.chevron_right;
 
     return Semantics(
       container: true,
+      button: true,
       explicitChildNodes: true,
+      onTap: onTap,
       label:
           '${orderText(context, 'طلب')} ${order.displayId}، '
-          '$gameName، $offerName، ${order.customerName}',
+          '$gameName، $offerName، ${order.customerName}، '
+          '${orderText(context, 'فتح تفاصيل الطلب')}',
       child: Card(
         key: Key('order-card-${order.displayId}'),
-        child: Padding(
-          padding: const EdgeInsets.all(14),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Wrap(
-                alignment: WrapAlignment.spaceBetween,
-                crossAxisAlignment: WrapCrossAlignment.center,
-                spacing: 12,
-                runSpacing: 8,
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          key: Key('order-card-open-${order.displayId}'),
+          onTap: onTap,
+          excludeFromSemantics: true,
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(minHeight: 48),
+            child: Padding(
+              padding: const EdgeInsetsDirectional.all(14),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
+                  Wrap(
+                    alignment: WrapAlignment.spaceBetween,
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    spacing: 12,
+                    runSpacing: 8,
+                    children: [
+                      ConstrainedBox(
+                        constraints: BoxConstraints(
+                          maxWidth: MediaQuery.sizeOf(context).width - 48,
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Flexible(
+                              child: Text(
+                                '#${order.displayId}',
+                                overflow: TextOverflow.ellipsis,
+                                style: Theme.of(context).textTheme.titleMedium
+                                    ?.copyWith(fontWeight: FontWeight.w800),
+                              ),
+                            ),
+                            const SizedBox(width: 4),
+                            Icon(openIcon),
+                          ],
+                        ),
+                      ),
+                      OrderStatusBadge(
+                        text: orderStatusText(context, order.orderStatus),
+                        icon: Icons.receipt_long_outlined,
+                      ),
+                      OrderStatusBadge(
+                        text: proofLabel,
+                        icon: order.hasPaymentProof
+                            ? Icons.attachment_outlined
+                            : Icons.do_not_disturb_alt_outlined,
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
                   Text(
-                    '#${order.displayId}',
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w800,
+                    gameName,
+                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.w700,
                     ),
                   ),
-                  OrderStatusBadge(
-                    text: orderStatusText(context, order.orderStatus),
-                    icon: Icons.receipt_long_outlined,
+                  Text(offerName),
+                  const Divider(height: 22),
+                  OrderField(
+                    icon: Icons.person_outline,
+                    label: orderText(context, 'الزبون'),
+                    value: order.customerName,
                   ),
-                  OrderStatusBadge(
-                    text: proofLabel,
-                    icon: order.hasPaymentProof
-                        ? Icons.attachment_outlined
-                        : Icons.do_not_disturb_alt_outlined,
+                  OrderField(
+                    icon: Icons.badge_outlined,
+                    label: orderText(context, 'معرّف اللاعب'),
+                    value: order.playerId,
+                    excludeFromSemantics: true,
                   ),
-                ],
-              ),
-              const SizedBox(height: 10),
-              Text(
-                gameName,
-                style: Theme.of(
-                  context,
-                ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
-              ),
-              Text(offerName),
-              const Divider(height: 22),
-              _OrderField(
-                icon: Icons.person_outline,
-                label: orderText(context, 'الزبون'),
-                value: order.customerName,
-              ),
-              _OrderField(
-                icon: Icons.badge_outlined,
-                label: 'Player ID',
-                value: order.playerId,
-              ),
-              if (order.inGameName case final name?)
-                _OrderField(
-                  icon: Icons.sports_esports_outlined,
-                  label: orderText(context, 'الاسم داخل اللعبة'),
-                  value: name,
-                ),
-              const SizedBox(height: 8),
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: [
-                  OrderStatusBadge(
-                    text:
-                        '${orderText(context, 'الكمية')}: '
-                        '${order.rewardQuantity} $rewardUnit',
-                    icon: Icons.redeem_outlined,
+                  if (order.inGameName case final name?)
+                    OrderField(
+                      icon: Icons.sports_esports_outlined,
+                      label: orderText(context, 'الاسم داخل اللعبة'),
+                      value: name,
+                      excludeFromSemantics: true,
+                    ),
+                  const SizedBox(height: 8),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
+                      OrderStatusBadge(
+                        text:
+                            '${orderText(context, 'الكمية')}: '
+                            '${order.rewardQuantity} $rewardUnit',
+                        icon: Icons.redeem_outlined,
+                      ),
+                      OrderStatusBadge(
+                        text:
+                            '${orderText(context, 'السعر')}: '
+                            '${order.salePriceDzd} ${orderText(context, 'دج')}',
+                        icon: Icons.payments_outlined,
+                      ),
+                      OrderStatusBadge(
+                        text: paymentMethodText(context, order.paymentMethod),
+                        icon: Icons.account_balance_wallet_outlined,
+                      ),
+                      OrderStatusBadge(
+                        text: paymentStatusText(context, order.paymentStatus),
+                        icon: Icons.verified_outlined,
+                      ),
+                    ],
                   ),
-                  OrderStatusBadge(
-                    text:
-                        '${orderText(context, 'السعر')}: '
-                        '${order.salePriceDzd} دج',
-                    icon: Icons.payments_outlined,
-                  ),
-                  OrderStatusBadge(
-                    text: paymentMethodText(context, order.paymentMethod),
-                    icon: Icons.account_balance_wallet_outlined,
-                  ),
-                  OrderStatusBadge(
-                    text: paymentStatusText(context, order.paymentStatus),
-                    icon: Icons.verified_outlined,
+                  const SizedBox(height: 12),
+                  OrderField(
+                    icon: Icons.schedule_outlined,
+                    label: orderText(context, 'وقت الإنشاء'),
+                    value: createdAt,
                   ),
                 ],
               ),
-              const SizedBox(height: 12),
-              _OrderField(
-                icon: Icons.schedule_outlined,
-                label: orderText(context, 'وقت الإنشاء'),
-                value: createdAt,
-              ),
-            ],
+            ),
           ),
         ),
       ),
@@ -143,12 +179,36 @@ class OrderStatusBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final maximumWidth = MediaQuery.sizeOf(context).width - 48;
     return Semantics(
+      container: true,
       label: text,
-      child: Chip(
-        avatar: Icon(icon, size: 18),
-        label: Text(text),
-        visualDensity: VisualDensity.compact,
+      child: ExcludeSemantics(
+        child: ConstrainedBox(
+          constraints: BoxConstraints(maxWidth: maximumWidth),
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              color: theme.colorScheme.surfaceContainerHighest,
+              border: Border.all(color: theme.colorScheme.outlineVariant),
+              borderRadius: BorderRadius.circular(999),
+            ),
+            child: Padding(
+              padding: const EdgeInsetsDirectional.symmetric(
+                horizontal: 10,
+                vertical: 6,
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(icon, size: 18),
+                  const SizedBox(width: 6),
+                  Flexible(child: Text(text, softWrap: true)),
+                ],
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }
@@ -176,7 +236,7 @@ class OrdersStateMessage extends StatelessWidget {
       onRefresh: onRefresh,
       child: ListView(
         physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.fromLTRB(24, 48, 24, 96),
+        padding: const EdgeInsetsDirectional.fromSTEB(24, 48, 24, 96),
         children: [
           Icon(icon, size: 56),
           const SizedBox(height: 16),
@@ -231,35 +291,68 @@ class OrdersStaleBanner extends StatelessWidget {
   }
 }
 
-class _OrderField extends StatelessWidget {
-  const _OrderField({
+class OrderField extends StatelessWidget {
+  const OrderField({
+    super.key,
     required this.icon,
     required this.label,
     required this.value,
+    this.selectable = false,
+    this.forceLtr = false,
+    this.excludeFromSemantics = false,
   });
 
   final IconData icon;
   final String label;
   final String value;
+  final bool selectable;
+  final bool forceLtr;
+  final bool excludeFromSemantics;
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
+    final Widget text;
+    if (forceLtr && value.isNotEmpty) {
+      text = Wrap(
+        spacing: 4,
+        runSpacing: 2,
+        crossAxisAlignment: WrapCrossAlignment.center,
+        children: [
+          Text('$label:'),
+          Directionality(
+            textDirection: TextDirection.ltr,
+            child: selectable
+                ? SelectableText(value, textDirection: TextDirection.ltr)
+                : Text(value, softWrap: true, textDirection: TextDirection.ltr),
+          ),
+        ],
+      );
+    } else if (selectable) {
+      text = SelectableText(value.isEmpty ? label : '$label: $value');
+    } else {
+      text = Text(value.isEmpty ? label : '$label: $value', softWrap: true);
+    }
+    final field = Padding(
       padding: const EdgeInsets.symmetric(vertical: 3),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Icon(icon, size: 19),
           const SizedBox(width: 8),
-          Expanded(
-            child: Text(
-              value.isEmpty ? label : '$label: $value',
-              softWrap: true,
-            ),
-          ),
+          Expanded(child: text),
         ],
       ),
     );
+    if (excludeFromSemantics) {
+      return ExcludeSemantics(child: field);
+    }
+    if (forceLtr && value.isNotEmpty) {
+      return Semantics(
+        label: '$label: $value',
+        child: ExcludeSemantics(child: field),
+      );
+    }
+    return field;
   }
 }
 
@@ -289,5 +382,19 @@ String paymentMethodText(BuildContext context, PaymentMethod method) {
   return orderText(context, switch (method) {
     PaymentMethod.cash => 'نقدًا',
     PaymentMethod.transfer => 'تحويل',
+  });
+}
+
+String timelineEventTypeText(
+  BuildContext context,
+  OrderTimelineEventType eventType,
+) {
+  return orderText(context, switch (eventType) {
+    OrderTimelineEventType.created => 'إنشاء الطلب',
+    OrderTimelineEventType.orderChanged => 'تغيير حالة الطلب',
+    OrderTimelineEventType.paymentChanged => 'تغيير حالة الدفع',
+    OrderTimelineEventType.proofAttached => 'إرفاق إثبات الدفع',
+    OrderTimelineEventType.refundStarted => 'بدء الاسترداد',
+    OrderTimelineEventType.refunded => 'اكتمال الاسترداد',
   });
 }

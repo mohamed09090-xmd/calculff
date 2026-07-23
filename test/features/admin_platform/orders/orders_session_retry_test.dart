@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:game_credit_profit_manager/features/admin_platform/application/common/platform_session_coordinator.dart';
 import 'package:game_credit_profit_manager/features/admin_platform/domain/admin_auth_models.dart';
@@ -11,34 +13,73 @@ void main() {
   test(
     'session expiry refreshes once and retries the list read once',
     () async {
-      final session = _FakeSessionAccess();
-      final dataScope = _FakeDataScope();
-      final dataSource = _ExpiringOrdersDataSource();
-      final repository = SupabaseCustomerOrdersRepository(
-        dataSource: dataSource,
-        errorMapper: const SupabasePlatformErrorMapper(),
-        readCoordinator: PlatformSessionCoordinator(
-          sessionAccess: session,
-          mapError: (error) => error is PlatformFailure
-              ? error
-              : const PlatformFailure(PlatformFailureCode.unknown),
-          dataScope: dataScope,
-        ),
-      );
+      final session = _SessionAccess();
+      final scope = _DataScope();
+      final dataSource = _ExpiringDataSource(expireListOnce: true);
+      final repository = _repository(session, scope, dataSource);
 
-      final page = await repository.listOrders(filters: OrderFilters());
+      await repository.listOrders(filters: OrderFilters());
 
-      expect(page.items, hasLength(1));
-      expect(dataSource.calls, 2);
+      expect(dataSource.listCalls, 2);
       expect(session.refreshCalls, 1);
-      expect(dataScope.invalidationCalls, 1);
-      expect(dataScope.authorizedCalls, 1);
+      expect(scope.invalidationCalls, 1);
+      expect(scope.authorizedCalls, 1);
+    },
+  );
+
+  test(
+    'concurrent detail and timeline expiry share one session refresh',
+    () async {
+      final session = _SessionAccess(blockRefresh: true);
+      final scope = _DataScope();
+      final dataSource = _ExpiringDataSource(
+        expireDetailsOnce: true,
+        expireTimelineOnce: true,
+      );
+      final repository = _repository(session, scope, dataSource);
+      const orderId = '11111111-1111-1111-1111-111111111111';
+
+      final reads = Future.wait<Object?>(<Future<Object?>>[
+        repository.getOrderDetails(orderId: orderId),
+        repository.getOrderTimeline(orderId: orderId),
+      ]);
+      await session.refreshStarted.future;
+      session.releaseRefresh.complete();
+      await reads;
+
+      expect(dataSource.detailCalls, 2);
+      expect(dataSource.timelineCalls, 2);
+      expect(session.refreshCalls, 1);
+      expect(session.maxConcurrentRefreshes, 1);
     },
   );
 }
 
-class _FakeSessionAccess implements PlatformSessionAccess {
+SupabaseCustomerOrdersRepository _repository(
+  _SessionAccess session,
+  _DataScope scope,
+  _ExpiringDataSource dataSource,
+) => SupabaseCustomerOrdersRepository(
+  dataSource: dataSource,
+  errorMapper: const SupabasePlatformErrorMapper(),
+  readCoordinator: PlatformSessionCoordinator(
+    sessionAccess: session,
+    mapError: (error) => error is PlatformFailure
+        ? error
+        : const PlatformFailure(PlatformFailureCode.unknown),
+    dataScope: scope,
+  ),
+);
+
+class _SessionAccess implements PlatformSessionAccess {
+  _SessionAccess({this.blockRefresh = false});
+
+  final bool blockRefresh;
   int refreshCalls = 0;
+  int _activeRefreshes = 0;
+  int maxConcurrentRefreshes = 0;
+  final Completer<void> refreshStarted = Completer<void>();
+  final Completer<void> releaseRefresh = Completer<void>();
 
   @override
   AdminAuthState get currentState => const AdminAuthState.authorized();
@@ -46,56 +87,103 @@ class _FakeSessionAccess implements PlatformSessionAccess {
   @override
   Future<void> refresh() async {
     refreshCalls += 1;
+    _activeRefreshes += 1;
+    if (_activeRefreshes > maxConcurrentRefreshes) {
+      maxConcurrentRefreshes = _activeRefreshes;
+    }
+    if (blockRefresh) {
+      if (!refreshStarted.isCompleted) {
+        refreshStarted.complete();
+      }
+      await releaseRefresh.future;
+    }
+    _activeRefreshes -= 1;
   }
 }
 
-class _FakeDataScope implements PlatformDataScopeSink {
+class _DataScope implements PlatformDataScopeSink {
   int authorizedCalls = 0;
   int invalidationCalls = 0;
 
   @override
-  void invalidate(PlatformFailureCode reason) {
-    invalidationCalls += 1;
-  }
+  void invalidate(PlatformFailureCode reason) => invalidationCalls += 1;
 
   @override
-  void markAuthorized() {
-    authorizedCalls += 1;
-  }
+  void markAuthorized() => authorizedCalls += 1;
 }
 
-class _ExpiringOrdersDataSource implements SupabaseOrdersDataSource {
-  int calls = 0;
+class _ExpiringDataSource implements SupabaseOrdersDataSource {
+  _ExpiringDataSource({
+    this.expireListOnce = false,
+    this.expireDetailsOnce = false,
+    this.expireTimelineOnce = false,
+  });
+
+  final bool expireListOnce;
+  final bool expireDetailsOnce;
+  final bool expireTimelineOnce;
+  int listCalls = 0;
+  int detailCalls = 0;
+  int timelineCalls = 0;
 
   @override
   Future<List<Map<String, Object?>>> listOrders({
     required Map<String, Object?> params,
   }) async {
-    calls += 1;
-    if (calls == 1) {
+    listCalls += 1;
+    if (expireListOnce && listCalls == 1) {
       throw const PlatformFailure(PlatformFailureCode.sessionExpired);
     }
-    return <Map<String, Object?>>[
-      <String, Object?>{
-        'id': '11111111-1111-1111-1111-111111111111',
-        'game_name_ar_snapshot': 'لعبة',
-        'game_name_fr_snapshot': 'Jeu',
-        'offer_name_ar_snapshot': 'عرض',
-        'offer_name_fr_snapshot': 'Offre',
-        'customer_name_snapshot': 'زبون',
-        'player_id': 'player-123',
-        'in_game_name': null,
-        'sale_price_dzd_snapshot': 350,
-        'reward_quantity_snapshot': 100,
-        'reward_unit_name_ar_snapshot': 'جوهرة',
-        'reward_unit_name_fr_snapshot': 'diamants',
-        'payment_method': 'cash',
-        'order_status': 'new',
-        'payment_status': 'awaiting_payment',
-        'created_at': '2026-07-17T12:00:00Z',
-        'has_payment_proof': false,
-        'has_more': false,
-      },
-    ];
+    return const <Map<String, Object?>>[];
+  }
+
+  @override
+  Future<List<Map<String, Object?>>> getOrderDetails({
+    required String orderId,
+  }) async {
+    detailCalls += 1;
+    if (expireDetailsOnce && detailCalls == 1) {
+      throw const PlatformFailure(PlatformFailureCode.sessionExpired);
+    }
+    return <Map<String, Object?>>[_detailsRow()];
+  }
+
+  @override
+  Future<List<Map<String, Object?>>> getOrderTimeline({
+    required String orderId,
+  }) async {
+    timelineCalls += 1;
+    if (expireTimelineOnce && timelineCalls == 1) {
+      throw const PlatformFailure(PlatformFailureCode.sessionExpired);
+    }
+    return const <Map<String, Object?>>[];
   }
 }
+
+Map<String, Object?> _detailsRow() => <String, Object?>{
+  'id': '11111111-1111-1111-1111-111111111111',
+  'game_name_ar_snapshot': 'لعبة',
+  'game_name_fr_snapshot': 'Jeu',
+  'offer_name_ar_snapshot': 'عرض',
+  'offer_name_fr_snapshot': 'Offre',
+  'reward_unit_code_snapshot': 'diamond',
+  'reward_unit_name_ar_snapshot': 'جوهرة',
+  'reward_unit_name_fr_snapshot': 'diamant',
+  'customer_name_snapshot': 'Customer Fixture',
+  'customer_email_snapshot': 'customer@example.test',
+  'customer_phone_snapshot': '0550000000',
+  'player_id': 'player-123',
+  'in_game_name': null,
+  'sale_price_dzd_snapshot': 350,
+  'reward_quantity_snapshot': 100,
+  'payment_method': 'transfer',
+  'order_status': 'processing',
+  'payment_status': 'under_review',
+  'public_status_message': null,
+  'created_at': '2026-07-18T12:00:00Z',
+  'updated_at': '2026-07-18T13:00:00Z',
+  'completed_at': null,
+  'refund_started_at': null,
+  'refunded_at': null,
+  'has_payment_proof': true,
+};

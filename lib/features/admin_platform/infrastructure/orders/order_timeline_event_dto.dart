@@ -38,4 +38,11 @@ class OrderTimelineEventDto {
       createdAt: createdAt,
     );
   }
+
+  @override
+  String toString() {
+    return 'OrderTimelineEventDto(eventType: ${eventType.wireValue}, '
+        'orderStatus: ${orderStatus.wireValue}, '
+        'paymentStatus: ${paymentStatus.wireValue})';
+  }
 }

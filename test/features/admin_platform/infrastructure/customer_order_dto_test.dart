@@ -38,6 +38,7 @@ void main() {
 
       expect(summary.inGameName, isNull);
       expect(summary.createdAt, DateTime.utc(2026, 7, 17, 11));
+      expect(summary.createdAt.isUtc, isTrue);
     });
 
     test('reads the required proof boolean directly', () {
@@ -134,18 +135,23 @@ void main() {
   });
 
   group('CustomerOrderDetailsDto', () {
-    test('adds contact details only to the details model', () {
-      final details = CustomerOrderDetailsDto.fromMap(
-        _detailsPayload(),
-      ).toDomain();
+    test('maps details, snapshots, and lifecycle dates to UTC', () {
+      final dto = CustomerOrderDetailsDto.fromMap(_detailsPayload());
+      final details = dto.toDomain();
 
+      expect(details.summary.orderStatus, OrderStatus.processing);
+      expect(details.summary.paymentStatus, PaymentStatus.underReview);
+      expect(details.rewardUnitCodeSnapshot, 'diamond');
+      expect(details.summary.hasPaymentProof, isTrue);
       expect(details.customerEmail, 'customer@example.test');
       expect(details.customerPhone, '0550000000');
       expect(details.publicStatusMessage, 'Payment is under review');
+      expect(details.summary.createdAt, DateTime.utc(2026, 7, 17, 11));
       expect(details.updatedAt, DateTime.utc(2026, 7, 17, 12));
       expect(details.completedAt, DateTime.utc(2026, 7, 18));
       expect(details.refundStartedAt, DateTime.utc(2026, 7, 19));
       expect(details.refundedAt, DateTime.utc(2026, 7, 20));
+      expect(details.updatedAt.isUtc, isTrue);
     });
 
     test('supports nullable public and lifecycle fields', () {
@@ -162,17 +168,70 @@ void main() {
       expect(details.refundedAt, isNull);
     });
 
-    test('safe representation omits email, phone, and full UUID', () {
+    test('requires has_payment_proof to be a Boolean', () {
+      final payload = _detailsPayload()..['has_payment_proof'] = 'true';
+
+      expect(
+        () => CustomerOrderDetailsDto.fromMap(payload),
+        throwsA(
+          isA<PlatformPayloadException>().having(
+            (error) => error.field,
+            'field',
+            'has_payment_proof',
+          ),
+        ),
+      );
+    });
+
+    test('requires the reward unit code snapshot', () {
+      final payload = _detailsPayload()..remove('reward_unit_code_snapshot');
+
+      expect(
+        () => CustomerOrderDetailsDto.fromMap(payload),
+        throwsA(
+          isA<PlatformPayloadException>().having(
+            (error) => error.field,
+            'field',
+            'reward_unit_code_snapshot',
+          ),
+        ),
+      );
+    });
+
+    test('rejects unknown enums and malformed payloads', () {
+      final unknown = _detailsPayload()..['order_status'] = 'hidden';
+      final malformed = _detailsPayload()..['sale_price_dzd_snapshot'] = 1.5;
+
+      expect(
+        () => CustomerOrderDetailsDto.fromMap(unknown),
+        throwsA(_invalidField('order_status')),
+      );
+      expect(
+        () => CustomerOrderDetailsDto.fromMap(malformed),
+        throwsA(
+          isA<PlatformPayloadException>().having(
+            (error) => error.field,
+            'field',
+            'sale_price_dzd_snapshot',
+          ),
+        ),
+      );
+    });
+
+    test('safe representations do not leak contact or player data', () {
       final dto = CustomerOrderDetailsDto.fromMap(_detailsPayload());
       final dtoText = dto.toString();
       final domainText = dto.toDomain().toString();
 
-      expect(dtoText, isNot(contains('customer@example.test')));
-      expect(dtoText, isNot(contains('0550000000')));
-      expect(dtoText, isNot(contains(dto.summary.id)));
-      expect(domainText, isNot(contains('customer@example.test')));
-      expect(domainText, isNot(contains('0550000000')));
-      expect(domainText, isNot(contains(dto.summary.id)));
+      for (final privateValue in <String>[
+        'customer@example.test',
+        '0550000000',
+        'player-123',
+        '11111111-1111-1111-1111-111111111111',
+      ]) {
+        expect(dtoText, isNot(contains(privateValue)));
+        expect(domainText, isNot(contains(privateValue)));
+      }
     });
   });
 }
@@ -194,6 +253,7 @@ Map<String, Object?> _summaryPayload() {
     'game_name_fr_snapshot': 'Game FR',
     'offer_name_ar_snapshot': 'Offer AR',
     'offer_name_fr_snapshot': 'Offer FR',
+    'reward_unit_code_snapshot': 'diamond',
     'customer_name_snapshot': 'Customer Name',
     'player_id': 'player-123',
     'in_game_name': 'Player Name',

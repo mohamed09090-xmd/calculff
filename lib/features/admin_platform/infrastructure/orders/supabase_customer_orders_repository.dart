@@ -8,8 +8,14 @@ import '../../domain/orders/order_page.dart';
 import '../../domain/orders/order_timeline_event.dart';
 import '../common/platform_payload_reader.dart';
 import '../common/supabase_platform_error_mapper.dart';
+import 'customer_order_details_dto.dart';
 import 'customer_order_summary_dto.dart';
+import 'order_timeline_event_dto.dart';
 import 'supabase_orders_data_source.dart';
+
+final RegExp _orderIdPattern = RegExp(
+  r'^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$',
+);
 
 class SupabaseCustomerOrdersRepository implements CustomerOrdersRepository {
   const SupabaseCustomerOrdersRepository({
@@ -76,22 +82,76 @@ class SupabaseCustomerOrdersRepository implements CustomerOrdersRepository {
           hasMore: pageHasMore,
         );
       } catch (error) {
-        if (error is FormatException || error is PlatformPayloadException) {
-          throw const PlatformFailure(PlatformFailureCode.malformedResponse);
-        }
-        throw _errorMapper.map(error);
+        throw _mapReadError(error);
       }
     });
   }
 
   @override
   Future<CustomerOrderDetails> getOrderDetails({required String orderId}) {
-    throw const PlatformFailure(PlatformFailureCode.temporarilyUnavailable);
+    _validateOrderId(orderId);
+    return _readCoordinator.runRead(() async {
+      try {
+        final rows = await _dataSource.getOrderDetails(orderId: orderId);
+        if (rows.isEmpty) {
+          throw const PlatformFailure(PlatformFailureCode.notFound);
+        }
+        if (rows.length != 1) {
+          throw const PlatformFailure(PlatformFailureCode.malformedResponse);
+        }
+        return CustomerOrderDetailsDto.fromMap(rows.single).toDomain();
+      } catch (error) {
+        throw _mapReadError(error);
+      }
+    });
   }
 
   @override
   Future<List<OrderTimelineEvent>> getOrderTimeline({required String orderId}) {
-    throw const PlatformFailure(PlatformFailureCode.temporarilyUnavailable);
+    _validateOrderId(orderId);
+    return _readCoordinator.runRead(() async {
+      try {
+        final rows = await _dataSource.getOrderTimeline(orderId: orderId);
+        final indexedEvents = <_IndexedTimelineEvent>[];
+        for (var index = 0; index < rows.length; index += 1) {
+          indexedEvents.add(
+            _IndexedTimelineEvent(
+              index: index,
+              event: OrderTimelineEventDto.fromMap(rows[index]).toDomain(),
+            ),
+          );
+        }
+        indexedEvents.sort((left, right) {
+          final byDate = left.event.createdAt.compareTo(right.event.createdAt);
+          return byDate != 0 ? byDate : left.index.compareTo(right.index);
+        });
+        return List<OrderTimelineEvent>.unmodifiable(
+          indexedEvents.map((item) => item.event),
+        );
+      } catch (error) {
+        throw _mapReadError(error);
+      }
+    });
+  }
+
+  PlatformFailure _mapReadError(Object error) {
+    if (error is FormatException || error is PlatformPayloadException) {
+      return const PlatformFailure(PlatformFailureCode.malformedResponse);
+    }
+    return _errorMapper.map(error);
+  }
+}
+
+class _IndexedTimelineEvent {
+  const _IndexedTimelineEvent({required this.index, required this.event});
+
+  final int index;
+  final OrderTimelineEvent event;
+}
+
+void _validateOrderId(String orderId) {
+  if (!_orderIdPattern.hasMatch(orderId)) {
+    throw const PlatformFailure(PlatformFailureCode.validation);
   }
 }
 

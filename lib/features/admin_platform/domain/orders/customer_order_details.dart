@@ -3,6 +3,7 @@ import 'customer_order_summary.dart';
 class CustomerOrderDetails {
   CustomerOrderDetails({
     required this.summary,
+    this.rewardUnitCodeSnapshot = '',
     required this.customerEmail,
     required this.customerPhone,
     required this.publicStatusMessage,
@@ -16,6 +17,7 @@ class CustomerOrderDetails {
        refundedAt = refundedAt?.toUtc();
 
   final CustomerOrderSummary summary;
+  final String rewardUnitCodeSnapshot;
   final String customerEmail;
   final String customerPhone;
   final String? publicStatusMessage;
