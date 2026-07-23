@@ -343,7 +343,10 @@ class OrderField extends StatelessWidget {
         ],
       ),
     );
-    return excludeFromSemantics ? ExcludeSemantics(child: field) : field;
+    if (excludeFromSemantics) {
+      return ExcludeSemantics(child: field);
+    }
+    return forceLtr && value.isNotEmpty ? MergeSemantics(child: field) : field;
   }
 }
 
