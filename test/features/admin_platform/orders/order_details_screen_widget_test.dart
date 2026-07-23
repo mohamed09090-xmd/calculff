@@ -64,6 +64,13 @@ void main() {
           find.textContaining('11111111-1111-1111-1111-111111111111'),
           findsNothing,
         );
+        final detailsList = find.byKey(const Key('order-details-list'));
+        await tester.scrollUntilVisible(
+          find.byKey(const Key('order-details-email')),
+          300,
+          scrollable: _detailsScrollable(detailsList),
+        );
+        await tester.pumpAndSettle();
         expect(find.textContaining('customer@example.test'), findsOneWidget);
         expect(find.textContaining('0550000000'), findsOneWidget);
         expect(find.byType(SelectableText), findsNWidgets(3));
@@ -91,7 +98,6 @@ void main() {
           findsWidgets,
         );
 
-        final detailsList = find.byKey(const Key('order-details-list'));
         await tester.scrollUntilVisible(
           find.byKey(const Key('order-details-internal-notes')),
           300,
@@ -139,6 +145,13 @@ void main() {
     await _openDetails(tester);
 
     expect(find.text('Résumé de la commande'), findsOneWidget);
+    final detailsList = find.byKey(const Key('order-details-list'));
+    await tester.scrollUntilVisible(
+      find.byKey(const Key('order-details-email')),
+      300,
+      scrollable: _detailsScrollable(detailsList),
+    );
+    await tester.pumpAndSettle();
     expect(find.text('Coordonnées'), findsOneWidget);
     expect(find.textContaining('Free Fire'), findsOneWidget);
     expect(
@@ -147,7 +160,6 @@ void main() {
           .textDirection,
       TextDirection.ltr,
     );
-    final detailsList = find.byKey(const Key('order-details-list'));
     await tester.scrollUntilVisible(
       find.byKey(const Key('order-details-internal-notes')),
       300,
@@ -282,8 +294,14 @@ void main() {
   ) async {
     await _pumpOrders(tester);
     await _openDetails(tester);
-    expect(find.textContaining('customer@example.test'), findsOneWidget);
     final detailsList = find.byKey(const Key('order-details-list'));
+    await tester.scrollUntilVisible(
+      find.byKey(const Key('order-details-email')),
+      300,
+      scrollable: _detailsScrollable(detailsList),
+    );
+    await tester.pumpAndSettle();
+    expect(find.textContaining('customer@example.test'), findsOneWidget);
     await tester.scrollUntilVisible(
       find.byKey(const Key('order-details-internal-notes')),
       300,

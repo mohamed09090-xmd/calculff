@@ -131,17 +131,17 @@ void main() {
       expect(calls, <(String, Map<String, Object?>)>[
         (
           'admin_accept_order',
-          <String, Object?>{
+          Map<String, Object?>.unmodifiable(<String, Object?>{
             'p_order_id': orderId,
             'p_public_message': 'accepted',
-          },
+          }),
         ),
         (
           'admin_reject_order',
-          <String, Object?>{
+          Map<String, Object?>.unmodifiable(<String, Object?>{
             'p_order_id': orderId,
             'p_public_message': 'rejected',
-          },
+          }),
         ),
       ]);
     });

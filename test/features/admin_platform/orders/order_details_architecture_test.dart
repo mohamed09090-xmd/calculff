@@ -113,7 +113,8 @@ void main() {
         expect(content, contains('paymentProofSignedUrlLifetimeSeconds = 60'));
         expect(content, contains("'p_order_id': orderId"));
         expect(content, isNot(contains("select('*')")));
-        expect(content, isNot(contains('.from(')));
+        expect(content, isNot(contains('_client.from(')));
+        expect(content, contains('_client.storage.from(bucket)'));
         expect(RegExp(r'\.rpc\(').allMatches(content), hasLength(1));
         expect(
           RegExp(r'\.createSignedUrl\(').allMatches(content),

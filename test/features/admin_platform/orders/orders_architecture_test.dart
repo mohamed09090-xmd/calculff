@@ -149,10 +149,6 @@ List<File> _productionFiles() {
   return <File>[
     File(
       'lib/features/admin_platform/infrastructure/orders/'
-      'supabase_orders_data_source.dart',
-    ),
-    File(
-      'lib/features/admin_platform/infrastructure/orders/'
       'supabase_customer_orders_repository.dart',
     ),
     File(
