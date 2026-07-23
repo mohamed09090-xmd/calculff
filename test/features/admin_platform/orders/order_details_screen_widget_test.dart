@@ -15,6 +15,7 @@ import 'package:game_credit_profit_manager/features/admin_platform/domain/orders
 import 'package:game_credit_profit_manager/features/admin_platform/domain/orders/order_cursor.dart';
 import 'package:game_credit_profit_manager/features/admin_platform/domain/orders/order_enums.dart';
 import 'package:game_credit_profit_manager/features/admin_platform/domain/orders/order_filters.dart';
+import 'package:game_credit_profit_manager/features/admin_platform/domain/orders/order_internal_note.dart';
 import 'package:game_credit_profit_manager/features/admin_platform/domain/orders/order_page.dart';
 import 'package:game_credit_profit_manager/features/admin_platform/domain/orders/order_timeline_event.dart';
 import 'package:game_credit_profit_manager/features/admin_platform/presentation/orders/customer_orders_screen.dart';
@@ -30,10 +31,13 @@ void main() {
     (tester) async {
       final semantics = tester.ensureSemantics();
       try {
-        await _pumpOrders(tester);
+        final repository = _OrdersRepository();
+        await _pumpOrders(tester, repository: repository);
 
         expect(find.textContaining('customer@example.test'), findsNothing);
         expect(find.textContaining('0550000000'), findsNothing);
+        expect(find.textContaining('Private fixture note'), findsNothing);
+        expect(repository.internalNoteCalls, 0);
         expect(
           find.bySemanticsLabel(
             RegExp(
@@ -48,6 +52,7 @@ void main() {
         );
 
         await _openDetails(tester);
+        expect(repository.internalNoteCalls, 1);
 
         expect(find.byType(OrderDetailsScreen), findsOneWidget);
         expect(find.text('#11111111'), findsOneWidget);
@@ -81,6 +86,16 @@ void main() {
           find.bySemanticsLabel(RegExp(r'customer@example\.test|0550000000')),
           findsWidgets,
         );
+
+        final detailsList = find.byKey(const Key('order-details-list'));
+        await tester.scrollUntilVisible(
+          find.byKey(const Key('order-details-internal-notes')),
+          300,
+          scrollable: _detailsScrollable(detailsList),
+        );
+        await tester.pumpAndSettle();
+        expect(find.text('الملاحظات الداخلية'), findsOneWidget);
+        expect(find.text('Private fixture note'), findsOneWidget);
       } finally {
         semantics.dispose();
       }
@@ -128,6 +143,32 @@ void main() {
           .textDirection,
       TextDirection.ltr,
     );
+    final detailsList = find.byKey(const Key('order-details-list'));
+    await tester.scrollUntilVisible(
+      find.byKey(const Key('order-details-internal-notes')),
+      300,
+      scrollable: _detailsScrollable(detailsList),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('Notes internes'), findsOneWidget);
+  });
+
+  testWidgets('empty internal notes use the localized safe state', (
+    tester,
+  ) async {
+    await _pumpOrders(tester, includeInternalNotes: false);
+    await _openDetails(tester);
+
+    final detailsList = find.byKey(const Key('order-details-list'));
+    await tester.scrollUntilVisible(
+      find.byKey(const Key('order-details-internal-notes')),
+      300,
+      scrollable: _detailsScrollable(detailsList),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('لا توجد ملاحظات داخلية.'), findsOneWidget);
+    expect(find.text('Private fixture note'), findsNothing);
   });
 
   testWidgets('details support 320 by 640 and 200 percent text scale', (
@@ -143,7 +184,14 @@ void main() {
     expect(find.byKey(const Key('order-details-list')), findsOneWidget);
     final detailsList = find.byKey(const Key('order-details-list'));
     await tester.scrollUntilVisible(
-      find.text('Second public event'),
+      find.byKey(const Key('order-details-internal-notes')),
+      300,
+      scrollable: _detailsScrollable(detailsList),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('Private fixture note'), findsOneWidget);
+    await tester.scrollUntilVisible(
+      find.byKey(const Key('order-details-timeline')),
       300,
       scrollable: _detailsScrollable(detailsList),
     );
@@ -158,6 +206,14 @@ void main() {
     await _pumpOrders(tester);
     await _openDetails(tester);
     expect(find.textContaining('customer@example.test'), findsOneWidget);
+    final detailsList = find.byKey(const Key('order-details-list'));
+    await tester.scrollUntilVisible(
+      find.byKey(const Key('order-details-internal-notes')),
+      300,
+      scrollable: _detailsScrollable(detailsList),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('Private fixture note'), findsOneWidget);
 
     final context = tester.element(find.byType(OrderDetailsScreen));
     final container = ProviderScope.containerOf(context);
@@ -167,6 +223,7 @@ void main() {
 
     expect(find.textContaining('customer@example.test'), findsNothing);
     expect(find.textContaining('0550000000'), findsNothing);
+    expect(find.textContaining('Private fixture note'), findsNothing);
 
     await tester.pumpAndSettle();
     expect(find.byType(OrderDetailsScreen), findsNothing);
@@ -185,6 +242,8 @@ Future<void> _pumpOrders(
   Locale locale = const Locale('ar', 'DZ'),
   Size size = const Size(390, 800),
   TextScaler textScaler = TextScaler.noScaling,
+  bool includeInternalNotes = true,
+  _OrdersRepository? repository,
 }) async {
   tester.view.physicalSize = size;
   tester.view.devicePixelRatio = 1;
@@ -197,7 +256,10 @@ Future<void> _pumpOrders(
         platformAdminAuthStateProvider.overrideWith((ref) {
           return ref.watch(_testAuthStateProvider);
         }),
-        customerOrdersRepositoryProvider.overrideWithValue(_OrdersRepository()),
+        customerOrdersRepositoryProvider.overrideWithValue(
+          repository ??
+              _OrdersRepository(includeInternalNotes: includeInternalNotes),
+        ),
         ordersGamesRepositoryProvider.overrideWithValue(
           const _GamesRepository(),
         ),
@@ -232,6 +294,11 @@ Future<void> _openDetails(WidgetTester tester) async {
 }
 
 class _OrdersRepository implements CustomerOrdersRepository {
+  _OrdersRepository({this.includeInternalNotes = true});
+
+  final bool includeInternalNotes;
+  int internalNoteCalls = 0;
+
   @override
   Future<OrderPage> listOrders({
     required OrderFilters filters,
@@ -280,6 +347,20 @@ class _OrdersRepository implements CustomerOrdersRepository {
         paymentStatus: PaymentStatus.underReview,
         publicMessage: 'Second public event',
         createdAt: DateTime.utc(2026, 7, 18, 11),
+      ),
+    ];
+  }
+
+  @override
+  Future<List<OrderInternalNote>> getOrderInternalNotes({
+    required String orderId,
+  }) async {
+    internalNoteCalls += 1;
+    if (!includeInternalNotes) return const <OrderInternalNote>[];
+    return <OrderInternalNote>[
+      OrderInternalNote(
+        text: 'Private fixture note',
+        createdAt: DateTime.utc(2026, 7, 18, 10, 30),
       ),
     ];
   }

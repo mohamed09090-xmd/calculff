@@ -4,6 +4,7 @@ import '../../domain/orders/customer_order_details.dart';
 import '../../domain/orders/customer_orders_repository.dart';
 import '../../domain/orders/order_cursor.dart';
 import '../../domain/orders/order_filters.dart';
+import '../../domain/orders/order_internal_note.dart';
 import '../../domain/orders/order_page.dart';
 import '../../domain/orders/order_timeline_event.dart';
 import '../common/platform_payload_reader.dart';
@@ -11,6 +12,7 @@ import '../common/supabase_platform_error_mapper.dart';
 import 'customer_order_details_dto.dart';
 import 'customer_order_summary_dto.dart';
 import 'order_timeline_event_dto.dart';
+import 'order_internal_note_dto.dart';
 import 'supabase_orders_data_source.dart';
 
 final RegExp _orderIdPattern = RegExp(
@@ -127,6 +129,39 @@ class SupabaseCustomerOrdersRepository implements CustomerOrdersRepository {
         });
         return List<OrderTimelineEvent>.unmodifiable(
           indexedEvents.map((item) => item.event),
+        );
+      } catch (error) {
+        throw _mapReadError(error);
+      }
+    });
+  }
+
+  @override
+  Future<List<OrderInternalNote>> getOrderInternalNotes({
+    required String orderId,
+  }) {
+    _validateOrderId(orderId);
+    final normalizedOrderId = orderId.toLowerCase();
+    return _readCoordinator.runRead(() async {
+      try {
+        final rows = await _dataSource.getOrderInternalNotes(orderId: orderId);
+        final notes = <OrderInternalNoteDto>[];
+        for (final row in rows) {
+          final note = OrderInternalNoteDto.fromMap(row);
+          if (note.orderId != normalizedOrderId) {
+            throw const PlatformPayloadException(
+              field: 'order_id',
+              reason: PlatformPayloadFailureReason.invalidValue,
+            );
+          }
+          notes.add(note);
+        }
+        notes.sort((left, right) {
+          final byDate = left.createdAt.compareTo(right.createdAt);
+          return byDate != 0 ? byDate : left.id.compareTo(right.id);
+        });
+        return List<OrderInternalNote>.unmodifiable(
+          notes.map((note) => note.toDomain()),
         );
       } catch (error) {
         throw _mapReadError(error);

@@ -9,6 +9,7 @@ import '../../application/orders/order_details_providers.dart';
 import '../../domain/common/platform_failure.dart';
 import '../../domain/orders/customer_order_details.dart';
 import '../../domain/orders/customer_order_summary.dart';
+import '../../domain/orders/order_internal_note.dart';
 import '../../domain/orders/order_timeline_event.dart';
 import '../platform_ui_text.dart';
 import 'order_widgets.dart';
@@ -39,6 +40,9 @@ class _OrderDetailsScreenState extends ConsumerState<OrderDetailsScreen> {
     }
 
     final state = ref.watch(orderDetailsControllerProvider(widget.orderId));
+    final internalNotes = state.status == OrderDetailsViewStatus.data
+        ? ref.watch(orderInternalNotesProvider(widget.orderId))
+        : const AsyncLoading<List<OrderInternalNote>>();
     final controller = ref.read(
       orderDetailsControllerProvider(widget.orderId).notifier,
     );
@@ -50,6 +54,9 @@ class _OrderDetailsScreenState extends ConsumerState<OrderDetailsScreen> {
           OrderDetailsViewStatus.data => _Content(
             details: state.details!,
             timeline: state.timeline,
+            internalNotes: internalNotes,
+            onRetryInternalNotes: () =>
+                ref.invalidate(orderInternalNotesProvider(widget.orderId)),
           ),
           OrderDetailsViewStatus.offline => _Failure(
             key: const Key('order-details-offline'),
@@ -137,10 +144,17 @@ class _Loading extends StatelessWidget {
 }
 
 class _Content extends StatelessWidget {
-  const _Content({required this.details, required this.timeline});
+  const _Content({
+    required this.details,
+    required this.timeline,
+    required this.internalNotes,
+    required this.onRetryInternalNotes,
+  });
 
   final CustomerOrderDetails details;
   final List<OrderTimelineEvent> timeline;
+  final AsyncValue<List<OrderInternalNote>> internalNotes;
+  final VoidCallback onRetryInternalNotes;
 
   @override
   Widget build(BuildContext context) {
@@ -269,6 +283,10 @@ class _Content extends StatelessWidget {
             icon: Icons.chat_bubble_outline,
             children: [Text(message)],
           ),
+        _InternalNotesSection(
+          notes: internalNotes,
+          onRetry: onRetryInternalNotes,
+        ),
         _Section(
           title: orderText(context, 'تواريخ الطلب'),
           icon: Icons.schedule_outlined,
@@ -307,6 +325,81 @@ class _Content extends StatelessWidget {
               : [for (final event in timeline) _TimelineLine(event: event)],
         ),
       ],
+    );
+  }
+}
+
+class _InternalNotesSection extends StatelessWidget {
+  const _InternalNotesSection({required this.notes, required this.onRetry});
+
+  final AsyncValue<List<OrderInternalNote>> notes;
+  final VoidCallback onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    return _Section(
+      key: const Key('order-details-internal-notes'),
+      title: orderText(context, 'الملاحظات الداخلية'),
+      icon: Icons.lock_outline,
+      children: switch (notes) {
+        AsyncData(:final value) when value.isEmpty => [
+          Text(orderText(context, 'لا توجد ملاحظات داخلية.')),
+        ],
+        AsyncData(:final value) => [
+          for (final note in value) _InternalNoteLine(note: note),
+        ],
+        AsyncError() => [
+          Text(orderText(context, 'تعذر تحميل الملاحظات الداخلية.')),
+          const SizedBox(height: 8),
+          Align(
+            alignment: AlignmentDirectional.centerStart,
+            child: OutlinedButton.icon(
+              key: const Key('order-details-internal-notes-retry'),
+              onPressed: onRetry,
+              icon: const Icon(Icons.refresh),
+              label: Text(orderText(context, 'إعادة المحاولة')),
+            ),
+          ),
+        ],
+        _ => [
+          Semantics(
+            liveRegion: true,
+            label: orderText(context, 'تحميل الملاحظات الداخلية'),
+            child: const Align(
+              alignment: AlignmentDirectional.centerStart,
+              child: CircularProgressIndicator(),
+            ),
+          ),
+        ],
+      },
+    );
+  }
+}
+
+class _InternalNoteLine extends StatelessWidget {
+  const _InternalNoteLine({required this.note});
+
+  final OrderInternalNote note;
+
+  @override
+  Widget build(BuildContext context) {
+    final date = _formatDate(context, note.createdAt);
+    return Semantics(
+      container: true,
+      label: '${note.text}، $date',
+      child: ExcludeSemantics(
+        child: Padding(
+          padding: const EdgeInsetsDirectional.only(bottom: 14),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(note.text),
+              const SizedBox(height: 4),
+              Text(date, style: Theme.of(context).textTheme.bodySmall),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

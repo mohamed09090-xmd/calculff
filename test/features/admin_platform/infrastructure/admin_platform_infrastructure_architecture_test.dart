@@ -191,6 +191,10 @@ List<File> _dtoProductionFiles() {
       'order_timeline_event_dto.dart',
     ),
     File(
+      'lib/features/admin_platform/infrastructure/orders/'
+      'order_internal_note_dto.dart',
+    ),
+    File(
       'lib/features/admin_platform/infrastructure/dashboard/'
       'platform_dashboard_summary_dto.dart',
     ),

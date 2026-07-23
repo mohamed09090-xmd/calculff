@@ -28,13 +28,14 @@ void main() {
   );
 
   test(
-    'concurrent detail and timeline expiry share one session refresh',
+    'concurrent detail, timeline, and notes expiry share one session refresh',
     () async {
       final session = _SessionAccess(blockRefresh: true);
       final scope = _DataScope();
       final dataSource = _ExpiringDataSource(
         expireDetailsOnce: true,
         expireTimelineOnce: true,
+        expireNotesOnce: true,
       );
       final repository = _repository(session, scope, dataSource);
       const orderId = '11111111-1111-1111-1111-111111111111';
@@ -42,6 +43,7 @@ void main() {
       final reads = Future.wait<Object?>(<Future<Object?>>[
         repository.getOrderDetails(orderId: orderId),
         repository.getOrderTimeline(orderId: orderId),
+        repository.getOrderInternalNotes(orderId: orderId),
       ]);
       await session.refreshStarted.future;
       session.releaseRefresh.complete();
@@ -49,8 +51,29 @@ void main() {
 
       expect(dataSource.detailCalls, 2);
       expect(dataSource.timelineCalls, 2);
+      expect(dataSource.noteCalls, 2);
       expect(session.refreshCalls, 1);
       expect(session.maxConcurrentRefreshes, 1);
+    },
+  );
+
+  test(
+    'session expiry refreshes once and retries internal notes once',
+    () async {
+      final session = _SessionAccess();
+      final scope = _DataScope();
+      final dataSource = _ExpiringDataSource(expireNotesOnce: true);
+      final repository = _repository(session, scope, dataSource);
+
+      final notes = await repository.getOrderInternalNotes(
+        orderId: '11111111-1111-1111-1111-111111111111',
+      );
+
+      expect(notes.single.text, 'Private fixture note');
+      expect(dataSource.noteCalls, 2);
+      expect(session.refreshCalls, 1);
+      expect(scope.invalidationCalls, 1);
+      expect(scope.authorizedCalls, 1);
     },
   );
 }
@@ -117,14 +140,17 @@ class _ExpiringDataSource implements SupabaseOrdersDataSource {
     this.expireListOnce = false,
     this.expireDetailsOnce = false,
     this.expireTimelineOnce = false,
+    this.expireNotesOnce = false,
   });
 
   final bool expireListOnce;
   final bool expireDetailsOnce;
   final bool expireTimelineOnce;
+  final bool expireNotesOnce;
   int listCalls = 0;
   int detailCalls = 0;
   int timelineCalls = 0;
+  int noteCalls = 0;
 
   @override
   Future<List<Map<String, Object?>>> listOrders({
@@ -157,6 +183,25 @@ class _ExpiringDataSource implements SupabaseOrdersDataSource {
       throw const PlatformFailure(PlatformFailureCode.sessionExpired);
     }
     return const <Map<String, Object?>>[];
+  }
+
+  @override
+  Future<List<Map<String, Object?>>> getOrderInternalNotes({
+    required String orderId,
+  }) async {
+    noteCalls += 1;
+    if (expireNotesOnce && noteCalls == 1) {
+      throw const PlatformFailure(PlatformFailureCode.sessionExpired);
+    }
+    return <Map<String, Object?>>[
+      <String, Object?>{
+        'id': 1,
+        'order_id': orderId,
+        'author_user_id': 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
+        'note': 'Private fixture note',
+        'created_at': '2026-07-18T12:00:00Z',
+      },
+    ];
   }
 }
 

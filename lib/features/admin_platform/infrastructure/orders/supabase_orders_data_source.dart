@@ -13,6 +13,10 @@ abstract interface class SupabaseOrdersDataSource {
   Future<List<Map<String, Object?>>> getOrderTimeline({
     required String orderId,
   });
+
+  Future<List<Map<String, Object?>>> getOrderInternalNotes({
+    required String orderId,
+  });
 }
 
 class FlutterSupabaseOrdersDataSource implements SupabaseOrdersDataSource {
@@ -25,6 +29,7 @@ class FlutterSupabaseOrdersDataSource implements SupabaseOrdersDataSource {
   static const listOrdersRpcName = 'admin_list_orders';
   static const orderDetailsRpcName = 'admin_get_order_details';
   static const orderTimelineRpcName = 'admin_get_order_timeline';
+  static const orderInternalNotesRpcName = 'admin_list_order_internal_notes';
   static const rpcName = listOrdersRpcName;
 
   final OrdersRpcCall _rpcCall;
@@ -52,6 +57,16 @@ class FlutterSupabaseOrdersDataSource implements SupabaseOrdersDataSource {
   }) {
     return _readRows(
       rpcName: orderTimelineRpcName,
+      params: <String, Object?>{'p_order_id': orderId},
+    );
+  }
+
+  @override
+  Future<List<Map<String, Object?>>> getOrderInternalNotes({
+    required String orderId,
+  }) {
+    return _readRows(
+      rpcName: orderInternalNotesRpcName,
       params: <String, Object?>{'p_order_id': orderId},
     );
   }
