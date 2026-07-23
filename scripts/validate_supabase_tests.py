@@ -20,6 +20,7 @@ EXPECTED_MIGRATIONS = [
     "20260716163910_harden_platform_security_and_rls.sql",
     "20260718030259_admin_list_orders_read_only.sql",
     "20260718150000_admin_order_details_read_only.sql",
+    "20260723021628_admin_get_order_payment_proof_read_only.sql",
 ]
 CLOUD_REFS = {
     "zegjqwsv" + "saprnguvxuwk",
@@ -134,6 +135,7 @@ def main() -> int:
         "060_security_hardening.test.sql",
         "070_admin_list_orders.test.sql",
         "080_admin_order_details_read_only.test.sql",
+        "090_admin_order_payment_proof_read_only.test.sql",
     ]
     if [path.name for path in sql_files] != expected_names:
         fail("database test file set is incomplete or unexpectedly changed")
