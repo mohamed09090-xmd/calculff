@@ -13,8 +13,6 @@ void main() {
           'flutter_secure_storage',
           'payment_proof_path',
           'changed_by',
-          'internal_note',
-          'internal notes',
           'client_request_id',
           'service_role',
           'sb_secret_',
@@ -35,6 +33,10 @@ void main() {
           'realtime',
           'timer.periodic',
           'admin_update_',
+          'admin_add_order_internal_note',
+          'admin_set_order_status',
+          'admin_set_payment_status',
+          'admin_mark_refunded',
           'admin_accept_',
           'admin_reject_',
           'refund_order',
@@ -71,10 +73,53 @@ void main() {
 
       expect(content, contains("'admin_get_order_details'"));
       expect(content, contains("'admin_get_order_timeline'"));
+      expect(content, contains("'admin_list_order_internal_notes'"));
       expect(content, contains("'p_order_id': orderId"));
       expect(content, isNot(contains("select('*')")));
       expect(content, isNot(contains('.from(')));
       expect(RegExp(r'\.rpc\(').allMatches(content), hasLength(1));
+    });
+
+    test('list and public timeline models remain free of internal notes', () {
+      final files = <File>[
+        File(
+          'lib/features/admin_platform/domain/orders/'
+          'customer_order_summary.dart',
+        ),
+        File(
+          'lib/features/admin_platform/domain/orders/'
+          'customer_order_details.dart',
+        ),
+        File(
+          'lib/features/admin_platform/domain/orders/'
+          'order_timeline_event.dart',
+        ),
+        File(
+          'lib/features/admin_platform/infrastructure/orders/'
+          'customer_order_summary_dto.dart',
+        ),
+        File(
+          'lib/features/admin_platform/infrastructure/orders/'
+          'customer_order_details_dto.dart',
+        ),
+        File(
+          'lib/features/admin_platform/infrastructure/orders/'
+          'order_timeline_event_dto.dart',
+        ),
+        File(
+          'lib/features/admin_platform/presentation/orders/'
+          'customer_orders_screen.dart',
+        ),
+        File(
+          'lib/features/admin_platform/presentation/orders/order_widgets.dart',
+        ),
+      ];
+
+      for (final file in files) {
+        final content = file.readAsStringSync().toLowerCase();
+        expect(content, isNot(contains('internal_note')), reason: file.path);
+        expect(content, isNot(contains('internal note')), reason: file.path);
+      }
     });
 
     test('details provider is family scoped and auto disposed', () {
@@ -126,6 +171,7 @@ List<File> _productionFiles() {
       'lib/features/admin_platform/domain/orders/customer_order_details.dart',
     ),
     File('lib/features/admin_platform/domain/orders/order_timeline_event.dart'),
+    File('lib/features/admin_platform/domain/orders/order_internal_note.dart'),
     File(
       'lib/features/admin_platform/infrastructure/orders/'
       'customer_order_details_dto.dart',
@@ -133,6 +179,10 @@ List<File> _productionFiles() {
     File(
       'lib/features/admin_platform/infrastructure/orders/'
       'order_timeline_event_dto.dart',
+    ),
+    File(
+      'lib/features/admin_platform/infrastructure/orders/'
+      'order_internal_note_dto.dart',
     ),
     File(
       'lib/features/admin_platform/infrastructure/orders/'
@@ -177,6 +227,10 @@ List<File> _testFiles() {
     File(
       'test/features/admin_platform/infrastructure/'
       'order_timeline_event_dto_test.dart',
+    ),
+    File(
+      'test/features/admin_platform/infrastructure/'
+      'order_internal_note_dto_test.dart',
     ),
     File(
       'test/features/admin_platform/orders/'

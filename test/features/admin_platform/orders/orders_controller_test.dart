@@ -13,6 +13,7 @@ import 'package:game_credit_profit_manager/features/admin_platform/domain/orders
 import 'package:game_credit_profit_manager/features/admin_platform/domain/orders/order_cursor.dart';
 import 'package:game_credit_profit_manager/features/admin_platform/domain/orders/order_enums.dart';
 import 'package:game_credit_profit_manager/features/admin_platform/domain/orders/order_filters.dart';
+import 'package:game_credit_profit_manager/features/admin_platform/domain/orders/order_internal_note.dart';
 import 'package:game_credit_profit_manager/features/admin_platform/domain/orders/order_page.dart';
 import 'package:game_credit_profit_manager/features/admin_platform/domain/orders/order_timeline_event.dart';
 
@@ -174,6 +175,13 @@ class _FakeOrdersRepository implements CustomerOrdersRepository {
 
   @override
   Future<List<OrderTimelineEvent>> getOrderTimeline({required String orderId}) {
+    throw UnsupportedError('Not used by list tests.');
+  }
+
+  @override
+  Future<List<OrderInternalNote>> getOrderInternalNotes({
+    required String orderId,
+  }) {
     throw UnsupportedError('Not used by list tests.');
   }
 }

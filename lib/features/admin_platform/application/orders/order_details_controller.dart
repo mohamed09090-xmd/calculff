@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../domain/common/platform_failure.dart';
 import '../../domain/orders/customer_order_details.dart';
 import '../../domain/orders/customer_orders_repository.dart';
+import '../../domain/orders/order_internal_note.dart';
 import '../../domain/orders/order_timeline_event.dart';
 
 enum OrderDetailsViewStatus { loading, data, offline, notFound, error }
@@ -12,8 +13,10 @@ class OrderDetailsState {
     required this.status,
     this.details,
     Iterable<OrderTimelineEvent> timeline = const <OrderTimelineEvent>[],
+    Iterable<OrderInternalNote> internalNotes = const <OrderInternalNote>[],
     this.failureCode,
-  }) : timeline = List<OrderTimelineEvent>.unmodifiable(timeline);
+  }) : timeline = List<OrderTimelineEvent>.unmodifiable(timeline),
+       internalNotes = List<OrderInternalNote>.unmodifiable(internalNotes);
 
   factory OrderDetailsState.loading() {
     return OrderDetailsState(status: OrderDetailsViewStatus.loading);
@@ -34,9 +37,10 @@ class OrderDetailsState {
   final OrderDetailsViewStatus status;
   final CustomerOrderDetails? details;
   final List<OrderTimelineEvent> timeline;
+  final List<OrderInternalNote> internalNotes;
   final PlatformFailureCode? failureCode;
 
-  bool get containsPersonalData => details != null;
+  bool get containsPersonalData => details != null || internalNotes.isNotEmpty;
 }
 
 class OrderDetailsController extends StateNotifier<OrderDetailsState> {
@@ -89,6 +93,12 @@ class OrderDetailsController extends StateNotifier<OrderDetailsState> {
       if (!_isCurrent(requestGeneration)) {
         return;
       }
+      final internalNotes = await repository.getOrderInternalNotes(
+        orderId: _orderId,
+      );
+      if (!_isCurrent(requestGeneration)) {
+        return;
+      }
       final details = await repository.getOrderDetails(orderId: _orderId);
       if (!_isCurrent(requestGeneration)) {
         return;
@@ -98,6 +108,7 @@ class OrderDetailsController extends StateNotifier<OrderDetailsState> {
         status: OrderDetailsViewStatus.data,
         details: details,
         timeline: timeline,
+        internalNotes: internalNotes,
       );
     } catch (error) {
       if (!_isCurrent(requestGeneration)) {

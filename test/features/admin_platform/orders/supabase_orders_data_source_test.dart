@@ -50,6 +50,24 @@ void main() {
       expect(params, <String, Object?>{'p_order_id': orderId});
     });
 
+    test('uses exact internal notes RPC name with p_order_id only', () async {
+      late String name;
+      late Map<String, Object?> params;
+      final dataSource = FlutterSupabaseOrdersDataSource.withRpcCall((
+        rpc,
+        input,
+      ) async {
+        name = rpc;
+        params = input;
+        return <Object?>[];
+      });
+
+      await dataSource.getOrderInternalNotes(orderId: orderId);
+
+      expect(name, 'admin_list_order_internal_notes');
+      expect(params, <String, Object?>{'p_order_id': orderId});
+    });
+
     test(
       'strictly rejects non-list, non-map, and non-string-key payloads',
       () async {
@@ -204,6 +222,57 @@ void main() {
     });
 
     test(
+      'internal notes are ordered by UTC timestamp then backend id',
+      () async {
+        final repository = _repository(
+          _RepositoryDataSource(
+            noteRows: <Map<String, Object?>>[
+              _noteRow(id: 12, text: 'second tie'),
+              _noteRow(
+                id: 10,
+                text: 'older',
+                createdAt: '2026-07-18T10:00:00+01:00',
+              ),
+              _noteRow(id: 11, text: 'first tie'),
+            ],
+          ),
+        );
+
+        final notes = await repository.getOrderInternalNotes(orderId: orderId);
+
+        expect(
+          notes.map((note) => note.text),
+          orderedEquals(<String>['older', 'first tie', 'second tie']),
+        );
+        expect(notes.every((note) => note.createdAt.isUtc), isTrue);
+        expect(() => notes.add(notes.first), throwsUnsupportedError);
+      },
+    );
+
+    test('cross-order and malformed internal note rows are rejected', () async {
+      for (final row in <Map<String, Object?>>[
+        _noteRow(orderId: '22222222-2222-2222-2222-222222222222'),
+        _noteRow(id: 0),
+        _noteRow(text: ' padded '),
+        _noteRow(text: List<String>.filled(2001, 'x').join()),
+      ]) {
+        final repository = _repository(
+          _RepositoryDataSource(noteRows: <Map<String, Object?>>[row]),
+        );
+        await expectLater(
+          repository.getOrderInternalNotes(orderId: orderId),
+          throwsA(
+            isA<PlatformFailure>().having(
+              (failure) => failure.code,
+              'code',
+              PlatformFailureCode.malformedResponse,
+            ),
+          ),
+        );
+      }
+    });
+
+    test(
       'network, unauthorized, and raw PostgREST errors are mapped',
       () async {
         final cases = <(Object, PlatformFailureCode)>[
@@ -252,6 +321,17 @@ void main() {
         ),
       );
       expect(dataSource.detailCalls, 0);
+      expect(
+        () => repository.getOrderInternalNotes(orderId: 'not-a-uuid'),
+        throwsA(
+          isA<PlatformFailure>().having(
+            (failure) => failure.code,
+            'code',
+            PlatformFailureCode.validation,
+          ),
+        ),
+      );
+      expect(dataSource.noteCalls, 0);
     });
   });
 }
@@ -279,13 +359,16 @@ class _RepositoryDataSource implements SupabaseOrdersDataSource {
   _RepositoryDataSource({
     this.detailsRows = const <Map<String, Object?>>[],
     this.timelineRows = const <Map<String, Object?>>[],
+    this.noteRows = const <Map<String, Object?>>[],
     this.error,
   });
 
   final List<Map<String, Object?>> detailsRows;
   final List<Map<String, Object?>> timelineRows;
+  final List<Map<String, Object?>> noteRows;
   final Object? error;
   int detailCalls = 0;
+  int noteCalls = 0;
 
   @override
   Future<List<Map<String, Object?>>> listOrders({
@@ -307,6 +390,15 @@ class _RepositoryDataSource implements SupabaseOrdersDataSource {
   }) async {
     if (error case final value?) throw value;
     return timelineRows;
+  }
+
+  @override
+  Future<List<Map<String, Object?>>> getOrderInternalNotes({
+    required String orderId,
+  }) async {
+    noteCalls += 1;
+    if (error case final value?) throw value;
+    return noteRows;
   }
 }
 
@@ -347,5 +439,18 @@ Map<String, Object?> _timelineRow(
   'order_status': type == 'created' ? 'new' : 'processing',
   'payment_status': type == 'created' ? 'awaiting_payment' : 'under_review',
   'public_message': publicMessage,
+  'created_at': createdAt,
+};
+
+Map<String, Object?> _noteRow({
+  int id = 11,
+  String orderId = '11111111-1111-1111-1111-111111111111',
+  String text = 'Private fixture note',
+  String createdAt = '2026-07-18T11:00:00Z',
+}) => <String, Object?>{
+  'id': id,
+  'order_id': orderId,
+  'author_user_id': 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
+  'note': text,
   'created_at': createdAt,
 };

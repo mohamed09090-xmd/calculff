@@ -1,6 +1,7 @@
 import 'customer_order_details.dart';
 import 'order_cursor.dart';
 import 'order_filters.dart';
+import 'order_internal_note.dart';
 import 'order_page.dart';
 import 'order_timeline_event.dart';
 
@@ -20,4 +21,8 @@ abstract interface class CustomerOrdersRepository {
   Future<CustomerOrderDetails> getOrderDetails({required String orderId});
 
   Future<List<OrderTimelineEvent>> getOrderTimeline({required String orderId});
+
+  Future<List<OrderInternalNote>> getOrderInternalNotes({
+    required String orderId,
+  });
 }

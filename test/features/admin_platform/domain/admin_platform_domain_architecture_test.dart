@@ -99,7 +99,6 @@ void main() {
         'changedby',
         'userid',
         'clientrequestid',
-        'internalnote',
       ];
 
       for (final file in files) {
@@ -111,6 +110,24 @@ void main() {
             reason: '${file.path} must not contain $field',
           );
         }
+      }
+
+      final internalNote = File(
+        'lib/features/admin_platform/domain/orders/order_internal_note.dart',
+      ).readAsStringSync().toLowerCase();
+      for (final field in <String>['id', 'orderid', 'author', 'userid']) {
+        expect(internalNote, isNot(contains(field)));
+      }
+
+      for (final path in <String>[
+        'customer_order_summary.dart',
+        'customer_order_details.dart',
+        'order_timeline_event.dart',
+      ]) {
+        final content = File(
+          'lib/features/admin_platform/domain/orders/$path',
+        ).readAsStringSync().toLowerCase();
+        expect(content, isNot(contains('internalnote')));
       }
     });
 

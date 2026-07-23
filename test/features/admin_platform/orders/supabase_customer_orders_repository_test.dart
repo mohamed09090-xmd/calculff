@@ -253,6 +253,11 @@ class _DataSource implements SupabaseOrdersDataSource {
   Future<List<Map<String, Object?>>> getOrderTimeline({
     required String orderId,
   }) async => const <Map<String, Object?>>[];
+
+  @override
+  Future<List<Map<String, Object?>>> getOrderInternalNotes({
+    required String orderId,
+  }) async => const <Map<String, Object?>>[];
 }
 
 Map<String, Object?> _listRow({

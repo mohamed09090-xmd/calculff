@@ -9,6 +9,7 @@ import '../../application/orders/order_details_providers.dart';
 import '../../domain/common/platform_failure.dart';
 import '../../domain/orders/customer_order_details.dart';
 import '../../domain/orders/customer_order_summary.dart';
+import '../../domain/orders/order_internal_note.dart';
 import '../../domain/orders/order_timeline_event.dart';
 import '../platform_ui_text.dart';
 import 'order_widgets.dart';
@@ -50,6 +51,7 @@ class _OrderDetailsScreenState extends ConsumerState<OrderDetailsScreen> {
           OrderDetailsViewStatus.data => _Content(
             details: state.details!,
             timeline: state.timeline,
+            internalNotes: state.internalNotes,
           ),
           OrderDetailsViewStatus.offline => _Failure(
             key: const Key('order-details-offline'),
@@ -137,10 +139,15 @@ class _Loading extends StatelessWidget {
 }
 
 class _Content extends StatelessWidget {
-  const _Content({required this.details, required this.timeline});
+  const _Content({
+    required this.details,
+    required this.timeline,
+    required this.internalNotes,
+  });
 
   final CustomerOrderDetails details;
   final List<OrderTimelineEvent> timeline;
+  final List<OrderInternalNote> internalNotes;
 
   @override
   Widget build(BuildContext context) {
@@ -270,6 +277,17 @@ class _Content extends StatelessWidget {
             children: [Text(message)],
           ),
         _Section(
+          key: const Key('order-details-internal-notes'),
+          title: orderText(context, 'الملاحظات الداخلية'),
+          icon: Icons.lock_outline,
+          children: internalNotes.isEmpty
+              ? [Text(orderText(context, 'لا توجد ملاحظات داخلية.'))]
+              : [
+                  for (final note in internalNotes)
+                    _InternalNoteLine(note: note),
+                ],
+        ),
+        _Section(
           title: orderText(context, 'تواريخ الطلب'),
           icon: Icons.schedule_outlined,
           children: [
@@ -307,6 +325,32 @@ class _Content extends StatelessWidget {
               : [for (final event in timeline) _TimelineLine(event: event)],
         ),
       ],
+    );
+  }
+}
+
+class _InternalNoteLine extends StatelessWidget {
+  const _InternalNoteLine({required this.note});
+
+  final OrderInternalNote note;
+
+  @override
+  Widget build(BuildContext context) {
+    final date = _formatDate(context, note.createdAt);
+    return Semantics(
+      container: true,
+      label: '${note.text}، $date',
+      child: Padding(
+        padding: const EdgeInsetsDirectional.only(bottom: 14),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(note.text),
+            const SizedBox(height: 4),
+            Text(date, style: Theme.of(context).textTheme.bodySmall),
+          ],
+        ),
+      ),
     );
   }
 }
