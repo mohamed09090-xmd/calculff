@@ -91,6 +91,7 @@ The migration first revokes broad defaults and then grants only the required cap
 | `public.admin_list_orders` | None | `EXECUTE`, followed by in-function admin authorization and existing RLS |
 | `public.admin_add_order_internal_note` | None | `EXECUTE`, followed by in-function admin authorization |
 | `public.admin_list_order_internal_notes` | None | `EXECUTE`, followed by in-function admin authorization |
+| `public.admin_get_order_payment_proof_path` | None | `EXECUTE`, followed by in-function admin authorization and existing RLS |
 | `public.admin_set_order_status` | None | `EXECUTE`, followed by in-function admin authorization |
 | `public.admin_set_payment_status` | None | `EXECUTE`, followed by in-function admin authorization |
 | `public.admin_mark_refunded` | None | `EXECUTE`, followed by in-function admin authorization |
@@ -169,6 +170,8 @@ The Security Advisor warnings for authenticated execution of application `SECURI
 
 `admin_list_orders` is not part of that definer inventory. It is intentionally `SECURITY INVOKER`, so the existing administrator RLS policy remains an authorization boundary rather than being bypassed by the function owner.
 
+`admin_get_order_payment_proof_path` is also outside the definer inventory. It is intentionally `SECURITY INVOKER`, so both the administrator order policy and the private Storage select policy remain active authorization boundaries.
+
 `Leaked Password Protection Disabled` is an Auth configuration warning, not a SQL migration concern. Enabling it is deferred to the dedicated Auth setup step in the Supabase Dashboard or supported Auth configuration workflow. No Auth setting is changed by this migration.
 
 ## Read-only order-list forward migration
@@ -176,6 +179,12 @@ The Security Advisor warnings for authenticated execution of application `SECURI
 `20260718030259_admin_list_orders_read_only.sql` adds only the deterministic cursor index and `public.admin_list_orders`. Its pgTAP coverage is isolated in `070_admin_list_orders.test.sql` and covers the function contract, execution grants, privacy projection, authentication and admin-claim checks, filters, literal parameterized search, cursor correctness, page limits, and RLS/table-grant regressions.
 
 The migration is designed for local validation before any hosted application. It contains no project reference, remote command, data mutation, RLS change, table-grant change, enum change, or Storage change. Applying it to a hosted project remains a separately approved operation.
+
+## Read-only payment-proof path forward migration
+
+`20260723021628_admin_get_order_payment_proof_read_only.sql` adds only `public.admin_get_order_payment_proof_path`. The function returns one validated private object path or zero rows. The path is a sensitive infrastructure locator that contains user and order UUIDs; it must never reach presentation, Semantics, logs, analytics, or persistent client state. The RPC never returns separate order data, object ownership, Storage metadata, or a signed URL. The linked object must exist in the fixed private bucket, match the order owner, use the order owner's and order's UUID folders, match the existing filename allowlist, and belong to a transfer order.
+
+The function is `STABLE`, `SECURITY INVOKER`, has an empty `search_path`, trusts only the signed administrator claim in `app_metadata`, and is executable only by `authenticated`. Its isolated pgTAP suite verifies the exact one-column projection, grants, RLS-preserving execution mode, object linkage, path validation, caller search-path resistance, and unchanged order and Storage policy counts. Hosted application remains a separate approval gate.
 
 ## Migration immutability and operational controls
 

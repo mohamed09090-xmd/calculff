@@ -53,7 +53,7 @@ python3 supabase/tests/storage/payment_proofs_storage_test.py
 supabase stop --no-backup
 ```
 
-`supabase db reset --local` recreates the local database, applies every migration from `supabase/migrations`, and then runs `supabase/seed.sql`. The committed database suite contains 232 pgTAP assertions. The Storage integration runner reports 25 real HTTP cases against the local Auth, PostgREST, and Storage services. It rejects non-loopback API URLs and redacts local keys and JWTs from failure output.
+`supabase db reset --local` recreates the local database, applies every migration from `supabase/migrations`, and then runs `supabase/seed.sql`. The committed database suite contains 443 pgTAP assertions. The Storage integration runner reports 25 real HTTP cases against the local Auth, PostgREST, and Storage services. It rejects non-loopback API URLs and redacts local keys and JWTs from failure output.
 
 Use `supabase stop --no-backup` after tests so local Docker volumes are removed. Local keys are short-lived test credentials only; never write them to a file, log them, or upload them as artifacts.
 
