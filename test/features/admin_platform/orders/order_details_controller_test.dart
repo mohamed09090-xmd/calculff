@@ -15,7 +15,7 @@ import 'package:game_credit_profit_manager/features/admin_platform/domain/orders
 void main() {
   const orderId = '11111111-1111-1111-1111-111111111111';
 
-  test('loads details then timeline and publishes them atomically', () async {
+  test('loads public timeline before PII and publishes atomically', () async {
     final repository = _QueueRepository();
     final controller = OrderDetailsController(
       repository: repository,
@@ -24,13 +24,13 @@ void main() {
 
     await controller.load();
 
-    expect(repository.calls, <String>['details', 'timeline']);
+    expect(repository.calls, <String>['timeline', 'details']);
     expect(controller.state.status, OrderDetailsViewStatus.data);
     expect(controller.state.details?.customerEmail, 'customer@example.test');
     expect(controller.state.timeline, hasLength(1));
   });
 
-  test('does not retain partial details when timeline fails', () async {
+  test('does not fetch or retain PII when timeline fails', () async {
     final repository = _QueueRepository(
       timelineFailure: const PlatformFailure(
         PlatformFailureCode.networkUnavailable,
@@ -46,6 +46,7 @@ void main() {
     expect(controller.state.status, OrderDetailsViewStatus.offline);
     expect(controller.state.details, isNull);
     expect(controller.state.timeline, isEmpty);
+    expect(repository.calls, <String>['timeline']);
   });
 
   test('prevents concurrent retries', () async {
@@ -57,17 +58,18 @@ void main() {
 
     final first = controller.load();
     final second = controller.retry();
+    expect(repository.timelineCalls, 1);
+    repository.completeTimeline(<OrderTimelineEvent>[_event()]);
+    await Future<void>.delayed(Duration.zero);
     expect(repository.detailCalls, 1);
     repository.completeDetails(_details());
-    await Future<void>.delayed(Duration.zero);
-    repository.completeTimeline(<OrderTimelineEvent>[_event()]);
     await Future.wait(<Future<void>>[first, second]);
 
     expect(repository.detailCalls, 1);
     expect(repository.timelineCalls, 1);
   });
 
-  test('invalidation clears PII and ignores a late response', () async {
+  test('invalidation while timeline is pending prevents the PII read', () async {
     final repository = _CompletingRepository();
     final controller = OrderDetailsController(
       repository: repository,
@@ -76,12 +78,13 @@ void main() {
 
     final request = controller.load();
     controller.invalidate(PlatformFailureCode.sessionExpired);
-    repository.completeDetails(_details());
+    repository.completeTimeline(<OrderTimelineEvent>[_event()]);
     await request;
 
     expect(controller.state.containsPersonalData, isFalse);
     expect(controller.state.failureCode, PlatformFailureCode.sessionExpired);
-    expect(repository.timelineCalls, 0);
+    expect(repository.timelineCalls, 1);
+    expect(repository.detailCalls, 0);
   });
 
   test('retry succeeds after an ordinary failure', () async {

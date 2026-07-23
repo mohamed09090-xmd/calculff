@@ -311,17 +311,31 @@ class OrderField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final displayed = value.isEmpty ? label : '$label: $value';
-    final text = selectable
-        ? SelectableText(
-            displayed,
-            textDirection: forceLtr ? TextDirection.ltr : null,
-          )
-        : Text(
-            displayed,
-            softWrap: true,
-            textDirection: forceLtr ? TextDirection.ltr : null,
-          );
+    final Widget text;
+    if (forceLtr && value.isNotEmpty) {
+      text = Wrap(
+        spacing: 4,
+        runSpacing: 2,
+        crossAxisAlignment: WrapCrossAlignment.center,
+        children: [
+          Text('$label:'),
+          Directionality(
+            textDirection: TextDirection.ltr,
+            child: selectable
+                ? SelectableText(value, textDirection: TextDirection.ltr)
+                : Text(
+                    value,
+                    softWrap: true,
+                    textDirection: TextDirection.ltr,
+                  ),
+          ),
+        ],
+      );
+    } else if (selectable) {
+      text = SelectableText(value.isEmpty ? label : '$label: $value');
+    } else {
+      text = Text(value.isEmpty ? label : '$label: $value', softWrap: true);
+    }
     final field = Padding(
       padding: const EdgeInsets.symmetric(vertical: 3),
       child: Row(

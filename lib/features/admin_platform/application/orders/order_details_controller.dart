@@ -85,11 +85,11 @@ class OrderDetailsController extends StateNotifier<OrderDetailsState> {
         throw const PlatformFailure(PlatformFailureCode.temporarilyUnavailable);
       }
 
-      final details = await repository.getOrderDetails(orderId: _orderId);
+      final timeline = await repository.getOrderTimeline(orderId: _orderId);
       if (!_isCurrent(requestGeneration)) {
         return;
       }
-      final timeline = await repository.getOrderTimeline(orderId: _orderId);
+      final details = await repository.getOrderDetails(orderId: _orderId);
       if (!_isCurrent(requestGeneration)) {
         return;
       }

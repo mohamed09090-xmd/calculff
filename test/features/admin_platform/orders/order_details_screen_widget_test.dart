@@ -59,6 +59,24 @@ void main() {
         expect(find.textContaining('0550000000'), findsOneWidget);
         expect(find.byType(SelectableText), findsNWidgets(3));
         expect(find.bySemanticsLabel('معلومات الاتصال'), findsWidgets);
+        expect(find.text('البريد الإلكتروني:'), findsOneWidget);
+        expect(find.text('رقم الهاتف:'), findsOneWidget);
+        expect(
+          tester
+              .widget<SelectableText>(
+                find.widgetWithText(SelectableText, 'customer@example.test'),
+              )
+              .textDirection,
+          TextDirection.ltr,
+        );
+        expect(
+          tester
+              .widget<SelectableText>(
+                find.widgetWithText(SelectableText, '0550000000'),
+              )
+              .textDirection,
+          TextDirection.ltr,
+        );
         expect(
           find.bySemanticsLabel(
             RegExp(r'customer@example\.test|0550000000'),
