@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:game_credit_profit_manager/features/admin_platform/application/common/platform_session_coordinator.dart';
 import 'package:game_credit_profit_manager/features/admin_platform/domain/admin_auth_models.dart';
@@ -26,19 +28,27 @@ void main() {
   );
 
   test(
-    'sequential detail and timeline reads never refresh concurrently',
+    'concurrent detail and timeline expiry share one session refresh',
     () async {
-      final session = _SessionAccess();
+      final session = _SessionAccess(blockRefresh: true);
       final scope = _DataScope();
-      final dataSource = _ExpiringDataSource(expireDetailsOnce: true);
+      final dataSource = _ExpiringDataSource(
+        expireDetailsOnce: true,
+        expireTimelineOnce: true,
+      );
       final repository = _repository(session, scope, dataSource);
       const orderId = '11111111-1111-1111-1111-111111111111';
 
-      await repository.getOrderDetails(orderId: orderId);
-      await repository.getOrderTimeline(orderId: orderId);
+      final reads = Future.wait<Object?>(<Future<Object?>>[
+        repository.getOrderDetails(orderId: orderId),
+        repository.getOrderTimeline(orderId: orderId),
+      ]);
+      await session.refreshStarted.future;
+      session.releaseRefresh.complete();
+      await reads;
 
       expect(dataSource.detailCalls, 2);
-      expect(dataSource.timelineCalls, 1);
+      expect(dataSource.timelineCalls, 2);
       expect(session.refreshCalls, 1);
       expect(session.maxConcurrentRefreshes, 1);
     },
@@ -62,9 +72,14 @@ SupabaseCustomerOrdersRepository _repository(
 );
 
 class _SessionAccess implements PlatformSessionAccess {
+  _SessionAccess({this.blockRefresh = false});
+
+  final bool blockRefresh;
   int refreshCalls = 0;
   int _activeRefreshes = 0;
   int maxConcurrentRefreshes = 0;
+  final Completer<void> refreshStarted = Completer<void>();
+  final Completer<void> releaseRefresh = Completer<void>();
 
   @override
   AdminAuthState get currentState => const AdminAuthState.authorized();
@@ -76,7 +91,12 @@ class _SessionAccess implements PlatformSessionAccess {
     if (_activeRefreshes > maxConcurrentRefreshes) {
       maxConcurrentRefreshes = _activeRefreshes;
     }
-    await Future<void>.delayed(Duration.zero);
+    if (blockRefresh) {
+      if (!refreshStarted.isCompleted) {
+        refreshStarted.complete();
+      }
+      await releaseRefresh.future;
+    }
     _activeRefreshes -= 1;
   }
 }
@@ -96,10 +116,12 @@ class _ExpiringDataSource implements SupabaseOrdersDataSource {
   _ExpiringDataSource({
     this.expireListOnce = false,
     this.expireDetailsOnce = false,
+    this.expireTimelineOnce = false,
   });
 
   final bool expireListOnce;
   final bool expireDetailsOnce;
+  final bool expireTimelineOnce;
   int listCalls = 0;
   int detailCalls = 0;
   int timelineCalls = 0;
@@ -131,6 +153,9 @@ class _ExpiringDataSource implements SupabaseOrdersDataSource {
     required String orderId,
   }) async {
     timelineCalls += 1;
+    if (expireTimelineOnce && timelineCalls == 1) {
+      throw const PlatformFailure(PlatformFailureCode.sessionExpired);
+    }
     return const <Map<String, Object?>>[];
   }
 }

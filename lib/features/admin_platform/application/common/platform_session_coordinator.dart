@@ -39,7 +39,7 @@ abstract interface class PlatformReadCoordinator {
 }
 
 class PlatformSessionCoordinator implements PlatformReadCoordinator {
-  const PlatformSessionCoordinator({
+  PlatformSessionCoordinator({
     required PlatformSessionAccess sessionAccess,
     required PlatformErrorMapper mapError,
     required PlatformDataScopeSink dataScope,
@@ -50,6 +50,7 @@ class PlatformSessionCoordinator implements PlatformReadCoordinator {
   final PlatformSessionAccess _sessionAccess;
   final PlatformErrorMapper _mapError;
   final PlatformDataScopeSink _dataScope;
+  Future<void>? _refreshInFlight;
 
   @override
   Future<T> runRead<T>(PlatformReadOperation<T> operation) async {
@@ -73,7 +74,7 @@ class PlatformSessionCoordinator implements PlatformReadCoordinator {
     }
 
     try {
-      await _sessionAccess.refresh();
+      await _refreshSessionOnce();
     } catch (error) {
       final failure = _mapError(error);
       _applySessionBoundary(failure);
@@ -95,6 +96,22 @@ class PlatformSessionCoordinator implements PlatformReadCoordinator {
       _applySessionBoundary(failure);
       throw failure;
     }
+  }
+
+  Future<void> _refreshSessionOnce() {
+    final existing = _refreshInFlight;
+    if (existing != null) {
+      return existing;
+    }
+
+    late final Future<void> refresh;
+    refresh = Future<void>.sync(_sessionAccess.refresh).whenComplete(() {
+      if (identical(_refreshInFlight, refresh)) {
+        _refreshInFlight = null;
+      }
+    });
+    _refreshInFlight = refresh;
+    return refresh;
   }
 
   void _applySessionBoundary(PlatformFailure failure) {

@@ -35,6 +35,14 @@ void main() {
         expect(find.textContaining('customer@example.test'), findsNothing);
         expect(find.textContaining('0550000000'), findsNothing);
         expect(
+          find.bySemanticsLabel(
+            RegExp(
+              r'customer@example\.test|0550000000|player-123|Player Fixture',
+            ),
+          ),
+          findsNothing,
+        );
+        expect(
           find.bySemanticsLabel(RegExp('طلب 11111111.*فتح تفاصيل الطلب')),
           findsOneWidget,
         );
@@ -51,6 +59,12 @@ void main() {
         expect(find.textContaining('0550000000'), findsOneWidget);
         expect(find.byType(SelectableText), findsNWidgets(3));
         expect(find.bySemanticsLabel('معلومات الاتصال'), findsWidgets);
+        expect(
+          find.bySemanticsLabel(
+            RegExp(r'customer@example\.test|0550000000'),
+          ),
+          findsWidgets,
+        );
       } finally {
         semantics.dispose();
       }
@@ -63,10 +77,7 @@ void main() {
     await _pumpOrders(tester);
     await _openDetails(tester);
     final detailsList = find.byKey(const Key('order-details-list'));
-    final detailsScrollable = find.descendant(
-      of: detailsList,
-      matching: find.byType(Scrollable),
-    );
+    final detailsScrollable = _detailsScrollable(detailsList);
     expect(detailsScrollable, findsOneWidget);
     await tester.scrollUntilVisible(
       find.byKey(const Key('order-details-timeline')),
@@ -114,6 +125,14 @@ void main() {
     await _openDetails(tester);
 
     expect(find.byKey(const Key('order-details-list')), findsOneWidget);
+    final detailsList = find.byKey(const Key('order-details-list'));
+    await tester.scrollUntilVisible(
+      find.text('Second public event'),
+      300,
+      scrollable: _detailsScrollable(detailsList),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('Second public event'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
@@ -137,6 +156,12 @@ void main() {
     expect(find.byType(OrderDetailsScreen), findsNothing);
     expect(find.byKey(const Key('orders-list')), findsOneWidget);
   });
+}
+
+Finder _detailsScrollable(Finder detailsList) {
+  return find
+      .descendant(of: detailsList, matching: find.byType(Scrollable))
+      .first;
 }
 
 Future<void> _pumpOrders(
