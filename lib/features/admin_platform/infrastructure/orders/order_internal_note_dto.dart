@@ -22,8 +22,7 @@ class OrderInternalNoteDto {
     }
 
     final text = reader.requiredString('note');
-    if (text != text.trim() ||
-        text.runes.length > orderInternalNoteMaxLength) {
+    if (text != text.trim() || text.runes.length > orderInternalNoteMaxLength) {
       throw const PlatformPayloadException(
         field: 'note',
         reason: PlatformPayloadFailureReason.invalidValue,
