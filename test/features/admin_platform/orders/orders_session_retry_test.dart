@@ -28,13 +28,14 @@ void main() {
   );
 
   test(
-    'concurrent detail and timeline expiry share one session refresh',
+    'concurrent detail, timeline, and notes expiry share one session refresh',
     () async {
       final session = _SessionAccess(blockRefresh: true);
       final scope = _DataScope();
       final dataSource = _ExpiringDataSource(
         expireDetailsOnce: true,
         expireTimelineOnce: true,
+        expireNotesOnce: true,
       );
       final repository = _repository(session, scope, dataSource);
       const orderId = '11111111-1111-1111-1111-111111111111';
@@ -42,6 +43,7 @@ void main() {
       final reads = Future.wait<Object?>(<Future<Object?>>[
         repository.getOrderDetails(orderId: orderId),
         repository.getOrderTimeline(orderId: orderId),
+        repository.getOrderInternalNotes(orderId: orderId),
       ]);
       await session.refreshStarted.future;
       session.releaseRefresh.complete();
@@ -49,6 +51,7 @@ void main() {
 
       expect(dataSource.detailCalls, 2);
       expect(dataSource.timelineCalls, 2);
+      expect(dataSource.noteCalls, 2);
       expect(session.refreshCalls, 1);
       expect(session.maxConcurrentRefreshes, 1);
     },

@@ -53,6 +53,8 @@ const Map<String, String> _french = <String, String>{
   'لا توجد أحداث عامة للطلب.': 'Aucun événement public pour cette commande.',
   'الملاحظات الداخلية': 'Notes internes',
   'لا توجد ملاحظات داخلية.': 'Aucune note interne.',
+  'تعذر تحميل الملاحظات الداخلية.': 'Impossible de charger les notes internes.',
+  'تحميل الملاحظات الداخلية': 'Chargement des notes internes',
   'الزبون': 'Client',
   'معرّف اللاعب': 'Player ID',
   'الاسم داخل اللعبة': 'Nom dans le jeu',

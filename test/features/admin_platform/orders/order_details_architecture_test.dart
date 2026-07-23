@@ -11,6 +11,8 @@ void main() {
           'package:sqflite',
           'databasehelper',
           'flutter_secure_storage',
+          'shared_preferences',
+          'package:hive',
           'payment_proof_path',
           'changed_by',
           'client_request_id',
@@ -119,6 +121,27 @@ void main() {
         final content = file.readAsStringSync().toLowerCase();
         expect(content, isNot(contains('internal_note')), reason: file.path);
         expect(content, isNot(contains('internal note')), reason: file.path);
+        expect(content, isNot(contains('internalnote')), reason: file.path);
+      }
+    });
+
+    test('application state imports no data client or local persistence', () {
+      for (final path in <String>[
+        'order_details_controller.dart',
+        'order_details_providers.dart',
+      ]) {
+        final content = File(
+          'lib/features/admin_platform/application/orders/$path',
+        ).readAsStringSync().toLowerCase();
+        for (final forbidden in <String>[
+          'package:supabase_flutter',
+          'package:sqflite',
+          'shared_preferences',
+          'package:hive',
+          'flutter_secure_storage',
+        ]) {
+          expect(content, isNot(contains(forbidden)), reason: path);
+        }
       }
     });
 
@@ -139,6 +162,14 @@ void main() {
       );
       expect(content, contains('platformDataScopeProvider.select'));
       expect(content, contains('value.generation'));
+      expect(content, contains('orderInternalNotesProvider'));
+      expect(
+        RegExp(
+          r'FutureProvider\.autoDispose\s*\.family',
+          multiLine: true,
+        ).hasMatch(content),
+        isTrue,
+      );
       expect(content, isNot(contains('keepAlive')));
     });
 
@@ -247,6 +278,10 @@ List<File> _testFiles() {
     File(
       'test/features/admin_platform/orders/'
       'order_details_controller_test.dart',
+    ),
+    File(
+      'test/features/admin_platform/orders/'
+      'order_internal_notes_provider_test.dart',
     ),
     File(
       'test/features/admin_platform/orders/'

@@ -16,31 +16,20 @@ import 'package:game_credit_profit_manager/features/admin_platform/domain/orders
 void main() {
   const orderId = '11111111-1111-1111-1111-111111111111';
 
-  test(
-    'loads timeline and notes before PII and publishes atomically',
-    () async {
-      final repository = _QueueRepository();
-      final controller = OrderDetailsController(
-        repository: repository,
-        orderId: orderId,
-      );
+  test('loads public timeline before PII and publishes atomically', () async {
+    final repository = _QueueRepository();
+    final controller = OrderDetailsController(
+      repository: repository,
+      orderId: orderId,
+    );
 
-      await controller.load();
+    await controller.load();
 
-      expect(repository.calls, <String>['timeline', 'notes', 'details']);
-      expect(controller.state.status, OrderDetailsViewStatus.data);
-      expect(controller.state.details?.customerEmail, 'customer@example.test');
-      expect(controller.state.timeline, hasLength(1));
-      expect(
-        controller.state.internalNotes.single.text,
-        'Private fixture note',
-      );
-      expect(
-        () => controller.state.internalNotes.add(_note()),
-        throwsUnsupportedError,
-      );
-    },
-  );
+    expect(repository.calls, <String>['timeline', 'details']);
+    expect(controller.state.status, OrderDetailsViewStatus.data);
+    expect(controller.state.details?.customerEmail, 'customer@example.test');
+    expect(controller.state.timeline, hasLength(1));
+  });
 
   test('does not fetch or retain PII when timeline fails', () async {
     final repository = _QueueRepository(
@@ -61,26 +50,6 @@ void main() {
     expect(repository.calls, <String>['timeline']);
   });
 
-  test('does not fetch or retain PII when internal notes fail', () async {
-    final repository = _QueueRepository(
-      notesFailure: const PlatformFailure(
-        PlatformFailureCode.networkUnavailable,
-      ),
-    );
-    final controller = OrderDetailsController(
-      repository: repository,
-      orderId: orderId,
-    );
-
-    await controller.load();
-
-    expect(controller.state.status, OrderDetailsViewStatus.offline);
-    expect(controller.state.details, isNull);
-    expect(controller.state.timeline, isEmpty);
-    expect(controller.state.internalNotes, isEmpty);
-    expect(repository.calls, <String>['timeline', 'notes']);
-  });
-
   test('prevents concurrent retries', () async {
     final repository = _CompletingRepository();
     final controller = OrderDetailsController(
@@ -93,16 +62,12 @@ void main() {
     expect(repository.timelineCalls, 1);
     repository.completeTimeline(<OrderTimelineEvent>[_event()]);
     await Future<void>.delayed(Duration.zero);
-    expect(repository.notesCalls, 1);
-    repository.completeNotes(<OrderInternalNote>[_note()]);
-    await Future<void>.delayed(Duration.zero);
     expect(repository.detailCalls, 1);
     repository.completeDetails(_details());
     await Future.wait(<Future<void>>[first, second]);
 
     expect(repository.detailCalls, 1);
     expect(repository.timelineCalls, 1);
-    expect(repository.notesCalls, 1);
   });
 
   test(
@@ -123,32 +88,8 @@ void main() {
       expect(controller.state.failureCode, PlatformFailureCode.sessionExpired);
       expect(repository.timelineCalls, 1);
       expect(repository.detailCalls, 0);
-      expect(repository.notesCalls, 0);
     },
   );
-
-  test('invalidation while notes are pending clears sensitive state', () async {
-    final repository = _CompletingRepository();
-    final controller = OrderDetailsController(
-      repository: repository,
-      orderId: orderId,
-    );
-
-    final request = controller.load();
-    repository.completeTimeline(<OrderTimelineEvent>[_event()]);
-    await Future<void>.delayed(Duration.zero);
-    expect(repository.notesCalls, 1);
-
-    controller.invalidate(PlatformFailureCode.sessionExpired);
-    repository.completeNotes(<OrderInternalNote>[_note()]);
-    await request;
-
-    expect(controller.state.containsPersonalData, isFalse);
-    expect(controller.state.details, isNull);
-    expect(controller.state.timeline, isEmpty);
-    expect(controller.state.internalNotes, isEmpty);
-    expect(repository.detailCalls, 0);
-  });
 
   test('retry succeeds after an ordinary failure', () async {
     final repository = _QueueRepository(
@@ -171,12 +112,10 @@ void main() {
 class _QueueRepository implements CustomerOrdersRepository {
   _QueueRepository({
     this.timelineFailure,
-    this.notesFailure,
     List<PlatformFailure>? detailFailures,
   }) : detailFailures = detailFailures ?? <PlatformFailure>[];
 
   final PlatformFailure? timelineFailure;
-  final PlatformFailure? notesFailure;
   final List<PlatformFailure> detailFailures;
   final List<String> calls = <String>[];
 
@@ -201,10 +140,8 @@ class _QueueRepository implements CustomerOrdersRepository {
   @override
   Future<List<OrderInternalNote>> getOrderInternalNotes({
     required String orderId,
-  }) async {
-    calls.add('notes');
-    if (notesFailure case final failure?) throw failure;
-    return <OrderInternalNote>[_note()];
+  }) {
+    throw UnsupportedError('Loaded by a dedicated provider.');
   }
 
   @override
@@ -222,11 +159,8 @@ class _CompletingRepository implements CustomerOrdersRepository {
       Completer<CustomerOrderDetails>();
   final Completer<List<OrderTimelineEvent>> _timelineCompleter =
       Completer<List<OrderTimelineEvent>>();
-  final Completer<List<OrderInternalNote>> _notesCompleter =
-      Completer<List<OrderInternalNote>>();
   int detailCalls = 0;
   int timelineCalls = 0;
-  int notesCalls = 0;
 
   @override
   Future<CustomerOrderDetails> getOrderDetails({required String orderId}) {
@@ -244,16 +178,13 @@ class _CompletingRepository implements CustomerOrdersRepository {
   Future<List<OrderInternalNote>> getOrderInternalNotes({
     required String orderId,
   }) {
-    notesCalls += 1;
-    return _notesCompleter.future;
+    throw UnsupportedError('Loaded by a dedicated provider.');
   }
 
   void completeDetails(CustomerOrderDetails value) =>
       _detailsCompleter.complete(value);
   void completeTimeline(List<OrderTimelineEvent> value) =>
       _timelineCompleter.complete(value);
-  void completeNotes(List<OrderInternalNote> value) =>
-      _notesCompleter.complete(value);
 
   @override
   Future<OrderPage> listOrders({
@@ -301,9 +232,4 @@ OrderTimelineEvent _event() => OrderTimelineEvent(
   paymentStatus: PaymentStatus.awaitingPayment,
   publicMessage: null,
   createdAt: DateTime.utc(2026, 7, 18),
-);
-
-OrderInternalNote _note() => OrderInternalNote(
-  text: 'Private fixture note',
-  createdAt: DateTime.utc(2026, 7, 18, 0, 30),
 );

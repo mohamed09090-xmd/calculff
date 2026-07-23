@@ -31,11 +31,13 @@ void main() {
     (tester) async {
       final semantics = tester.ensureSemantics();
       try {
-        await _pumpOrders(tester);
+        final repository = _OrdersRepository();
+        await _pumpOrders(tester, repository: repository);
 
         expect(find.textContaining('customer@example.test'), findsNothing);
         expect(find.textContaining('0550000000'), findsNothing);
         expect(find.textContaining('Private fixture note'), findsNothing);
+        expect(repository.internalNoteCalls, 0);
         expect(
           find.bySemanticsLabel(
             RegExp(
@@ -50,6 +52,7 @@ void main() {
         );
 
         await _openDetails(tester);
+        expect(repository.internalNoteCalls, 1);
 
         expect(find.byType(OrderDetailsScreen), findsOneWidget);
         expect(find.text('#11111111'), findsOneWidget);
@@ -240,6 +243,7 @@ Future<void> _pumpOrders(
   Size size = const Size(390, 800),
   TextScaler textScaler = TextScaler.noScaling,
   bool includeInternalNotes = true,
+  _OrdersRepository? repository,
 }) async {
   tester.view.physicalSize = size;
   tester.view.devicePixelRatio = 1;
@@ -253,7 +257,8 @@ Future<void> _pumpOrders(
           return ref.watch(_testAuthStateProvider);
         }),
         customerOrdersRepositoryProvider.overrideWithValue(
-          _OrdersRepository(includeInternalNotes: includeInternalNotes),
+          repository ??
+              _OrdersRepository(includeInternalNotes: includeInternalNotes),
         ),
         ordersGamesRepositoryProvider.overrideWithValue(
           const _GamesRepository(),
@@ -289,9 +294,10 @@ Future<void> _openDetails(WidgetTester tester) async {
 }
 
 class _OrdersRepository implements CustomerOrdersRepository {
-  const _OrdersRepository({this.includeInternalNotes = true});
+  _OrdersRepository({this.includeInternalNotes = true});
 
   final bool includeInternalNotes;
+  int internalNoteCalls = 0;
 
   @override
   Future<OrderPage> listOrders({
@@ -349,6 +355,7 @@ class _OrdersRepository implements CustomerOrdersRepository {
   Future<List<OrderInternalNote>> getOrderInternalNotes({
     required String orderId,
   }) async {
+    internalNoteCalls += 1;
     if (!includeInternalNotes) return const <OrderInternalNote>[];
     return <OrderInternalNote>[
       OrderInternalNote(

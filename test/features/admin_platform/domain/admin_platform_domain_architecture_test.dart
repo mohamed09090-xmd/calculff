@@ -115,7 +115,12 @@ void main() {
       final internalNote = File(
         'lib/features/admin_platform/domain/orders/order_internal_note.dart',
       ).readAsStringSync().toLowerCase();
-      for (final field in <String>['id', 'orderid', 'author', 'userid']) {
+      for (final field in <String>[
+        'final int id',
+        'orderid',
+        'author',
+        'userid',
+      ]) {
         expect(internalNote, isNot(contains(field)));
       }
 
