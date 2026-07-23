@@ -69,23 +69,26 @@ void main() {
     expect(repository.timelineCalls, 1);
   });
 
-  test('invalidation while timeline is pending prevents the PII read', () async {
-    final repository = _CompletingRepository();
-    final controller = OrderDetailsController(
-      repository: repository,
-      orderId: orderId,
-    );
+  test(
+    'invalidation while timeline is pending prevents the PII read',
+    () async {
+      final repository = _CompletingRepository();
+      final controller = OrderDetailsController(
+        repository: repository,
+        orderId: orderId,
+      );
 
-    final request = controller.load();
-    controller.invalidate(PlatformFailureCode.sessionExpired);
-    repository.completeTimeline(<OrderTimelineEvent>[_event()]);
-    await request;
+      final request = controller.load();
+      controller.invalidate(PlatformFailureCode.sessionExpired);
+      repository.completeTimeline(<OrderTimelineEvent>[_event()]);
+      await request;
 
-    expect(controller.state.containsPersonalData, isFalse);
-    expect(controller.state.failureCode, PlatformFailureCode.sessionExpired);
-    expect(repository.timelineCalls, 1);
-    expect(repository.detailCalls, 0);
-  });
+      expect(controller.state.containsPersonalData, isFalse);
+      expect(controller.state.failureCode, PlatformFailureCode.sessionExpired);
+      expect(repository.timelineCalls, 1);
+      expect(repository.detailCalls, 0);
+    },
+  );
 
   test('retry succeeds after an ordinary failure', () async {
     final repository = _QueueRepository(

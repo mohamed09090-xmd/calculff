@@ -78,9 +78,7 @@ void main() {
           TextDirection.ltr,
         );
         expect(
-          find.bySemanticsLabel(
-            RegExp(r'customer@example\.test|0550000000'),
-          ),
+          find.bySemanticsLabel(RegExp(r'customer@example\.test|0550000000')),
           findsWidgets,
         );
       } finally {

@@ -323,11 +323,7 @@ class OrderField extends StatelessWidget {
             textDirection: TextDirection.ltr,
             child: selectable
                 ? SelectableText(value, textDirection: TextDirection.ltr)
-                : Text(
-                    value,
-                    softWrap: true,
-                    textDirection: TextDirection.ltr,
-                  ),
+                : Text(value, softWrap: true, textDirection: TextDirection.ltr),
           ),
         ],
       );
