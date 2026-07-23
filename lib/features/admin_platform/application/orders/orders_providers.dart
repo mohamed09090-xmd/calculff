@@ -17,12 +17,12 @@ import 'orders_controller.dart';
 
 final supabaseOrdersDataSourceProvider =
     Provider<FlutterSupabaseOrdersDataSource?>((ref) {
-  final client = ref.watch(supabaseClientProvider);
-  if (client == null) {
-    return null;
-  }
-  return FlutterSupabaseOrdersDataSource(client);
-});
+      final client = ref.watch(supabaseClientProvider);
+      if (client == null) {
+        return null;
+      }
+      return FlutterSupabaseOrdersDataSource(client);
+    });
 
 final supabaseCustomerOrdersRepositoryProvider =
     Provider<SupabaseCustomerOrdersRepository?>((ref) {
