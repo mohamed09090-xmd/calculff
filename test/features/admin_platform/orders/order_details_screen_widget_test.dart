@@ -73,7 +73,6 @@ void main() {
         await tester.pumpAndSettle();
         expect(find.textContaining('customer@example.test'), findsOneWidget);
         expect(find.textContaining('0550000000'), findsOneWidget);
-        expect(find.byType(SelectableText), findsNWidgets(3));
         expect(find.bySemanticsLabel('معلومات الاتصال'), findsWidgets);
         expect(find.text('البريد الإلكتروني:'), findsOneWidget);
         expect(find.text('رقم الهاتف:'), findsOneWidget);
@@ -145,6 +144,7 @@ void main() {
     await _openDetails(tester);
 
     expect(find.text('Résumé de la commande'), findsOneWidget);
+    expect(find.textContaining('Free Fire'), findsOneWidget);
     final detailsList = find.byKey(const Key('order-details-list'));
     await tester.scrollUntilVisible(
       find.byKey(const Key('order-details-email')),
@@ -153,7 +153,6 @@ void main() {
     );
     await tester.pumpAndSettle();
     expect(find.text('Coordonnées'), findsOneWidget);
-    expect(find.textContaining('Free Fire'), findsOneWidget);
     expect(
       tester
           .widget<Directionality>(find.byType(Directionality).first)

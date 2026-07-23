@@ -128,22 +128,19 @@ void main() {
       await dataSource.acceptOrder(orderId: orderId, publicMessage: 'accepted');
       await dataSource.rejectOrder(orderId: orderId, publicMessage: 'rejected');
 
-      expect(calls, <(String, Map<String, Object?>)>[
-        (
-          'admin_accept_order',
-          Map<String, Object?>.unmodifiable(<String, Object?>{
-            'p_order_id': orderId,
-            'p_public_message': 'accepted',
-          }),
-        ),
-        (
-          'admin_reject_order',
-          Map<String, Object?>.unmodifiable(<String, Object?>{
-            'p_order_id': orderId,
-            'p_public_message': 'rejected',
-          }),
-        ),
+      expect(calls, hasLength(2));
+      expect(calls.map((call) => call.$1), <String>[
+        'admin_accept_order',
+        'admin_reject_order',
       ]);
+      expect(calls[0].$2, <String, Object?>{
+        'p_order_id': orderId,
+        'p_public_message': 'accepted',
+      });
+      expect(calls[1].$2, <String, Object?>{
+        'p_order_id': orderId,
+        'p_public_message': 'rejected',
+      });
     });
 
     test(
