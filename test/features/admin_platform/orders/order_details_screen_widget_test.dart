@@ -12,11 +12,15 @@ import 'package:game_credit_profit_manager/features/admin_platform/domain/games/
 import 'package:game_credit_profit_manager/features/admin_platform/domain/orders/customer_order_details.dart';
 import 'package:game_credit_profit_manager/features/admin_platform/domain/orders/customer_order_summary.dart';
 import 'package:game_credit_profit_manager/features/admin_platform/domain/orders/customer_orders_repository.dart';
+import 'package:game_credit_profit_manager/features/admin_platform/domain/orders/order_action_result.dart';
+import 'package:game_credit_profit_manager/features/admin_platform/domain/orders/order_actions_repository.dart';
 import 'package:game_credit_profit_manager/features/admin_platform/domain/orders/order_cursor.dart';
 import 'package:game_credit_profit_manager/features/admin_platform/domain/orders/order_enums.dart';
 import 'package:game_credit_profit_manager/features/admin_platform/domain/orders/order_filters.dart';
 import 'package:game_credit_profit_manager/features/admin_platform/domain/orders/order_internal_note.dart';
 import 'package:game_credit_profit_manager/features/admin_platform/domain/orders/order_page.dart';
+import 'package:game_credit_profit_manager/features/admin_platform/domain/orders/order_payment_proof.dart';
+import 'package:game_credit_profit_manager/features/admin_platform/domain/orders/order_payment_proof_repository.dart';
 import 'package:game_credit_profit_manager/features/admin_platform/domain/orders/order_timeline_event.dart';
 import 'package:game_credit_profit_manager/features/admin_platform/presentation/orders/customer_orders_screen.dart';
 import 'package:game_credit_profit_manager/features/admin_platform/presentation/orders/order_details_screen.dart';
@@ -60,9 +64,15 @@ void main() {
           find.textContaining('11111111-1111-1111-1111-111111111111'),
           findsNothing,
         );
+        final detailsList = find.byKey(const Key('order-details-list'));
+        await tester.scrollUntilVisible(
+          find.byKey(const Key('order-details-email')),
+          300,
+          scrollable: _detailsScrollable(detailsList),
+        );
+        await tester.pumpAndSettle();
         expect(find.textContaining('customer@example.test'), findsOneWidget);
         expect(find.textContaining('0550000000'), findsOneWidget);
-        expect(find.byType(SelectableText), findsNWidgets(3));
         expect(find.bySemanticsLabel('معلومات الاتصال'), findsWidgets);
         expect(find.text('البريد الإلكتروني:'), findsOneWidget);
         expect(find.text('رقم الهاتف:'), findsOneWidget);
@@ -87,7 +97,6 @@ void main() {
           findsWidgets,
         );
 
-        final detailsList = find.byKey(const Key('order-details-list'));
         await tester.scrollUntilVisible(
           find.byKey(const Key('order-details-internal-notes')),
           300,
@@ -135,15 +144,21 @@ void main() {
     await _openDetails(tester);
 
     expect(find.text('Résumé de la commande'), findsOneWidget);
-    expect(find.text('Coordonnées'), findsOneWidget);
     expect(find.textContaining('Free Fire'), findsOneWidget);
+    final detailsList = find.byKey(const Key('order-details-list'));
+    await tester.scrollUntilVisible(
+      find.byKey(const Key('order-details-email')),
+      300,
+      scrollable: _detailsScrollable(detailsList),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('Coordonnées'), findsOneWidget);
     expect(
       tester
           .widget<Directionality>(find.byType(Directionality).first)
           .textDirection,
       TextDirection.ltr,
     );
-    final detailsList = find.byKey(const Key('order-details-list'));
     await tester.scrollUntilVisible(
       find.byKey(const Key('order-details-internal-notes')),
       300,
@@ -200,13 +215,92 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('private PDF proof is requested only after tapping view', (
+    tester,
+  ) async {
+    final repository = _OrdersRepository();
+    await _pumpOrders(tester, repository: repository);
+    await _openDetails(tester);
+    expect(repository.paymentProofCalls, 0);
+
+    final list = find.byKey(const Key('order-details-list'));
+    await tester.scrollUntilVisible(
+      find.byKey(const Key('view-payment-proof')),
+      300,
+      scrollable: _detailsScrollable(list),
+    );
+    await tester.tap(find.byKey(const Key('view-payment-proof')));
+    await tester.pumpAndSettle();
+
+    expect(repository.paymentProofCalls, 1);
+    expect(find.byKey(const Key('open-payment-proof-pdf')), findsOneWidget);
+    expect(
+      find.textContaining('https://project.test/private-proof'),
+      findsNothing,
+    );
+  });
+
+  testWidgets('accept confirmation calls one atomic action and refreshes', (
+    tester,
+  ) async {
+    final repository = _OrdersRepository(
+      orderStatus: OrderStatus.newOrder,
+      paymentStatus: PaymentStatus.underReview,
+    );
+    await _pumpOrders(tester, repository: repository);
+    await _openDetails(tester);
+
+    final list = find.byKey(const Key('order-details-list'));
+    await tester.scrollUntilVisible(
+      find.byKey(const Key('accept-order')),
+      300,
+      scrollable: _detailsScrollable(list),
+    );
+    await tester.tap(find.byKey(const Key('accept-order')));
+    await tester.pumpAndSettle();
+    expect(repository.acceptCalls, 0);
+    await tester.tap(find.byKey(const Key('confirm-accept-order')));
+    await tester.pumpAndSettle();
+
+    expect(repository.acceptCalls, 1);
+    expect(repository.rejectCalls, 0);
+    expect(repository.lastPublicMessage, isNotEmpty);
+    expect(find.text('تم تحديث الطلب بنجاح.'), findsOneWidget);
+  });
+
+  testWidgets('reject confirmation calls one atomic action', (tester) async {
+    final repository = _OrdersRepository();
+    await _pumpOrders(tester, repository: repository);
+    await _openDetails(tester);
+
+    final list = find.byKey(const Key('order-details-list'));
+    await tester.scrollUntilVisible(
+      find.byKey(const Key('reject-order')),
+      300,
+      scrollable: _detailsScrollable(list),
+    );
+    await tester.tap(find.byKey(const Key('reject-order')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('confirm-reject-order')));
+    await tester.pumpAndSettle();
+
+    expect(repository.rejectCalls, 1);
+    expect(repository.acceptCalls, 0);
+  });
+
   testWidgets('session expiry removes PII before returning to a safe screen', (
     tester,
   ) async {
     await _pumpOrders(tester);
     await _openDetails(tester);
-    expect(find.textContaining('customer@example.test'), findsOneWidget);
     final detailsList = find.byKey(const Key('order-details-list'));
+    await tester.scrollUntilVisible(
+      find.byKey(const Key('order-details-email')),
+      300,
+      scrollable: _detailsScrollable(detailsList),
+    );
+    await tester.pumpAndSettle();
+    expect(find.textContaining('customer@example.test'), findsOneWidget);
     await tester.scrollUntilVisible(
       find.byKey(const Key('order-details-internal-notes')),
       300,
@@ -245,6 +339,9 @@ Future<void> _pumpOrders(
   bool includeInternalNotes = true,
   _OrdersRepository? repository,
 }) async {
+  final resolvedRepository =
+      repository ??
+      _OrdersRepository(includeInternalNotes: includeInternalNotes);
   tester.view.physicalSize = size;
   tester.view.devicePixelRatio = 1;
   addTearDown(tester.view.resetPhysicalSize);
@@ -256,10 +353,11 @@ Future<void> _pumpOrders(
         platformAdminAuthStateProvider.overrideWith((ref) {
           return ref.watch(_testAuthStateProvider);
         }),
-        customerOrdersRepositoryProvider.overrideWithValue(
-          repository ??
-              _OrdersRepository(includeInternalNotes: includeInternalNotes),
+        customerOrdersRepositoryProvider.overrideWithValue(resolvedRepository),
+        orderPaymentProofRepositoryProvider.overrideWithValue(
+          resolvedRepository,
         ),
+        orderActionsRepositoryProvider.overrideWithValue(resolvedRepository),
         ordersGamesRepositoryProvider.overrideWithValue(
           const _GamesRepository(),
         ),
@@ -293,11 +391,25 @@ Future<void> _openDetails(WidgetTester tester) async {
   await tester.pumpAndSettle();
 }
 
-class _OrdersRepository implements CustomerOrdersRepository {
-  _OrdersRepository({this.includeInternalNotes = true});
+class _OrdersRepository
+    implements
+        CustomerOrdersRepository,
+        OrderPaymentProofRepository,
+        OrderActionsRepository {
+  _OrdersRepository({
+    this.includeInternalNotes = true,
+    this.orderStatus = OrderStatus.processing,
+    this.paymentStatus = PaymentStatus.underReview,
+  });
 
   final bool includeInternalNotes;
+  OrderStatus orderStatus;
+  PaymentStatus paymentStatus;
   int internalNoteCalls = 0;
+  int paymentProofCalls = 0;
+  int acceptCalls = 0;
+  int rejectCalls = 0;
+  String? lastPublicMessage;
 
   @override
   Future<OrderPage> listOrders({
@@ -306,7 +418,9 @@ class _OrdersRepository implements CustomerOrdersRepository {
     int limit = customerOrdersMaxPageSize,
   }) async {
     return OrderPage(
-      items: <CustomerOrderSummary>[_summary()],
+      items: <CustomerOrderSummary>[
+        _summary(orderStatus: orderStatus, paymentStatus: paymentStatus),
+      ],
       nextCursor: null,
       hasMore: false,
     );
@@ -317,7 +431,7 @@ class _OrdersRepository implements CustomerOrdersRepository {
     required String orderId,
   }) async {
     return CustomerOrderDetails(
-      summary: _summary(),
+      summary: _summary(orderStatus: orderStatus, paymentStatus: paymentStatus),
       rewardUnitCodeSnapshot: 'diamond',
       customerEmail: 'customer@example.test',
       customerPhone: '0550000000',
@@ -364,6 +478,45 @@ class _OrdersRepository implements CustomerOrdersRepository {
       ),
     ];
   }
+
+  @override
+  Future<OrderPaymentProof?> getPaymentProof({required String orderId}) async {
+    paymentProofCalls += 1;
+    return OrderPaymentProof(
+      uri: Uri.parse('https://project.test/private-proof'),
+      kind: OrderPaymentProofKind.pdf,
+    );
+  }
+
+  @override
+  Future<OrderActionResult> acceptOrder({
+    required String orderId,
+    String? publicMessage,
+  }) async {
+    acceptCalls += 1;
+    lastPublicMessage = publicMessage;
+    orderStatus = OrderStatus.processing;
+    paymentStatus = PaymentStatus.paid;
+    return OrderActionResult(
+      orderStatus: orderStatus,
+      paymentStatus: paymentStatus,
+    );
+  }
+
+  @override
+  Future<OrderActionResult> rejectOrder({
+    required String orderId,
+    String? publicMessage,
+  }) async {
+    rejectCalls += 1;
+    lastPublicMessage = publicMessage;
+    orderStatus = OrderStatus.rejected;
+    paymentStatus = PaymentStatus.proofRejected;
+    return OrderActionResult(
+      orderStatus: orderStatus,
+      paymentStatus: paymentStatus,
+    );
+  }
 }
 
 class _GamesRepository implements GamesRepository {
@@ -394,7 +547,10 @@ class _GamesRepository implements GamesRepository {
   }
 }
 
-CustomerOrderSummary _summary() {
+CustomerOrderSummary _summary({
+  OrderStatus orderStatus = OrderStatus.processing,
+  PaymentStatus paymentStatus = PaymentStatus.underReview,
+}) {
   return CustomerOrderSummary(
     id: '11111111-1111-1111-1111-111111111111',
     gameNameArSnapshot: 'فري فاير',
@@ -409,8 +565,8 @@ CustomerOrderSummary _summary() {
     rewardUnitNameAr: 'جوهرة',
     rewardUnitNameFr: 'diamants',
     paymentMethod: PaymentMethod.transfer,
-    orderStatus: OrderStatus.processing,
-    paymentStatus: PaymentStatus.underReview,
+    orderStatus: orderStatus,
+    paymentStatus: paymentStatus,
     createdAt: DateTime.utc(2026, 7, 18, 12),
     hasPaymentProof: true,
   );

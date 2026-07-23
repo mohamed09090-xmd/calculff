@@ -68,6 +68,81 @@ void main() {
       expect(params, <String, Object?>{'p_order_id': orderId});
     });
 
+    test('signs only the validated proof path for sixty seconds', () async {
+      late String rpcName;
+      late Map<String, Object?> rpcParams;
+      late String bucket;
+      late String path;
+      late int expiresIn;
+      final dataSource = FlutterSupabaseOrdersDataSource.withRpcCall(
+        (rpc, input) async {
+          rpcName = rpc;
+          rpcParams = input;
+          return <Object?>[
+            <String, Object?>{
+              'payment_proof_path': 'user/order/proof_aaaaaaaaaaaaaaaa.jpg',
+            },
+          ];
+        },
+        signedUrlCall: (inputBucket, inputPath, inputExpiry) async {
+          bucket = inputBucket;
+          path = inputPath;
+          expiresIn = inputExpiry;
+          return 'https://project.test/storage/signed-proof';
+        },
+      );
+
+      final payload = await dataSource.getOrderPaymentProof(orderId: orderId);
+
+      expect(rpcName, 'admin_get_order_payment_proof_path');
+      expect(rpcParams, <String, Object?>{'p_order_id': orderId});
+      expect(bucket, 'payment-proofs');
+      expect(path, 'user/order/proof_aaaaaaaaaaaaaaaa.jpg');
+      expect(expiresIn, 60);
+      expect(payload, <String, Object?>{
+        'signed_url': 'https://project.test/storage/signed-proof',
+        'file_extension': 'jpg',
+      });
+      expect(payload.toString(), isNot(contains('proof_aaaaaaaaaaaaaaaa')));
+    });
+
+    test('uses atomic accept and reject RPC contracts', () async {
+      final calls = <(String, Map<String, Object?>)>[];
+      final dataSource = FlutterSupabaseOrdersDataSource.withRpcCall((
+        rpc,
+        input,
+      ) async {
+        calls.add((rpc, input));
+        return <Object?>[
+          <String, Object?>{
+            'order_status': rpc == 'admin_accept_order'
+                ? 'processing'
+                : 'rejected',
+            'payment_status': rpc == 'admin_accept_order'
+                ? 'paid'
+                : 'proof_rejected',
+          },
+        ];
+      });
+
+      await dataSource.acceptOrder(orderId: orderId, publicMessage: 'accepted');
+      await dataSource.rejectOrder(orderId: orderId, publicMessage: 'rejected');
+
+      expect(calls, hasLength(2));
+      expect(calls.map((call) => call.$1), <String>[
+        'admin_accept_order',
+        'admin_reject_order',
+      ]);
+      expect(calls[0].$2, <String, Object?>{
+        'p_order_id': orderId,
+        'p_public_message': 'accepted',
+      });
+      expect(calls[1].$2, <String, Object?>{
+        'p_order_id': orderId,
+        'p_public_message': 'rejected',
+      });
+    });
+
     test(
       'strictly rejects non-list, non-map, and non-string-key payloads',
       () async {

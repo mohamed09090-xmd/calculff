@@ -71,6 +71,30 @@ const Map<String, String> _french = <String, String>{
   'رقم الهاتف': 'Téléphone',
   'يوجد إثبات دفع': 'Preuve de paiement disponible',
   'لا يوجد إثبات دفع': 'Aucune preuve de paiement',
+  'إثبات الدفع': 'Preuve de paiement',
+  'الإثبات خاص ويُفتح برابط مؤقت لمدة قصيرة.':
+      'La preuve est privée et utilise un lien temporaire.',
+  'عرض إثبات الدفع': 'Afficher la preuve de paiement',
+  'تحميل إثبات الدفع': 'Chargement de la preuve de paiement',
+  'لا يوجد إثبات دفع متاح.': 'Aucune preuve de paiement disponible.',
+  'تعذر عرض إثبات الدفع.': 'Impossible d’afficher la preuve de paiement.',
+  'إثبات الدفع ملف PDF. افتحه بواسطة عارض آمن على جهازك.':
+      'La preuve est un PDF. Ouvrez-la avec un lecteur sûr sur votre appareil.',
+  'فتح ملف PDF': 'Ouvrir le PDF',
+  'إغلاق': 'Fermer',
+  'إجراءات الطلب': 'Actions sur la commande',
+  'قبول الطلب': 'Accepter la commande',
+  'رفض الطلب': 'Refuser la commande',
+  'سيتم تأكيد الدفع ونقل الطلب إلى قيد التنفيذ.':
+      'Le paiement sera confirmé et la commande passera en traitement.',
+  'سيتم رفض الطلب وتحديث حالة الدفع بأمان.':
+      'La commande et son paiement seront refusés en toute sécurité.',
+  'قبول وبدء التنفيذ': 'Accepter et démarrer',
+  'جارٍ تحديث الطلب': 'Mise à jour de la commande',
+  'تم قبول الطلب وبدأ تنفيذه.':
+      'La commande a été acceptée et son traitement a commencé.',
+  'تم رفض الطلب بعد المراجعة.': 'La commande a été refusée après vérification.',
+  'تم تحديث الطلب بنجاح.': 'La commande a été mise à jour.',
   'نقدًا': 'Espèces',
   'تحويل': 'Virement',
   'جديد': 'Nouvelle',

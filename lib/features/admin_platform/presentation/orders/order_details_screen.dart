@@ -1,15 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import 'package:share_plus/share_plus.dart';
 
 import '../../../../core/localization/app_translator.dart';
 import '../../application/common/platform_common_providers.dart';
 import '../../application/orders/order_details_controller.dart';
 import '../../application/orders/order_details_providers.dart';
+import '../../application/orders/order_actions_controller.dart';
+import '../../application/orders/order_payment_proof_provider.dart';
 import '../../domain/common/platform_failure.dart';
 import '../../domain/orders/customer_order_details.dart';
 import '../../domain/orders/customer_order_summary.dart';
 import '../../domain/orders/order_internal_note.dart';
+import '../../domain/orders/order_enums.dart';
+import '../../domain/orders/order_payment_proof.dart';
 import '../../domain/orders/order_timeline_event.dart';
 import '../platform_ui_text.dart';
 import 'order_widgets.dart';
@@ -46,6 +51,9 @@ class _OrderDetailsScreenState extends ConsumerState<OrderDetailsScreen> {
     final controller = ref.read(
       orderDetailsControllerProvider(widget.orderId).notifier,
     );
+    final actionState = ref.watch(
+      orderActionsControllerProvider(widget.orderId),
+    );
     return Scaffold(
       appBar: AppBar(title: Text('#$shortId')),
       body: SafeArea(
@@ -55,8 +63,12 @@ class _OrderDetailsScreenState extends ConsumerState<OrderDetailsScreen> {
             details: state.details!,
             timeline: state.timeline,
             internalNotes: internalNotes,
+            actionState: actionState,
             onRetryInternalNotes: () =>
                 ref.invalidate(orderInternalNotesProvider(widget.orderId)),
+            onViewPaymentProof: () => _showPaymentProof(context),
+            onAccept: () => _confirmAction(accept: true),
+            onReject: () => _confirmAction(accept: false),
           ),
           OrderDetailsViewStatus.offline => _Failure(
             key: const Key('order-details-offline'),
@@ -89,6 +101,72 @@ class _OrderDetailsScreenState extends ConsumerState<OrderDetailsScreen> {
             onRetry: controller.retry,
           ),
         },
+      ),
+    );
+  }
+
+  Future<void> _showPaymentProof(BuildContext context) {
+    return showDialog<void>(
+      context: context,
+      builder: (_) => _PaymentProofDialog(orderId: widget.orderId),
+    );
+  }
+
+  Future<void> _confirmAction({required bool accept}) async {
+    final title = orderText(context, accept ? 'قبول الطلب' : 'رفض الطلب');
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text(title),
+        content: Text(
+          orderText(
+            context,
+            accept
+                ? 'سيتم تأكيد الدفع ونقل الطلب إلى قيد التنفيذ.'
+                : 'سيتم رفض الطلب وتحديث حالة الدفع بأمان.',
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: Text(orderText(context, 'إلغاء')),
+          ),
+          FilledButton(
+            key: Key(accept ? 'confirm-accept-order' : 'confirm-reject-order'),
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: Text(title),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+
+    final controller = ref.read(
+      orderActionsControllerProvider(widget.orderId).notifier,
+    );
+    final succeeded = accept
+        ? await controller.accept(
+            publicMessage: orderText(context, 'تم قبول الطلب وبدأ تنفيذه.'),
+          )
+        : await controller.reject(
+            publicMessage: orderText(context, 'تم رفض الطلب بعد المراجعة.'),
+          );
+    if (!mounted) return;
+    final actionState = ref.read(
+      orderActionsControllerProvider(widget.orderId),
+    );
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          succeeded
+              ? orderText(context, 'تم تحديث الطلب بنجاح.')
+              : platformDataFailureText(
+                  context,
+                  PlatformFailure(
+                    actionState.failureCode ?? PlatformFailureCode.unknown,
+                  ),
+                ),
+        ),
       ),
     );
   }
@@ -148,13 +226,21 @@ class _Content extends StatelessWidget {
     required this.details,
     required this.timeline,
     required this.internalNotes,
+    required this.actionState,
     required this.onRetryInternalNotes,
+    required this.onViewPaymentProof,
+    required this.onAccept,
+    required this.onReject,
   });
 
   final CustomerOrderDetails details;
   final List<OrderTimelineEvent> timeline;
   final AsyncValue<List<OrderInternalNote>> internalNotes;
+  final OrderActionState actionState;
   final VoidCallback onRetryInternalNotes;
+  final VoidCallback onViewPaymentProof;
+  final VoidCallback onAccept;
+  final VoidCallback onReject;
 
   @override
   Widget build(BuildContext context) {
@@ -165,6 +251,19 @@ class _Content extends StatelessWidget {
         ? order.offerNameFrSnapshot
         : order.offerNameArSnapshot;
     final unit = isFrench ? order.rewardUnitNameFr : order.rewardUnitNameAr;
+    final isFinal = const <OrderStatus>{
+      OrderStatus.completed,
+      OrderStatus.rejected,
+      OrderStatus.cancelled,
+    }.contains(order.orderStatus);
+    final canAccept =
+        !isFinal &&
+        order.orderStatus != OrderStatus.processing &&
+        order.paymentStatus != PaymentStatus.proofRejected &&
+        order.paymentStatus != PaymentStatus.refundPending &&
+        order.paymentStatus != PaymentStatus.refunded &&
+        (order.paymentMethod == PaymentMethod.cash || order.hasPaymentProof);
+    final canReject = !isFinal;
 
     return ListView(
       key: const Key('order-details-list'),
@@ -193,6 +292,59 @@ class _Content extends StatelessWidget {
             ),
           ],
         ),
+        if (order.hasPaymentProof)
+          _Section(
+            key: const Key('order-details-payment-proof'),
+            title: orderText(context, 'إثبات الدفع'),
+            icon: Icons.attachment_outlined,
+            children: [
+              Text(
+                orderText(context, 'الإثبات خاص ويُفتح برابط مؤقت لمدة قصيرة.'),
+              ),
+              const SizedBox(height: 10),
+              FilledButton.icon(
+                key: const Key('view-payment-proof'),
+                onPressed: actionState.isSubmitting ? null : onViewPaymentProof,
+                icon: const Icon(Icons.visibility_outlined),
+                label: Text(orderText(context, 'عرض إثبات الدفع')),
+              ),
+            ],
+          ),
+        if (canAccept || canReject)
+          _Section(
+            key: const Key('order-details-actions'),
+            title: orderText(context, 'إجراءات الطلب'),
+            icon: Icons.rule_outlined,
+            children: [
+              if (actionState.isSubmitting)
+                Semantics(
+                  liveRegion: true,
+                  label: orderText(context, 'جارٍ تحديث الطلب'),
+                  child: const LinearProgressIndicator(),
+                ),
+              if (actionState.isSubmitting) const SizedBox(height: 12),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  if (canAccept)
+                    FilledButton.icon(
+                      key: const Key('accept-order'),
+                      onPressed: actionState.isSubmitting ? null : onAccept,
+                      icon: const Icon(Icons.check_circle_outline),
+                      label: Text(orderText(context, 'قبول وبدء التنفيذ')),
+                    ),
+                  if (canReject)
+                    OutlinedButton.icon(
+                      key: const Key('reject-order'),
+                      onPressed: actionState.isSubmitting ? null : onReject,
+                      icon: const Icon(Icons.cancel_outlined),
+                      label: Text(orderText(context, 'رفض الطلب')),
+                    ),
+                ],
+              ),
+            ],
+          ),
         _Section(
           title: orderText(context, 'بيانات الزبون واللاعب'),
           icon: Icons.person_outline,
@@ -325,6 +477,115 @@ class _Content extends StatelessWidget {
               : [for (final event in timeline) _TimelineLine(event: event)],
         ),
       ],
+    );
+  }
+}
+
+class _PaymentProofDialog extends ConsumerWidget {
+  const _PaymentProofDialog({required this.orderId});
+
+  final String orderId;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final proof = ref.watch(orderPaymentProofProvider(orderId));
+    return AlertDialog(
+      title: Text(orderText(context, 'إثبات الدفع')),
+      content: SizedBox(
+        width: 520,
+        height: 520,
+        child: proof.when(
+          loading: () => Semantics(
+            liveRegion: true,
+            label: orderText(context, 'تحميل إثبات الدفع'),
+            child: const Center(child: CircularProgressIndicator()),
+          ),
+          error: (_, __) => _PaymentProofFailure(
+            onRetry: () => ref.invalidate(orderPaymentProofProvider(orderId)),
+          ),
+          data: (value) {
+            if (value == null) {
+              return Center(
+                child: Text(orderText(context, 'لا يوجد إثبات دفع متاح.')),
+              );
+            }
+            return switch (value.kind) {
+              OrderPaymentProofKind.image => InteractiveViewer(
+                minScale: 0.8,
+                maxScale: 5,
+                child: Image.network(
+                  value.uri.toString(),
+                  key: const Key('payment-proof-image'),
+                  fit: BoxFit.contain,
+                  errorBuilder: (_, __, ___) => _PaymentProofFailure(
+                    onRetry: () =>
+                        ref.invalidate(orderPaymentProofProvider(orderId)),
+                  ),
+                ),
+              ),
+              OrderPaymentProofKind.pdf => Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.picture_as_pdf_outlined, size: 72),
+                    const SizedBox(height: 16),
+                    Text(
+                      orderText(
+                        context,
+                        'إثبات الدفع ملف PDF. افتحه بواسطة عارض آمن على جهازك.',
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 16),
+                    FilledButton.icon(
+                      key: const Key('open-payment-proof-pdf'),
+                      onPressed: () => Share.shareUri(value.uri),
+                      icon: const Icon(Icons.open_in_new),
+                      label: Text(orderText(context, 'فتح ملف PDF')),
+                    ),
+                  ],
+                ),
+              ),
+            };
+          },
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: Text(orderText(context, 'إغلاق')),
+        ),
+      ],
+    );
+  }
+}
+
+class _PaymentProofFailure extends StatelessWidget {
+  const _PaymentProofFailure({required this.onRetry});
+
+  final VoidCallback onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(Icons.broken_image_outlined, size: 56),
+          const SizedBox(height: 12),
+          Text(
+            orderText(context, 'تعذر عرض إثبات الدفع.'),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 12),
+          OutlinedButton.icon(
+            key: const Key('payment-proof-retry'),
+            onPressed: onRetry,
+            icon: const Icon(Icons.refresh),
+            label: Text(orderText(context, 'إعادة المحاولة')),
+          ),
+        ],
+      ),
     );
   }
 }

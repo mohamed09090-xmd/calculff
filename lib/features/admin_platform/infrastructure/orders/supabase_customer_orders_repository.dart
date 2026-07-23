@@ -91,7 +91,7 @@ class SupabaseCustomerOrdersRepository implements CustomerOrdersRepository {
 
   @override
   Future<CustomerOrderDetails> getOrderDetails({required String orderId}) {
-    _validateOrderId(orderId);
+    validateCustomerOrderId(orderId);
     return _readCoordinator.runRead(() async {
       try {
         final rows = await _dataSource.getOrderDetails(orderId: orderId);
@@ -110,7 +110,7 @@ class SupabaseCustomerOrdersRepository implements CustomerOrdersRepository {
 
   @override
   Future<List<OrderTimelineEvent>> getOrderTimeline({required String orderId}) {
-    _validateOrderId(orderId);
+    validateCustomerOrderId(orderId);
     return _readCoordinator.runRead(() async {
       try {
         final rows = await _dataSource.getOrderTimeline(orderId: orderId);
@@ -140,7 +140,7 @@ class SupabaseCustomerOrdersRepository implements CustomerOrdersRepository {
   Future<List<OrderInternalNote>> getOrderInternalNotes({
     required String orderId,
   }) {
-    _validateOrderId(orderId);
+    validateCustomerOrderId(orderId);
     final normalizedOrderId = orderId.toLowerCase();
     return _readCoordinator.runRead(() async {
       try {
@@ -184,7 +184,7 @@ class _IndexedTimelineEvent {
   final OrderTimelineEvent event;
 }
 
-void _validateOrderId(String orderId) {
+void validateCustomerOrderId(String orderId) {
   if (!_orderIdPattern.hasMatch(orderId)) {
     throw const PlatformFailure(PlatformFailureCode.validation);
   }
