@@ -4,6 +4,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../domain/games/games_repository.dart';
 import '../../domain/orders/customer_orders_repository.dart';
+import '../../domain/orders/order_actions_repository.dart';
+import '../../domain/orders/order_payment_proof_repository.dart';
+import '../../infrastructure/orders/supabase_order_actions_repository.dart';
+import '../../infrastructure/orders/supabase_order_payment_proof_repository.dart';
 import '../../infrastructure/orders/supabase_customer_orders_repository.dart';
 import '../../infrastructure/orders/supabase_orders_data_source.dart';
 import '../common/platform_common_providers.dart';
@@ -21,17 +25,47 @@ final supabaseOrdersDataSourceProvider = Provider<SupabaseOrdersDataSource?>((
   return FlutterSupabaseOrdersDataSource(client);
 });
 
+final supabaseCustomerOrdersRepositoryProvider =
+    Provider<SupabaseCustomerOrdersRepository?>((ref) {
+      final dataSource = ref.watch(supabaseOrdersDataSourceProvider);
+      if (dataSource == null) {
+        return null;
+      }
+      return SupabaseCustomerOrdersRepository(
+        dataSource: dataSource,
+        errorMapper: ref.watch(supabasePlatformErrorMapperProvider),
+        readCoordinator: ref.watch(platformReadCoordinatorProvider),
+      );
+    });
+
 final customerOrdersRepositoryProvider = Provider<CustomerOrdersRepository?>((
   ref,
 ) {
+  return ref.watch(supabaseCustomerOrdersRepositoryProvider);
+});
+
+final orderPaymentProofRepositoryProvider =
+    Provider<OrderPaymentProofRepository?>((ref) {
   final dataSource = ref.watch(supabaseOrdersDataSourceProvider);
   if (dataSource == null) {
     return null;
   }
-  return SupabaseCustomerOrdersRepository(
+  return SupabaseOrderPaymentProofRepository(
     dataSource: dataSource,
     errorMapper: ref.watch(supabasePlatformErrorMapperProvider),
     readCoordinator: ref.watch(platformReadCoordinatorProvider),
+  );
+});
+
+final orderActionsRepositoryProvider = Provider<OrderActionsRepository?>((ref) {
+  final dataSource = ref.watch(supabaseOrdersDataSourceProvider);
+  if (dataSource == null) {
+    return null;
+  }
+  return SupabaseOrderActionsRepository(
+    dataSource: dataSource,
+    errorMapper: ref.watch(supabasePlatformErrorMapperProvider),
+    mutationCoordinator: ref.watch(platformMutationCoordinatorProvider),
   );
 });
 

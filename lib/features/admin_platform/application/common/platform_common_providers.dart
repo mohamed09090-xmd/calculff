@@ -49,3 +49,13 @@ final platformReadCoordinatorProvider = Provider<PlatformReadCoordinator>((
     dataScope: ref.read(platformDataScopeProvider.notifier),
   );
 });
+
+final platformMutationCoordinatorProvider =
+    Provider<PlatformMutationCoordinator>((ref) {
+      final errorMapper = ref.watch(supabasePlatformErrorMapperProvider);
+      return PlatformSessionMutationCoordinator(
+        sessionAccess: ref.watch(platformSessionAccessProvider),
+        mapError: errorMapper.map,
+        dataScope: ref.read(platformDataScopeProvider.notifier),
+      );
+    });

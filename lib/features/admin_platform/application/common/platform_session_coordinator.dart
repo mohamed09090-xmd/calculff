@@ -3,6 +3,7 @@ import '../../domain/admin_auth_models.dart';
 import '../../domain/common/platform_failure.dart';
 
 typedef PlatformReadOperation<T> = Future<T> Function();
+typedef PlatformMutationOperation<T> = Future<T> Function();
 typedef PlatformErrorMapper = PlatformFailure Function(Object error);
 
 abstract interface class PlatformSessionAccess {
@@ -36,6 +37,10 @@ abstract interface class PlatformDataScopeSink {
 
 abstract interface class PlatformReadCoordinator {
   Future<T> runRead<T>(PlatformReadOperation<T> operation);
+}
+
+abstract interface class PlatformMutationCoordinator {
+  Future<T> runMutation<T>(PlatformMutationOperation<T> operation);
 }
 
 class PlatformSessionCoordinator implements PlatformReadCoordinator {
@@ -112,6 +117,47 @@ class PlatformSessionCoordinator implements PlatformReadCoordinator {
     });
     _refreshInFlight = refresh;
     return refresh;
+  }
+
+  void _applySessionBoundary(PlatformFailure failure) {
+    if (failure.code == PlatformFailureCode.sessionExpired ||
+        failure.code == PlatformFailureCode.unauthorized) {
+      _dataScope.invalidate(failure.code);
+    }
+  }
+}
+
+class PlatformSessionMutationCoordinator
+    implements PlatformMutationCoordinator {
+  PlatformSessionMutationCoordinator({
+    required PlatformSessionAccess sessionAccess,
+    required PlatformErrorMapper mapError,
+    required PlatformDataScopeSink dataScope,
+  }) : _sessionAccess = sessionAccess,
+       _mapError = mapError,
+       _dataScope = dataScope;
+
+  final PlatformSessionAccess _sessionAccess;
+  final PlatformErrorMapper _mapError;
+  final PlatformDataScopeSink _dataScope;
+
+  @override
+  Future<T> runMutation<T>(PlatformMutationOperation<T> operation) async {
+    final preflightFailure = _failureForState(_sessionAccess.currentState);
+    if (preflightFailure != null) {
+      _applySessionBoundary(preflightFailure);
+      throw preflightFailure;
+    }
+
+    try {
+      final result = await operation();
+      _dataScope.markAuthorized();
+      return result;
+    } catch (error) {
+      final failure = _mapError(error);
+      _applySessionBoundary(failure);
+      throw failure;
+    }
   }
 
   void _applySessionBoundary(PlatformFailure failure) {

@@ -5,7 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 void main() {
   group('Order details architecture', () {
     test(
-      'production implementation is read-only and contains no private fields',
+      'details state and presentation contain no raw backend private fields',
       () {
         const forbidden = <String>[
           'package:sqflite',
@@ -14,6 +14,7 @@ void main() {
           'shared_preferences',
           'package:hive',
           'payment_proof_path',
+          'signed_url',
           'changed_by',
           'client_request_id',
           'service_role',
@@ -39,10 +40,7 @@ void main() {
           'admin_set_order_status',
           'admin_set_payment_status',
           'admin_mark_refunded',
-          'admin_accept_',
-          'admin_reject_',
           'refund_order',
-          'signedurl',
         ];
 
         for (final file in _productionFiles()) {
@@ -67,7 +65,38 @@ void main() {
       }
     });
 
-    test('data source uses only the approved read RPC contracts', () {
+    test('raw proof path is confined to the Supabase data source', () {
+      final files = <File>[
+        File(
+          'lib/features/admin_platform/domain/orders/'
+          'order_payment_proof.dart',
+        ),
+        File(
+          'lib/features/admin_platform/domain/orders/'
+          'order_payment_proof_repository.dart',
+        ),
+        File(
+          'lib/features/admin_platform/application/orders/'
+          'order_payment_proof_provider.dart',
+        ),
+        File(
+          'lib/features/admin_platform/infrastructure/orders/'
+          'supabase_order_payment_proof_repository.dart',
+        ),
+        File(
+          'lib/features/admin_platform/presentation/orders/'
+          'order_details_screen.dart',
+        ),
+      ];
+      for (final file in files) {
+        final content = file.readAsStringSync().toLowerCase();
+        expect(content, isNot(contains('payment_proof_path')));
+        expect(content, isNot(contains('print(')));
+        expect(content, isNot(contains('debugprint(')));
+      }
+    });
+
+    test('data source uses only the approved order RPC and proof contracts', () {
       final content = File(
         'lib/features/admin_platform/infrastructure/orders/'
         'supabase_orders_data_source.dart',
@@ -76,10 +105,15 @@ void main() {
       expect(content, contains("'admin_get_order_details'"));
       expect(content, contains("'admin_get_order_timeline'"));
       expect(content, contains("'admin_list_order_internal_notes'"));
+      expect(content, contains("'admin_get_order_payment_proof_path'"));
+      expect(content, contains("'admin_accept_order'"));
+      expect(content, contains("'admin_reject_order'"));
+      expect(content, contains('paymentProofSignedUrlLifetimeSeconds = 60'));
       expect(content, contains("'p_order_id': orderId"));
       expect(content, isNot(contains("select('*')")));
       expect(content, isNot(contains('.from(')));
       expect(RegExp(r'\.rpc\(').allMatches(content), hasLength(1));
+      expect(RegExp(r'\.createSignedUrl\(').allMatches(content), hasLength(1));
     });
 
     test('list and public timeline models remain free of internal notes', () {
@@ -214,10 +248,6 @@ List<File> _productionFiles() {
     File(
       'lib/features/admin_platform/infrastructure/orders/'
       'order_internal_note_dto.dart',
-    ),
-    File(
-      'lib/features/admin_platform/infrastructure/orders/'
-      'supabase_orders_data_source.dart',
     ),
     File(
       'lib/features/admin_platform/infrastructure/orders/'
