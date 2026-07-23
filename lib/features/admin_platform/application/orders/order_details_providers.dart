@@ -58,9 +58,7 @@ final orderActionsControllerProvider = StateNotifierProvider.autoDispose
         ),
       );
       return OrderActionsController(
-        repository: scope.$2
-            ? ref.watch(orderActionsRepositoryProvider)
-            : null,
+        repository: scope.$2 ? ref.watch(orderActionsRepositoryProvider) : null,
         orderId: orderId,
         onChanged: () async {
           ref.invalidate(orderPaymentProofProvider(orderId));

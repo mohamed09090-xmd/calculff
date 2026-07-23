@@ -336,9 +336,7 @@ Future<void> _pumpOrders(
         platformAdminAuthStateProvider.overrideWith((ref) {
           return ref.watch(_testAuthStateProvider);
         }),
-        customerOrdersRepositoryProvider.overrideWithValue(
-          resolvedRepository,
-        ),
+        customerOrdersRepositoryProvider.overrideWithValue(resolvedRepository),
         orderPaymentProofRepositoryProvider.overrideWithValue(
           resolvedRepository,
         ),
@@ -416,10 +414,7 @@ class _OrdersRepository
     required String orderId,
   }) async {
     return CustomerOrderDetails(
-      summary: _summary(
-        orderStatus: orderStatus,
-        paymentStatus: paymentStatus,
-      ),
+      summary: _summary(orderStatus: orderStatus, paymentStatus: paymentStatus),
       rewardUnitCodeSnapshot: 'diamond',
       customerEmail: 'customer@example.test',
       customerPhone: '0550000000',
@@ -468,9 +463,7 @@ class _OrdersRepository
   }
 
   @override
-  Future<OrderPaymentProof?> getPaymentProof({
-    required String orderId,
-  }) async {
+  Future<OrderPaymentProof?> getPaymentProof({required String orderId}) async {
     paymentProofCalls += 1;
     return OrderPaymentProof(
       uri: Uri.parse('https://project.test/private-proof'),

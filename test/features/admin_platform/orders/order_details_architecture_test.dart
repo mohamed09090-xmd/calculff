@@ -96,25 +96,31 @@ void main() {
       }
     });
 
-    test('data source uses only the approved order RPC and proof contracts', () {
-      final content = File(
-        'lib/features/admin_platform/infrastructure/orders/'
-        'supabase_orders_data_source.dart',
-      ).readAsStringSync();
+    test(
+      'data source uses only the approved order RPC and proof contracts',
+      () {
+        final content = File(
+          'lib/features/admin_platform/infrastructure/orders/'
+          'supabase_orders_data_source.dart',
+        ).readAsStringSync();
 
-      expect(content, contains("'admin_get_order_details'"));
-      expect(content, contains("'admin_get_order_timeline'"));
-      expect(content, contains("'admin_list_order_internal_notes'"));
-      expect(content, contains("'admin_get_order_payment_proof_path'"));
-      expect(content, contains("'admin_accept_order'"));
-      expect(content, contains("'admin_reject_order'"));
-      expect(content, contains('paymentProofSignedUrlLifetimeSeconds = 60'));
-      expect(content, contains("'p_order_id': orderId"));
-      expect(content, isNot(contains("select('*')")));
-      expect(content, isNot(contains('.from(')));
-      expect(RegExp(r'\.rpc\(').allMatches(content), hasLength(1));
-      expect(RegExp(r'\.createSignedUrl\(').allMatches(content), hasLength(1));
-    });
+        expect(content, contains("'admin_get_order_details'"));
+        expect(content, contains("'admin_get_order_timeline'"));
+        expect(content, contains("'admin_list_order_internal_notes'"));
+        expect(content, contains("'admin_get_order_payment_proof_path'"));
+        expect(content, contains("'admin_accept_order'"));
+        expect(content, contains("'admin_reject_order'"));
+        expect(content, contains('paymentProofSignedUrlLifetimeSeconds = 60'));
+        expect(content, contains("'p_order_id': orderId"));
+        expect(content, isNot(contains("select('*')")));
+        expect(content, isNot(contains('.from(')));
+        expect(RegExp(r'\.rpc\(').allMatches(content), hasLength(1));
+        expect(
+          RegExp(r'\.createSignedUrl\(').allMatches(content),
+          hasLength(1),
+        );
+      },
+    );
 
     test('list and public timeline models remain free of internal notes', () {
       final files = <File>[

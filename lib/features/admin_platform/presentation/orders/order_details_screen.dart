@@ -67,8 +67,8 @@ class _OrderDetailsScreenState extends ConsumerState<OrderDetailsScreen> {
             onRetryInternalNotes: () =>
                 ref.invalidate(orderInternalNotesProvider(widget.orderId)),
             onViewPaymentProof: () => _showPaymentProof(context),
-            onAccept: () => _confirmAction(context, accept: true),
-            onReject: () => _confirmAction(context, accept: false),
+            onAccept: () => _confirmAction(accept: true),
+            onReject: () => _confirmAction(accept: false),
           ),
           OrderDetailsViewStatus.offline => _Failure(
             key: const Key('order-details-offline'),
@@ -112,14 +112,8 @@ class _OrderDetailsScreenState extends ConsumerState<OrderDetailsScreen> {
     );
   }
 
-  Future<void> _confirmAction(
-    BuildContext context, {
-    required bool accept,
-  }) async {
-    final title = orderText(
-      context,
-      accept ? 'قبول الطلب' : 'رفض الطلب',
-    );
+  Future<void> _confirmAction({required bool accept}) async {
+    final title = orderText(context, accept ? 'قبول الطلب' : 'رفض الطلب');
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
@@ -152,10 +146,7 @@ class _OrderDetailsScreenState extends ConsumerState<OrderDetailsScreen> {
     );
     final succeeded = accept
         ? await controller.accept(
-            publicMessage: orderText(
-              context,
-              'تم قبول الطلب وبدأ تنفيذه.',
-            ),
+            publicMessage: orderText(context, 'تم قبول الطلب وبدأ تنفيذه.'),
           )
         : await controller.reject(
             publicMessage: orderText(context, 'تم رفض الطلب بعد المراجعة.'),
@@ -308,17 +299,12 @@ class _Content extends StatelessWidget {
             icon: Icons.attachment_outlined,
             children: [
               Text(
-                orderText(
-                  context,
-                  'الإثبات خاص ويُفتح برابط مؤقت لمدة قصيرة.',
-                ),
+                orderText(context, 'الإثبات خاص ويُفتح برابط مؤقت لمدة قصيرة.'),
               ),
               const SizedBox(height: 10),
               FilledButton.icon(
                 key: const Key('view-payment-proof'),
-                onPressed: actionState.isSubmitting
-                    ? null
-                    : onViewPaymentProof,
+                onPressed: actionState.isSubmitting ? null : onViewPaymentProof,
                 icon: const Icon(Icons.visibility_outlined),
                 label: Text(orderText(context, 'عرض إثبات الدفع')),
               ),
@@ -515,9 +501,7 @@ class _PaymentProofDialog extends ConsumerWidget {
             child: const Center(child: CircularProgressIndicator()),
           ),
           error: (_, __) => _PaymentProofFailure(
-            onRetry: () => ref.invalidate(
-              orderPaymentProofProvider(orderId),
-            ),
+            onRetry: () => ref.invalidate(orderPaymentProofProvider(orderId)),
           ),
           data: (value) {
             if (value == null) {
@@ -534,9 +518,8 @@ class _PaymentProofDialog extends ConsumerWidget {
                   key: const Key('payment-proof-image'),
                   fit: BoxFit.contain,
                   errorBuilder: (_, __, ___) => _PaymentProofFailure(
-                    onRetry: () => ref.invalidate(
-                      orderPaymentProofProvider(orderId),
-                    ),
+                    onRetry: () =>
+                        ref.invalidate(orderPaymentProofProvider(orderId)),
                   ),
                 ),
               ),

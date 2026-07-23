@@ -59,7 +59,8 @@ as $$
     reward_unit_code_snapshot, reward_unit_name_ar_snapshot,
     reward_unit_name_fr_snapshot, offer_name_ar_snapshot,
     offer_name_fr_snapshot, reward_quantity_snapshot, sale_price_dzd_snapshot,
-    customer_name_snapshot, customer_email_snapshot, customer_phone_snapshot
+    customer_name_snapshot, customer_email_snapshot, customer_phone_snapshot,
+    completed_at
   ) values (
     p_id, '61111111-1111-4111-8111-111111111111', p_id,
     '6aaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa1',
@@ -67,7 +68,8 @@ as $$
     p_method, p_order_status, p_payment_status, p_proof,
     'لعبة الإجراءات', 'Jeu actions', 'diamonds', 'جواهر', 'Diamants',
     'عرض الإجراءات', 'Offre actions', 100, 350,
-    'Actions User', 'actions-user@test.invalid', '0555000061'
+    'Actions User', 'actions-user@test.invalid', '0555000061',
+    case when p_order_status = 'completed' then now() else null end
   );
 $$;
 

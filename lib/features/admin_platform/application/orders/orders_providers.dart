@@ -15,9 +15,8 @@ import '../games/games_providers.dart';
 import '../supabase_providers.dart';
 import 'orders_controller.dart';
 
-final supabaseOrdersDataSourceProvider = Provider<SupabaseOrdersDataSource?>((
-  ref,
-) {
+final supabaseOrdersDataSourceProvider =
+    Provider<FlutterSupabaseOrdersDataSource?>((ref) {
   final client = ref.watch(supabaseClientProvider);
   if (client == null) {
     return null;
@@ -46,16 +45,16 @@ final customerOrdersRepositoryProvider = Provider<CustomerOrdersRepository?>((
 
 final orderPaymentProofRepositoryProvider =
     Provider<OrderPaymentProofRepository?>((ref) {
-  final dataSource = ref.watch(supabaseOrdersDataSourceProvider);
-  if (dataSource == null) {
-    return null;
-  }
-  return SupabaseOrderPaymentProofRepository(
-    dataSource: dataSource,
-    errorMapper: ref.watch(supabasePlatformErrorMapperProvider),
-    readCoordinator: ref.watch(platformReadCoordinatorProvider),
-  );
-});
+      final dataSource = ref.watch(supabaseOrdersDataSourceProvider);
+      if (dataSource == null) {
+        return null;
+      }
+      return SupabaseOrderPaymentProofRepository(
+        dataSource: dataSource,
+        errorMapper: ref.watch(supabasePlatformErrorMapperProvider),
+        readCoordinator: ref.watch(platformReadCoordinatorProvider),
+      );
+    });
 
 final orderActionsRepositoryProvider = Provider<OrderActionsRepository?>((ref) {
   final dataSource = ref.watch(supabaseOrdersDataSourceProvider);

@@ -14,15 +14,11 @@ final orderPaymentProofProvider = FutureProvider.autoDispose
         ),
       );
       if (!scope.$2) {
-        throw PlatformFailure(
-          scope.$3 ?? PlatformFailureCode.sessionExpired,
-        );
+        throw PlatformFailure(scope.$3 ?? PlatformFailureCode.sessionExpired);
       }
       final repository = ref.watch(orderPaymentProofRepositoryProvider);
       if (repository == null) {
-        throw const PlatformFailure(
-          PlatformFailureCode.temporarilyUnavailable,
-        );
+        throw const PlatformFailure(PlatformFailureCode.temporarilyUnavailable);
       }
       return repository.getPaymentProof(orderId: orderId);
     });

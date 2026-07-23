@@ -59,32 +59,34 @@ void main() {
     }
   });
 
-  test('actions map only known final statuses through mutation coordinator', (
-  ) async {
-    final dataSource = _ActionsDataSource();
-    final coordinator = _MutationCoordinator();
-    final repository = SupabaseOrderActionsRepository(
-      dataSource: dataSource,
-      errorMapper: const SupabasePlatformErrorMapper(),
-      mutationCoordinator: coordinator,
-    );
+  test(
+    'actions map only known final statuses through mutation coordinator',
+    () async {
+      final dataSource = _ActionsDataSource();
+      final coordinator = _MutationCoordinator();
+      final repository = SupabaseOrderActionsRepository(
+        dataSource: dataSource,
+        errorMapper: const SupabasePlatformErrorMapper(),
+        mutationCoordinator: coordinator,
+      );
 
-    final accepted = await repository.acceptOrder(
-      orderId: _orderId,
-      publicMessage: 'accepted',
-    );
-    final rejected = await repository.rejectOrder(
-      orderId: _orderId,
-      publicMessage: 'rejected',
-    );
+      final accepted = await repository.acceptOrder(
+        orderId: _orderId,
+        publicMessage: 'accepted',
+      );
+      final rejected = await repository.rejectOrder(
+        orderId: _orderId,
+        publicMessage: 'rejected',
+      );
 
-    expect(accepted.orderStatus, OrderStatus.processing);
-    expect(accepted.paymentStatus, PaymentStatus.paid);
-    expect(rejected.orderStatus, OrderStatus.rejected);
-    expect(rejected.paymentStatus, PaymentStatus.proofRejected);
-    expect(dataSource.messages, <String?>['accepted', 'rejected']);
-    expect(coordinator.calls, 2);
-  });
+      expect(accepted.orderStatus, OrderStatus.processing);
+      expect(accepted.paymentStatus, PaymentStatus.paid);
+      expect(rejected.orderStatus, OrderStatus.rejected);
+      expect(rejected.paymentStatus, PaymentStatus.proofRejected);
+      expect(dataSource.messages, <String?>['accepted', 'rejected']);
+      expect(coordinator.calls, 2);
+    },
+  );
 
   test('invalid ids fail before proof or action network calls', () {
     final proofDataSource = _ProofDataSource(payload: null);

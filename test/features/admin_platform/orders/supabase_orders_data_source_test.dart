@@ -80,8 +80,7 @@ void main() {
           rpcParams = input;
           return <Object?>[
             <String, Object?>{
-              'payment_proof_path':
-                  'user/order/proof_aaaaaaaaaaaaaaaa.jpg',
+              'payment_proof_path': 'user/order/proof_aaaaaaaaaaaaaaaa.jpg',
             },
           ];
         },
@@ -126,14 +125,8 @@ void main() {
         ];
       });
 
-      await dataSource.acceptOrder(
-        orderId: orderId,
-        publicMessage: 'accepted',
-      );
-      await dataSource.rejectOrder(
-        orderId: orderId,
-        publicMessage: 'rejected',
-      );
+      await dataSource.acceptOrder(orderId: orderId, publicMessage: 'accepted');
+      await dataSource.rejectOrder(orderId: orderId, publicMessage: 'rejected');
 
       expect(calls, <(String, Map<String, Object?>)>[
         (

@@ -93,8 +93,7 @@ const Map<String, String> _french = <String, String>{
   'جارٍ تحديث الطلب': 'Mise à jour de la commande',
   'تم قبول الطلب وبدأ تنفيذه.':
       'La commande a été acceptée et son traitement a commencé.',
-  'تم رفض الطلب بعد المراجعة.':
-      'La commande a été refusée après vérification.',
+  'تم رفض الطلب بعد المراجعة.': 'La commande a été refusée après vérification.',
   'تم تحديث الطلب بنجاح.': 'La commande a été mise à jour.',
   'نقدًا': 'Espèces',
   'تحويل': 'Virement',

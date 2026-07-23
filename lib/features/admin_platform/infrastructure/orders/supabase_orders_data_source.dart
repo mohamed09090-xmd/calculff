@@ -22,9 +22,7 @@ abstract interface class SupabaseOrdersDataSource {
 }
 
 abstract interface class SupabaseOrderPaymentProofDataSource {
-  Future<Map<String, Object?>?> getOrderPaymentProof({
-    required String orderId,
-  });
+  Future<Map<String, Object?>?> getOrderPaymentProof({required String orderId});
 }
 
 abstract interface class SupabaseOrderActionsDataSource {
@@ -58,8 +56,7 @@ class FlutterSupabaseOrdersDataSource
   static const orderDetailsRpcName = 'admin_get_order_details';
   static const orderTimelineRpcName = 'admin_get_order_timeline';
   static const orderInternalNotesRpcName = 'admin_list_order_internal_notes';
-  static const orderPaymentProofRpcName =
-      'admin_get_order_payment_proof_path';
+  static const orderPaymentProofRpcName = 'admin_get_order_payment_proof_path';
   static const acceptOrderRpcName = 'admin_accept_order';
   static const rejectOrderRpcName = 'admin_reject_order';
   static const paymentProofBucket = 'payment-proofs';

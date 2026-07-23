@@ -10,9 +10,11 @@ select results_eq(
   $$values
     ('private.handle_auth_user_created'::text collate "C"),
     ('private.handle_auth_user_email_changed'::text collate "C"),
+    ('public.admin_accept_order'::text collate "C"),
     ('public.admin_add_order_internal_note'::text collate "C"),
     ('public.admin_list_order_internal_notes'::text collate "C"),
     ('public.admin_mark_refunded'::text collate "C"),
+    ('public.admin_reject_order'::text collate "C"),
     ('public.admin_set_order_status'::text collate "C"),
     ('public.admin_set_payment_status'::text collate "C"),
     ('public.attach_payment_proof'::text collate "C"),
@@ -22,8 +24,8 @@ select results_eq(
 );
 select is(
   (select count(*)::integer from pg_proc p join pg_namespace n on n.oid = p.pronamespace where p.prosecdef and n.nspname in ('public','private')),
-  10,
-  'exactly ten SECURITY DEFINER functions exist'
+  12,
+  'exactly twelve SECURITY DEFINER functions exist'
 );
 select is(
   (select count(*)::integer from pg_proc p join pg_namespace n on n.oid = p.pronamespace where p.prosecdef and n.nspname in ('public','private') and coalesce(array_to_string(p.proconfig, ','), '') <> 'search_path=""'),
@@ -59,8 +61,8 @@ select is(
 );
 select is(
   (select count(*)::integer from pg_proc p join pg_namespace n on n.oid = p.pronamespace where p.prosecdef and n.nspname = 'public' and has_function_privilege('authenticated', p.oid, 'EXECUTE')),
-  8,
-  'authenticated receives EXECUTE only on the eight public RPCs'
+  10,
+  'authenticated receives EXECUTE only on the ten public RPCs'
 );
 
 select results_eq(

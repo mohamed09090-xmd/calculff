@@ -54,9 +54,7 @@ class SupabaseOrderPaymentProofRepository
         return OrderPaymentProof(uri: uri, kind: kind);
       } catch (error) {
         if (error is FormatException || error is PlatformPayloadException) {
-          throw const PlatformFailure(
-            PlatformFailureCode.malformedResponse,
-          );
+          throw const PlatformFailure(PlatformFailureCode.malformedResponse);
         }
         throw _errorMapper.map(error);
       }
