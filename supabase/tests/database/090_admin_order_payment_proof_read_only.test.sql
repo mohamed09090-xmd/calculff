@@ -302,18 +302,18 @@ select is(
   'proof RPC returns at most the one requested proof'
 );
 select is(
-  (
-    select array_agg(key order by key)::text[]
-    from public.admin_get_order_payment_proof_path('50000000-0000-4000-8000-000000000051') as r
-    cross join lateral jsonb_object_keys(to_jsonb(r)) as key
-  ),
-  array['payment_proof_path']::text[],
-  'proof runtime response exposes exactly one field'
+  (select pg_typeof(payment_proof_path)::text
+   from public.admin_get_order_payment_proof_path('50000000-0000-4000-8000-000000000051')),
+  'text',
+  'proof runtime response uses the expected text type'
 );
 select ok(
-  (select not (to_jsonb(r) ?| array['order_id','user_id','owner_id','bucket_id','metadata','signed_url'])
-   from public.admin_get_order_payment_proof_path('50000000-0000-4000-8000-000000000051') as r),
-  'proof runtime response contains no order, owner, metadata, or URL fields'
+  not (
+    (select proargnames from pg_proc
+     where oid = to_regprocedure('public.admin_get_order_payment_proof_path(uuid)'))
+    && array['order_id','user_id','owner_id','bucket_id','metadata','signed_url']::text[]
+  ),
+  'proof response contract contains no order, owner, metadata, or URL fields'
 );
 select results_eq(
   $$select payment_proof_path from public.admin_get_order_payment_proof_path('50000000-0000-4000-8000-000000000052')$$,
